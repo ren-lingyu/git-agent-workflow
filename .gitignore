@@ -15,6 +15,12 @@
 !src/**/
 !src/**/*.lisp
 
+!pkgs/
+!pkgs/**/
+!pkgs/**/*.lisp
+!pkgs/**/*.nix
+!pkgs/**/*.sh
+
 !tests/
 !tests/**/
 !tests/**/*.lisp
