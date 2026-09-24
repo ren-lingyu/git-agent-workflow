@@ -1,5 +1,28 @@
 {
   "nodes": {
+    "cl-nix-forge": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "treefmt-nix": "treefmt-nix"
+      },
+      "locked": {
+        "lastModified": 1785825792,
+        "narHash": "sha256-FjpTPYXj5BINxpgFbNqKQgeB6p/ANR/1N8T4lSHS7kU=",
+        "ref": "refs/tags/v0.5.0",
+        "rev": "df1e772cda1efcdb90297b49ca1a25b396b8bdd7",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/nerima-lisp/cl-nix-forge.git"
+      },
+      "original": {
+        "ref": "refs/tags/v0.5.0",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/nerima-lisp/cl-nix-forge.git"
+      }
+    },
     "flake-parts": {
       "inputs": {
         "nixpkgs-lib": "nixpkgs-lib"
@@ -54,8 +77,30 @@
     },
     "root": {
       "inputs": {
+        "cl-nix-forge": "cl-nix-forge",
         "flake-parts": "flake-parts",
         "nixpkgs": "nixpkgs"
+      }
+    },
+    "treefmt-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "cl-nix-forge",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1785360170,
+        "narHash": "sha256-XE1lKgQ3eIO3E7zWryqcRsax+mYXod/5RHBn4YaR9YE=",
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "rev": "d1187f8bc71fb8aab02395869ec3f5c1920f75c0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "type": "github"
       }
     }
   },
