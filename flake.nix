@@ -17,13 +17,39 @@
 
   outputs = { self, ... }@inputs : inputs.flake-parts.lib.mkFlake { inherit inputs; } {
 
-    systems = inputs.nixpkgs.lib.systems.flakeExposed;
+    systems = [
+      "x86_64-linux"
+    ];
 
-    perSystem = { ... } : {
+    perSystem = { system, pkgs, ... } :  let
 
-      packages = { };
+      cl = inputs.cl-nix-forge.lib.${system};
 
-      checks = { };
+      lispSystem = pkgs.lib.removeSuffix ".asd" (builtins.baseNameOf ./git-agent-workflow.asd);
+      version = cl.fromAsdSystem ./git-agent-workflow.asd;
+      src = cl.mkLispSource {
+        root = ./.;
+      };
+
+      gaw = cl.lispDerivation {
+        inherit lispSystem version src;
+      };
+
+    in {
+
+      packages = {
+        default = cl.mkExecutable {
+          args = {
+            pname = "git-gaw";
+            inherit lispSystem version src;
+          };
+          programPath = "git-gaw";
+        };
+      };
+
+      checks = {
+        git-agent-workflow-test = cl.mkTestCheck gaw;
+      };
 
       devShells = { };
 
