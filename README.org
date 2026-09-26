@@ -1,2 +1,84 @@
-#+TITLE: Gir Agent Workflow (GAW)
+#+TITLE: Git Agent Workflow (GAW)
 #+AUTHOR: Lingyu Ren
+
+* Git Agent Workflow
+Git Agent Workflow (GAW) is a Git-native workflow for maintaining persistent
+agent working state and history alongside a Git repository.
+
+GAW is intended for coding workflows in which an agent may work on a project
+across many independent sessions.  Instead of treating one long-lived model
+context as the primary store of working state, GAW keeps selected agent state
+in Git and lets Git provide its history and reachability model.
+
+* Status
+GAW is currently under early development.
+
+The repository currently contains the Common Lisp and Nix project scaffold.
+The repository protocol and user-facing interface are still under development
+and are not yet available for general use.
+
+* Design
+** Separate GAW History
+GAW history is an independent Git history rather than a history derived from
+the ordinary project branches.
+
+A GAW commit records the state of the GAW workspace in its own tree.  Its
+parents have two distinct roles:
+
+1. the first parent is the previous GAW commit;
+2. any additional parents are project commits associated with that GAW state.
+
+The trees of additional project parents are not merged into the GAW tree.
+They are parent edges used to associate project snapshots with agent history
+and to keep those commits reachable through ordinary Git object reachability.
+
+The canonical temporal history of GAW is therefore its first-parent chain.
+
+** Workspace
+GAW manages a selected set of paths as its workspace.
+
+The workspace does not need to be one directory and may consist of multiple
+files and directories.
+
+Workspace contents are intentionally opaque to GAW.  GAW manages their Git
+history and validates the surrounding repository protocol, but does not
+prescribe their internal format.
+
+** Project Association
+A GAW commit may be associated with zero, one, or multiple project commits.
+
+These associations are represented directly as additional Git parent edges
+rather than through a separate snapshot database or identifier scheme.
+
+A project commit attached to GAW history must not itself track the GAW
+workspace or reserved GAW protocol paths.  This is a local validity condition
+on commits that participate in GAW history rather than a repository-wide
+restriction on unrelated branches.
+
+** History Semantics
+The first parent of a GAW commit represents temporal GAW history.
+
+Additional parents represent associated project snapshots and do not
+participate in that temporal ordering.
+
+As a result, the canonical history traversal of GAW follows first-parent
+edges, and the canonical change represented by a GAW commit is the change
+relative to its first parent.
+
+** Git as the History Store
+GAW deliberately relies on Git itself for:
+
+- commit identity;
+- temporal history;
+- object storage;
+- parent relationships;
+- reachability.
+
+In particular, relationships between GAW state and project snapshots are
+encoded directly in the Git commit graph rather than duplicated in a
+separate metadata database.
+
+* Development
+GAW is implemented in Common Lisp and built as an ASDF system.
+
+The build is managed with Nix flakes and =cl-nix-forge=. The currently supported system is =x86_64-linux=.
