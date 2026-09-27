@@ -25,14 +25,12 @@
 
       cl = inputs.cl-nix-forge.lib.${system};
 
-      lispSystem = pkgs.lib.removeSuffix ".asd" (builtins.baseNameOf ./git-agent-workflow.asd);
-      version = cl.fromAsdSystem ./git-agent-workflow.asd;
-      src = cl.mkLispSource {
-        root = ./.;
-      };
-
-      gaw = cl.lispDerivation {
-        inherit lispSystem version src;
+      lispArgs = {
+        lispSystem = pkgs.lib.removeSuffix ".asd" (builtins.baseNameOf ./git-agent-workflow.asd);
+        version = cl.fromAsdSystem ./git-agent-workflow.asd;
+        src = cl.mkLispSource {
+          root = ./.;
+        };
       };
 
     in {
@@ -41,14 +39,18 @@
         default = cl.mkExecutable {
           args = {
             pname = "git-gaw";
-            inherit lispSystem version src;
+            inherit (lispArgs) lispSystem version src;
           };
           programPath = "git-gaw";
         };
       };
 
       checks = {
-        git-agent-workflow-test = cl.mkTestCheck gaw;
+        "${lispArgs.lispSystem}-test" = cl.mkTestCheck (
+          cl.lispDerivation {
+            inherit (lispArgs) lispSystem version src;
+          }
+        );
       };
 
       devShells = { };
