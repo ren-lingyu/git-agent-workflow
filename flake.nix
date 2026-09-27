@@ -49,6 +49,9 @@
         "${lispArgs.lispSystem}-test" = cl.mkTestCheck (
           cl.lispDerivation {
             inherit (lispArgs) lispSystem version src;
+            nativeBuildInputs = [
+              pkgs.git
+            ];
           }
         );
       };
