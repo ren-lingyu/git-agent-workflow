@@ -21,6 +21,7 @@
   :depends-on ("git-agent-workflow")
 
   :components ((:module "tests"
+                :pathname "tests/"
                 :components ((:file "package")
                              (:file "package.support"
                               :depends-on ("package"))
