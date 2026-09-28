@@ -1,9 +1,16 @@
 (defpackage #:git-agent-workflow/tests
   (:use #:cl)
-  (:export #:run-tests))
+  (:export #:signals
+           #:call-git
+           #:with-temporary-directory
+           #:with-test-repository
+           #:run-tests))
 
 (defpackage #:git-agent-workflow/tests.git
   (:use #:cl)
+  (:import-from #:git-agent-workflow/tests
+                #:with-temporary-directory
+                #:with-test-repository)
   (:import-from #:git-agent-workflow.git
                 #:run-git
                 #:git-invocation

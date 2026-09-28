@@ -22,8 +22,11 @@
 
   :components ((:module "tests"
                 :components ((:file "package")
-                             (:file "git"
+                             (:file "package.support"
                               :depends-on ("package"))
+                             (:file "git"
+                              :depends-on ("package"
+                                           "package.support"))
                              (:file "tests"
                               :depends-on ("package"
                                            "git")))))
