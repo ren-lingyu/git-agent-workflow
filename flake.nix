@@ -21,6 +21,18 @@
       "x86_64-linux"
     ];
 
+    flake = {
+      overlays = {
+        default = final: prev: {
+          git = assert (prev.lib.assertMsg
+            (prev.lib.versionAtLeast prev.git.version "2.43")
+            "GAW requires Git >= 2.43, but got ${prev.git.version}"
+          );
+          prev.git;
+        };
+      };
+    };
+
     perSystem = { system, pkgs, ... } :  let
 
       cl = inputs.cl-nix-forge.lib.${system};
@@ -34,6 +46,13 @@
       };
 
     in {
+
+      _module.args.pkgs = import inputs.nixpkgs {
+        inherit system;
+        overlays = [
+          self.overlays.default
+        ];
+      };
 
       packages = {
         default = cl.mkExecutable {
