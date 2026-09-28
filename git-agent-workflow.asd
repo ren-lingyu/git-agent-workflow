@@ -8,6 +8,9 @@
                 :components ((:file "package")
                              (:file "git"
                               :depends-on ("package"))
+                             (:file "refs"
+                              :depends-on ("package"
+                                           "git"))
                              (:file "cli"
                               :depends-on ("package")))))
 
@@ -28,9 +31,13 @@
                              (:file "git"
                               :depends-on ("package"
                                            "package.support"))
+                             (:file "refs"
+                              :depends-on ("package"
+                                           "package.support"))
                              (:file "tests"
                               :depends-on ("package"
-                                           "git")))))
+                                           "git"
+                                           "refs")))))
 
   :perform (asdf:test-op (operation component)
                          (declare (ignore operation
