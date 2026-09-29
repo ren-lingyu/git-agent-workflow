@@ -10,22 +10,29 @@
                               :pathname "git/"
                               :depends-on ("package")
                               :components ((:file "package")
-                                           (:file "git.lib"
-                                            :depends-on ("package"))))
+                                           (:file "git.core"
+                                            :depends-on ("package"))
+                                           (:file "git.runtime"
+                                            :depends-on ("git.core"))))
                              (:module "refs"
                               :pathname "refs/"
                               :depends-on ("package"
                                            "git")
                               :components ((:file "package")
-                                           (:file "refs.lib"
+                                           (:file "refs.core"
                                             :depends-on ("package"))
+                                           (:file "refs.runtime"
+                                            :depends-on ("refs.core"))
                                            (:file "refs.api"
-                                            :depends-on ("refs.lib"))
-                                           (:file "current.lib"
-                                            :depends-on ("refs.lib"))
+                                            :depends-on ("refs.runtime"))
+                                           (:file "current.core"
+                                            :depends-on ("refs.core"))
+                                           (:file "current.runtime"
+                                            :depends-on ("refs.runtime"
+                                                         "current.core"))
                                            (:file "current.api"
                                             :depends-on ("refs.api"
-                                                         "current.lib"))))
+                                                         "current.runtime"))))
                              (:module "cli"
                               :pathname "cli/"
                               :depends-on ("package")

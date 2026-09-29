@@ -1,13 +1,12 @@
 (in-package #:git-agent-workflow.refs)
 
 (eval-when (:load-toplevel :execute)
-  (dolist (function '(inspect-ref
-                      ref-state-exists-p
+  (dolist (function '(ref-state-exists-p
                       ref-state-symbolic-p
                       ref-state-symbolic-target
                       %ref-under-prefix-p))
     (unless (fboundp function)
-      (error "Required refs library function is unavailable: ~S"
+      (error "Required refs core function is unavailable: ~S"
              function))))
 
 (define-condition current-ref-error (error)
@@ -63,60 +62,64 @@
                         (current-ref-error-display-name condition)
                         (current-ref-error-reason condition)))))))
 
-(defun %current-ref (directory
-                     display-name
-                     head-ref
-                     source-ref-prefix
-                     target-ref-prefix)
-  (let ((head-state (inspect-ref head-ref
-                                 directory)))
-    (unless (ref-state-exists-p head-state)
+(defun %current-registration-ref (head-state
+                                  display-name
+                                  head-ref
+                                  target-ref-prefix)
+  (unless (ref-state-exists-p head-state)
+    (error 'current-ref-error
+           :display-name display-name
+           :reason :missing-head
+           :ref head-ref))
+  (unless (ref-state-symbolic-p head-state)
+    (error 'current-ref-error
+           :display-name display-name
+           :reason :direct-head
+           :ref head-ref))
+  (let ((registration-ref
+          (ref-state-symbolic-target head-state)))
+    (unless (%ref-under-prefix-p registration-ref
+                                 target-ref-prefix)
       (error 'current-ref-error
              :display-name display-name
-             :reason :missing-head
-             :ref head-ref))
-    (unless (ref-state-symbolic-p head-state)
+             :reason :invalid-head-target
+             :ref head-ref
+             :target registration-ref))
+    registration-ref))
+
+(defun %current-source-ref (registration-state
+                            display-name
+                            registration-ref
+                            source-ref-prefix)
+  (unless (ref-state-exists-p registration-state)
+    (error 'current-ref-error
+           :display-name display-name
+           :reason :missing-registration
+           :ref registration-ref))
+  (unless (ref-state-symbolic-p registration-state)
+    (error 'current-ref-error
+           :display-name display-name
+           :reason :direct-registration
+           :ref registration-ref))
+  (let ((source-ref
+          (ref-state-symbolic-target registration-state)))
+    (unless (%ref-under-prefix-p source-ref
+                                 source-ref-prefix)
       (error 'current-ref-error
              :display-name display-name
-             :reason :direct-head
-             :ref head-ref))
-    (let ((registration-ref
-            (ref-state-symbolic-target head-state)))
-      (unless (%ref-under-prefix-p registration-ref
-                                   target-ref-prefix)
-        (error 'current-ref-error
-               :display-name display-name
-               :reason :invalid-head-target
-               :ref head-ref
-               :target registration-ref))
-      (let ((registration-state
-              (inspect-ref registration-ref
-                           directory)))
-        (unless (ref-state-exists-p registration-state)
-          (error 'current-ref-error
-                 :display-name display-name
-                 :reason :missing-registration
-                 :ref registration-ref))
-        (unless (ref-state-symbolic-p registration-state)
-          (error 'current-ref-error
-                 :display-name display-name
-                 :reason :direct-registration
-                 :ref registration-ref))
-        (let ((source-ref
-                (ref-state-symbolic-target registration-state)))
-          (unless (%ref-under-prefix-p source-ref
-                                       source-ref-prefix)
-            (error 'current-ref-error
-                   :display-name display-name
-                   :reason :invalid-registration-target
-                   :ref registration-ref
-                   :target source-ref))
-          (unless (ref-state-exists-p
-                   (inspect-ref source-ref
-                                directory))
-            (error 'current-ref-error
-                   :display-name display-name
-                   :reason :dangling-registration
-                   :ref registration-ref
-                   :target source-ref))
-          source-ref)))))
+             :reason :invalid-registration-target
+             :ref registration-ref
+             :target source-ref))
+    source-ref))
+
+(defun %ensure-current-source-exists (source-state
+                                      display-name
+                                      registration-ref
+                                      source-ref)
+  (unless (ref-state-exists-p source-state)
+    (error 'current-ref-error
+           :display-name display-name
+           :reason :dangling-registration
+           :ref registration-ref
+           :target source-ref))
+  source-ref)

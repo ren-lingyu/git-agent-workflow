@@ -4,35 +4,16 @@
   (dolist (function '(run-git
                       git-invocation-stdout
                       git-invocation-stderr
-                      git-invocation-exit-status))
+                      git-invocation-exit-status
+                      %make-ref-state
+                      %make-ref
+                      %ref-state-dangling-p
+                      %ensure-registration-available
+                      %validate-target-ref
+                      %ensure-registration-removable))
     (unless (fboundp function)
-      (error "Required Git function is unavailable: ~S"
+      (error "Required runtime dependency is unavailable: ~S"
              function))))
-
-(defstruct (ref-state (:constructor %make-ref-state))
-  name
-  exists-p
-  symbolic-p
-  symbolic-target)
-
-(defun %ref-under-prefix-p (checked-ref prefix)
-  (and (> (length checked-ref)
-          (length prefix))
-       (string= prefix
-                checked-ref
-                :end2 (length prefix))))
-
-(defun %make-ref (source-ref source-ref-prefix target-ref-prefix)
-  (check-type source-ref
-              string)
-  (unless (%ref-under-prefix-p source-ref
-                               source-ref-prefix)
-    (error "Not a valid source ref: ~S"
-           source-ref))
-  (concatenate 'string
-               target-ref-prefix
-               (subseq source-ref
-                       (length source-ref-prefix))))
 
 (defun %ref-exists-p (checked-ref directory)
   (let ((invocation (run-git (list "show-ref"
@@ -83,9 +64,10 @@
                                 directory)))
     (and (ref-state-exists-p ref-state)
          (ref-state-symbolic-p ref-state)
-         (not (ref-state-exists-p
-               (inspect-ref (ref-state-symbolic-target ref-state)
-                            directory))))))
+         (%ref-state-dangling-p
+          ref-state
+          (inspect-ref (ref-state-symbolic-target ref-state)
+                       directory)))))
 
 (defun %register-ref (source-ref
                       directory
@@ -98,11 +80,10 @@
                                 target-ref-prefix))
          (target-state (inspect-ref target-ref
                                     directory)))
-    (when (and (not overwrite)
-               (ref-state-exists-p target-state))
-      (error "~A branch registration already exists: ~S"
-             display-name
-             target-ref))
+    (%ensure-registration-available target-state
+                                    overwrite
+                                    display-name
+                                    target-ref)
     (let ((invocation (run-git (list "symbolic-ref"
                                      target-ref
                                      source-ref)
@@ -118,22 +99,13 @@
                         directory
                         display-name
                         target-ref-prefix)
-  (check-type target-ref
-              string)
-  (unless (%ref-under-prefix-p target-ref
-                               target-ref-prefix)
-    (error "Not a valid target ref: ~S"
-           target-ref))
+  (%validate-target-ref target-ref
+                        target-ref-prefix)
   (let ((target-state (inspect-ref target-ref
                                    directory)))
-    (unless (ref-state-exists-p target-state)
-      (error "~A branch registration does not exist: ~S"
-             display-name
-             target-ref))
-    (unless (ref-state-symbolic-p target-state)
-      (error "~A branch registration is not a symbolic ref: ~S"
-             display-name
-             target-ref))
+    (%ensure-registration-removable target-state
+                                    display-name
+                                    target-ref)
     (let ((invocation (run-git (list "symbolic-ref"
                                      "--delete"
                                      target-ref)

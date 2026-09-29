@@ -5,7 +5,7 @@
                       %register-ref
                       %unregister-ref))
     (unless (fboundp function)
-      (error "Required refs library function is unavailable: ~S"
+      (error "Required refs runtime function is unavailable: ~S"
              function))))
 
 (defparameter *display-name*

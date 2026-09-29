@@ -2,7 +2,7 @@
 
 (eval-when (:load-toplevel :execute)
   (unless (fboundp '%current-ref)
-    (error "Required current ref library function is unavailable: ~S"
+    (error "Required current ref runtime function is unavailable: ~S"
            '%current-ref))
   (dolist (variable '(*display-name*
                       *source-ref-prefix*

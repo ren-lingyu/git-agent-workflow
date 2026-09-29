@@ -1,28 +1,16 @@
 (in-package #:git-agent-workflow.git)
 
-(defstruct (git-invocation (:constructor %make-git-invocation))
-  command
-  arguments
-  directory
-  stdout
-  stderr
-  exit-status)
+(eval-when (:load-toplevel :execute)
+  (dolist (function '(%make-git-invocation
+                      %prepare-git-command))
+    (unless (fboundp function)
+      (error "Required Git core function is unavailable: ~S"
+             function))))
 
 (defun run-git (args directory)
-  (check-type directory
-              pathname)
-  (assert (every #'stringp
-                 args)
-          (args)
-          "Git arguments must be strings: ~S"
-          args)
-  (let* ((arguments (copy-list
-                     args))
-         (command (concatenate 'list
-                               (list "git"
-                                     "-C"
-                                     (namestring directory))
-                               arguments)))
+  (multiple-value-bind (command arguments)
+      (%prepare-git-command args
+                            directory)
     (multiple-value-bind (stdout stderr exit-status)
         (uiop:run-program command
                           :output '(:string :stripped t)
