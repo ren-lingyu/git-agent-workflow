@@ -69,6 +69,10 @@ The API layer resolves the current source ref and supplies the fixed config
 path and resource limits as explicit runtime arguments; runtime and core do
 not read those defaults from package-level state.
 
+The related entry point =(git-agent-workflow.config:read-config-at-tree
+directory tree-oid)= accepts a full tree object ID.  It is used when a staged
+tree must be validated before a commit makes it reachable.
+
 ** Project Association
 A GAW commit may be associated with zero, one, or multiple project commits.
 
@@ -79,6 +83,43 @@ A project commit attached to GAW history must not itself track the GAW
 workspace or reserved GAW protocol paths.  This is a local validity condition
 on commits that participate in GAW history rather than a repository-wide
 restriction on unrelated branches.
+
+** Creating Commits
+The command =git gaw commit= creates commits on the registered GAW branch
+checked out by the current worktree.  It must be run at that worktree's root.
+The worktree's symbolic =HEAD= is authoritative; =refs/gaw/HEAD= does not
+select the branch for this command.
+
+The command uses the current index as its complete tree source.  It neither
+stages paths nor includes unstaged or untracked changes.  A candidate tree is
+accepted only when it contains a valid =.gaw/config= and no content outside
+=.gaw= and the declared workspace.  Gitlinks are not supported in a GAW tree.
+
+The command syntax is:
+
+#+begin_src text
+git gaw commit [--allow-empty] [--allow-empty-message]
+               (-m <message> | -F <file>)...
+               [--] [project-commit...]
+#+end_src
+
+Message options may be repeated and mixed.  =-m= values are encoded as UTF-8;
+=-F= files and =-F -= standard input are read as exact bytes.  With no project
+commit, an unchanged tree is rejected unless =--allow-empty= is present.  A
+commit with project parents is meaningful even when its tree is unchanged.
+
+Each project revision is resolved once to a commit object.  Its tip tree is
+checked locally against the candidate workspace declaration and the reserved
+=.gaw= namespace; its ancestors are not scanned.  The project commits then
+become additional parents in command-line order.  Their trees are never
+merged into the GAW tree.
+
+Git subprocesses ignore inherited =GIT_*= and =EMAIL= variables and ignore
+system and user Git configuration.  Repository and worktree configuration is
+retained for repository interpretation and commit identity.  GAW supplies
+author, committer, UTC timestamps, message, hook policy, and unsigned commit
+policy explicitly.  The branch ref is updated with an expected-old-object
+check so a concurrent ref change is never overwritten.
 
 ** History Semantics
 The first parent of a GAW commit represents temporal GAW history.
