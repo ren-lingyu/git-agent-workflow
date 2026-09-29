@@ -72,7 +72,7 @@
       (assert (equal '("--version")
                      (git-invocation-arguments invocation))))))
 
-(defun run-tests ()
+(defun %run-git-tests ()
   (%test-run-git-returns-git-invocation)
   (%test-run-git-preserves-arguments)
   (%test-run-git-preserves-directory)

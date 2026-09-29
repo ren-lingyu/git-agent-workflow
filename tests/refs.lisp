@@ -226,7 +226,7 @@
               (unregister-ref "refs/heads/test"
                               directory)))))
 
-(defun run-tests ()
+(defun %run-ref-tests ()
   (%test-make-ref-maps-source-ref)
   (%test-make-ref-preserves-nested-name)
   (%test-make-ref-rejects-invalid-source-ref)

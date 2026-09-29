@@ -31,13 +31,19 @@
                              (:file "git"
                               :depends-on ("package"
                                            "package.support"))
+                             (:file "git.tests"
+                              :depends-on ("package"
+                                           "git"))
                              (:file "refs"
                               :depends-on ("package"
                                            "package.support"))
+                             (:file "refs.tests"
+                              :depends-on ("package"
+                                           "refs"))
                              (:file "tests"
                               :depends-on ("package"
-                                           "git"
-                                           "refs")))))
+                                           "git.tests"
+                                           "refs.tests")))))
 
   :perform (asdf:test-op (operation component)
                          (declare (ignore operation
