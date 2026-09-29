@@ -13,9 +13,9 @@ in Git and lets Git provide its history and reachability model.
 * Status
 GAW is currently under early development.
 
-The repository currently contains the Common Lisp and Nix project scaffold.
-The repository protocol and user-facing interface are still under development
-and are not yet available for general use.
+The repository currently contains an early Common Lisp implementation and its
+Nix build configuration.  The repository protocol and user-facing interface
+are still under development and are not yet available for general use.
 
 * Design
 ** Separate GAW History
@@ -81,4 +81,40 @@ separate metadata database.
 * Development
 GAW is implemented in Common Lisp and built as an ASDF system.
 
-The build is managed with Nix flakes and =cl-nix-forge=. The currently supported system is =x86_64-linux=.
+The build is managed with Nix flakes and =cl-nix-forge=.  The currently
+supported system is =x86_64-linux=.
+
+** Package Layout
+Source packages are organized as directories under =src/=.  Each package
+directory contains its own =package.lisp= and the implementation files owned
+by that package.  The top-level =src/package.lisp= defines the
+=git-agent-workflow= package; it is intentionally minimal and reserved for a
+future unified user-facing API.
+
+Tests follow the same package-oriented layout under =tests/=.  Shared test
+support and the top-level test runner remain directly under =tests/=, while
+package-specific definitions and tests live in the corresponding package
+directory.
+
+** Implementation Layers
+Implementation files use the naming pattern =<name>.<layer>.lisp=.  The
+available layers have the following responsibilities:
+
+- =*.core.lisp= contains pure transformations, validation, policy, and data
+  definitions.  It does not perform Git I/O or read dynamically bound
+  configuration.
+- =*.runtime.lisp= performs Git I/O and orchestrates operations using explicit
+  arguments and the core layer.
+- =*.api.lisp= provides package entry points.  Where configurable defaults
+  exist, it converts special variables or default configuration into explicit
+  arguments for the runtime layer.
+
+Dependencies flow from =api= to =runtime= to =core=.  A package only defines
+the layers it needs; empty layer files are not required.
+
+** ASDF Composition
+Package directories are represented by ASDF modules with explicit
+=:pathname= values.  File-level =:depends-on= declarations encode the layer
+order and cross-package dependencies rather than relying on incidental source
+file ordering.  The test system uses corresponding modules for tested
+packages and dispatches their runners from a top-level test entry point.
