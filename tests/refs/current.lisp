@@ -89,6 +89,41 @@
     (assert (eq :dangling-registration
                 (%current-ref-failure-reason directory)))))
 
+(defun %test-current-ref-uses-special-refs ()
+  (with-test-repository (directory)
+    (%create-direct-ref "refs/remotes/origin/test"
+                        directory)
+    (%create-symbolic-ref "refs/gaw/remotes/origin/test"
+                          "refs/remotes/origin/test"
+                          directory)
+    (%create-symbolic-ref "refs/gaw/CURRENT"
+                          "refs/gaw/remotes/origin/test"
+                          directory)
+    (let ((git-agent-workflow.refs::*head-ref*
+            "refs/gaw/CURRENT")
+          (git-agent-workflow.refs::*source-ref-prefix*
+            "refs/remotes/origin/")
+          (git-agent-workflow.refs::*target-ref-prefix*
+            "refs/gaw/remotes/origin/"))
+      (assert (string= "refs/remotes/origin/test"
+                       (current-ref directory))))))
+
+(defun %test-current-ref-captures-special-display-name ()
+  (with-test-repository (directory)
+    (let ((condition
+            (handler-case
+                (let ((git-agent-workflow.refs::*display-name*
+                        "Custom GAW"))
+                  (current-ref directory))
+              (current-ref-error (condition)
+                condition))))
+      (let ((git-agent-workflow.refs::*display-name*
+              "Different GAW"))
+        (assert (search "Custom GAW"
+                        (princ-to-string condition)))
+        (assert (not (search "Different GAW"
+                             (princ-to-string condition))))))))
+
 (defun %run-current-ref-tests ()
   (%test-current-ref-returns-source-ref)
   (%test-current-ref-rejects-missing-head)
@@ -98,6 +133,8 @@
   (%test-current-ref-rejects-direct-registration)
   (%test-current-ref-rejects-invalid-registration-target)
   (%test-current-ref-rejects-dangling-registration)
+  (%test-current-ref-uses-special-refs)
+  (%test-current-ref-captures-special-display-name)
   (format t
           "~&All current-ref tests passed.~%")
   t)

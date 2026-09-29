@@ -6,16 +6,32 @@
   :components ((:module "src"
                 :pathname "src/"
                 :components ((:file "package")
-                             (:file "git"
-                              :depends-on ("package"))
-                             (:file "refs"
+                             (:module "git"
+                              :pathname "git/"
+                              :depends-on ("package")
+                              :components ((:file "package")
+                                           (:file "git.lib"
+                                            :depends-on ("package"))))
+                             (:module "refs"
+                              :pathname "refs/"
                               :depends-on ("package"
-                                           "git"))
-                             (:file "refs.current"
-                              :depends-on ("package"
-                                           "refs"))
-                             (:file "cli"
-                              :depends-on ("package")))))
+                                           "git")
+                              :components ((:file "package")
+                                           (:file "refs.lib"
+                                            :depends-on ("package"))
+                                           (:file "refs.api"
+                                            :depends-on ("refs.lib"))
+                                           (:file "current.lib"
+                                            :depends-on ("refs.lib"))
+                                           (:file "current.api"
+                                            :depends-on ("refs.api"
+                                                         "current.lib"))))
+                             (:module "cli"
+                              :pathname "cli/"
+                              :depends-on ("package")
+                              :components ((:file "package")
+                                           (:file "cli.api"
+                                            :depends-on ("package")))))))
 
   :build-operation program-op
   :build-pathname "git-gaw"
@@ -29,29 +45,33 @@
   :components ((:module "tests"
                 :pathname "tests/"
                 :components ((:file "package")
-                             (:file "package.support"
+                             (:file "support"
                               :depends-on ("package"))
-                             (:file "git"
+                             (:module "git"
+                              :pathname "git/"
                               :depends-on ("package"
-                                           "package.support"))
-                             (:file "git.tests"
+                                           "support")
+                              :components ((:file "package")
+                                           (:file "git"
+                                            :depends-on ("package"))
+                                           (:file "tests"
+                                            :depends-on ("git"))))
+                             (:module "refs"
+                              :pathname "refs/"
                               :depends-on ("package"
-                                           "git"))
-                             (:file "refs"
-                              :depends-on ("package"
-                                           "package.support"))
-                             (:file "refs.current"
-                              :depends-on ("package"
-                                           "package.support"
-                                           "refs"))
-                             (:file "refs.tests"
-                              :depends-on ("package"
-                                           "refs"
-                                           "refs.current"))
+                                           "support")
+                              :components ((:file "package")
+                                           (:file "refs"
+                                            :depends-on ("package"))
+                                           (:file "current"
+                                            :depends-on ("refs"))
+                                           (:file "tests"
+                                            :depends-on ("refs"
+                                                         "current"))))
                              (:file "tests"
                               :depends-on ("package"
-                                           "git.tests"
-                                           "refs.tests")))))
+                                           "git"
+                                           "refs")))))
 
   :perform (asdf:test-op (operation component)
                          (declare (ignore operation

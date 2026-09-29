@@ -83,6 +83,14 @@
   (assert (signals error
             (make-ref "refs/tags/test"))))
 
+(defun %test-make-ref-uses-special-ref-prefixes ()
+  (let ((git-agent-workflow.refs::*source-ref-prefix*
+          "refs/remotes/origin/")
+        (git-agent-workflow.refs::*target-ref-prefix*
+          "refs/gaw/remotes/origin/"))
+    (assert (string= "refs/gaw/remotes/origin/test"
+                     (make-ref "refs/remotes/origin/test")))))
+
 (defun %test-inspect-ref-detects-missing-ref ()
   (with-test-repository (directory)
     (let ((state (inspect-ref "refs/heads/missing"
@@ -230,6 +238,7 @@
   (%test-make-ref-maps-source-ref)
   (%test-make-ref-preserves-nested-name)
   (%test-make-ref-rejects-invalid-source-ref)
+  (%test-make-ref-uses-special-ref-prefixes)
   (%test-inspect-ref-detects-missing-ref)
   (%test-inspect-ref-detects-direct-ref)
   (%test-inspect-ref-detects-symbolic-ref)
