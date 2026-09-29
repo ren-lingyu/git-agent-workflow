@@ -46,9 +46,23 @@
                                             :depends-on ("config.core"))
                                            (:file "config.api"
                                             :depends-on ("config.runtime"))))
+                             (:module "commit"
+                              :pathname "commit/"
+                              :depends-on ("package"
+                                           "git"
+                                           "refs"
+                                           "config")
+                              :components ((:file "package")
+                                           (:file "commit.core"
+                                            :depends-on ("package"))
+                                           (:file "commit.runtime"
+                                            :depends-on ("commit.core"))
+                                           (:file "commit.api"
+                                            :depends-on ("commit.runtime"))))
                              (:module "cli"
                               :pathname "cli/"
-                              :depends-on ("package")
+                              :depends-on ("package"
+                                           "commit")
                               :components ((:file "package")
                                            (:file "cli.api"
                                             :depends-on ("package")))))))
@@ -97,11 +111,21 @@
                                             :depends-on ("package"))
                                            (:file "tests"
                                             :depends-on ("config"))))
+                             (:module "commit"
+                              :pathname "commit/"
+                              :depends-on ("package"
+                                           "support")
+                              :components ((:file "package")
+                                           (:file "commit"
+                                            :depends-on ("package"))
+                                           (:file "tests"
+                                            :depends-on ("commit"))))
                              (:file "tests"
                               :depends-on ("package"
                                            "git"
                                            "refs"
-                                           "config")))))
+                                           "config"
+                                           "commit")))))
 
   :perform (asdf:test-op (operation component)
                          (declare (ignore operation
