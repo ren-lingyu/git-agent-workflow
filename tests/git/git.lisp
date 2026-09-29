@@ -202,6 +202,38 @@
         (%restore-environment-variable "GIT_CONFIG_GLOBAL"
                                        original)))))
 
+(defun %test-run-git-passthrough-retains-metadata-and-status ()
+  (with-temporary-directory (directory)
+    (write-test-octets (merge-pathnames "left" directory)
+                       #(65))
+    (write-test-octets (merge-pathnames "right" directory)
+                       #(66))
+    (let* ((arguments (list "diff"
+                            "--quiet"
+                            "--no-index"
+                            "--"
+                            "left"
+                            "right"))
+           (invocation (run-git-passthrough arguments
+                                            directory)))
+      (setf (first arguments)
+            "status")
+      (assert (typep invocation
+                     'git-invocation))
+      (assert (equal '("diff"
+                       "--quiet"
+                       "--no-index"
+                       "--"
+                       "left"
+                       "right")
+                     (git-invocation-arguments invocation)))
+      (assert (equal directory
+                     (git-invocation-directory invocation)))
+      (assert (null (git-invocation-stdout invocation)))
+      (assert (null (git-invocation-stderr invocation)))
+      (assert (= 1
+                 (git-invocation-exit-status invocation))))))
+
 (defun %run-git-tests ()
   (%test-run-git-returns-git-invocation)
   (%test-run-git-preserves-arguments)
@@ -217,6 +249,7 @@
   (%test-run-git-removes-inherited-git-environment)
   (%test-run-git-accepts-explicit-git-environment)
   (%test-run-git-ignores-inherited-global-config)
+  (%test-run-git-passthrough-retains-metadata-and-status)
   (format t
           "~&All Git tests passed.~%")
   t)

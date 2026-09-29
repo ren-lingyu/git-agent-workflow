@@ -132,3 +132,25 @@
                           :stdout stdout
                           :stderr (%decode-git-stderr stderr)
                           :exit-status exit-status)))
+
+(defun run-git-passthrough (args directory &key git-environment)
+  (multiple-value-bind (command arguments)
+      (%prepare-git-command args
+                            directory)
+    (multiple-value-bind (stdout stderr exit-status)
+        (uiop:run-program command
+                          :input :interactive
+                          :output :interactive
+                          :error-output :interactive
+                          :environment
+                          (%isolated-git-environment git-environment)
+                          :ignore-error-status t
+                          :force-shell nil)
+      (declare (ignore stdout
+                       stderr))
+      (%make-git-invocation :command command
+                            :arguments arguments
+                            :directory directory
+                            :stdout nil
+                            :stderr nil
+                            :exit-status exit-status))))

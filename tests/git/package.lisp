@@ -8,6 +8,7 @@
   (:import-from #:git-agent-workflow.git
                 #:run-git
                 #:run-git-bytes
+                #:run-git-passthrough
                 #:git-invocation
                 #:git-invocation-command
                 #:git-invocation-arguments

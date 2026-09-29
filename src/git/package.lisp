@@ -2,6 +2,7 @@
   (:use #:cl)
   (:export #:run-git
            #:run-git-bytes
+           #:run-git-passthrough
            #:git-invocation
            #:git-invocation-command
            #:git-invocation-arguments
