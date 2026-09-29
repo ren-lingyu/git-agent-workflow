@@ -73,7 +73,8 @@
                              (:module "cli"
                               :pathname "cli/"
                               :depends-on ("package"
-                                           "commit")
+                                           "commit"
+                                           "show")
                               :components ((:file "package")
                                            (:file "cli.api"
                                             :depends-on ("package")))))))

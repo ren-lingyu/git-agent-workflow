@@ -178,6 +178,14 @@
       (format t "~A~%" oid)
       0)))
 
+(defun %run-show (arguments)
+  (show (uiop:getcwd)
+        arguments))
+
+(defun %usage-error ()
+  (%cli-error
+   "Usage:~%  git gaw commit [options] [--] [project-commit...]~%  git gaw show [options] [object...] [-- path...]"))
+
 (defun main ()
   (handler-case
       (let ((arguments (uiop:command-line-arguments)))
@@ -186,8 +194,12 @@
                 (string= (first arguments)
                          "commit"))
            (%run-commit (rest arguments)))
+          ((and arguments
+                (string= (first arguments)
+                         "show"))
+           (%run-show (rest arguments)))
           (t
-           (%cli-error "Usage: git gaw commit [options] [--] [project-commit...]"))))
+           (%usage-error))))
     (error (condition)
       (format *error-output*
               "git-gaw: ~A~%"
