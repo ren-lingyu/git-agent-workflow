@@ -59,6 +59,17 @@
                                             :depends-on ("commit.core"))
                                            (:file "commit.api"
                                             :depends-on ("commit.runtime"))))
+                             (:module "show"
+                              :pathname "show/"
+                              :depends-on ("package"
+                                           "git")
+                              :components ((:file "package")
+                                           (:file "show.core"
+                                            :depends-on ("package"))
+                                           (:file "show.runtime"
+                                            :depends-on ("show.core"))
+                                           (:file "show.api"
+                                            :depends-on ("show.runtime"))))
                              (:module "cli"
                               :pathname "cli/"
                               :depends-on ("package"
@@ -120,6 +131,15 @@
                                             :depends-on ("package"))
                                            (:file "tests"
                                             :depends-on ("commit"))))
+                             (:module "show"
+                              :pathname "show/"
+                              :depends-on ("package"
+                                           "support")
+                              :components ((:file "package")
+                                           (:file "show"
+                                            :depends-on ("package"))
+                                           (:file "tests"
+                                            :depends-on ("show"))))
                              (:module "cli"
                               :pathname "cli/"
                               :depends-on ("package"
@@ -135,6 +155,7 @@
                                            "refs"
                                            "config"
                                            "commit"
+                                           "show"
                                            "cli")))))
 
   :perform (asdf:test-op (operation component)

@@ -5,5 +5,6 @@
   (git-agent-workflow/tests.refs:run-tests)
   (git-agent-workflow/tests.config:run-tests)
   (git-agent-workflow/tests.commit:run-tests)
+  (git-agent-workflow/tests.show:run-tests)
   (git-agent-workflow/tests.cli:run-tests)
   t)
