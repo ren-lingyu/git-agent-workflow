@@ -23,7 +23,7 @@
 
     flake = {
       overlays = {
-        default = final: prev: {
+        nixpkgs = final: prev: {
           git = assert (prev.lib.assertMsg
             (prev.lib.versionAtLeast prev.git.version "2.43")
             "GAW requires Git >= 2.43, but got ${prev.git.version}"
@@ -50,7 +50,7 @@
       _module.args.pkgs = import inputs.nixpkgs {
         inherit system;
         overlays = [
-          self.overlays.default
+          self.overlays.nixpkgs
         ];
       };
 
