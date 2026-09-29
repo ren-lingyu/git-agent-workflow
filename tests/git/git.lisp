@@ -1,5 +1,14 @@
 (in-package #:git-agent-workflow/tests.git)
 
+(defun %restore-environment-variable (name value)
+  (if value
+      (setf (uiop:getenv name)
+            value)
+      #+sbcl (uiop:symbol-call :sb-posix
+                               :unsetenv
+                               name)
+      #-sbcl (error "Environment test cleanup requires SBCL")))
+
 (defun %test-run-git-returns-git-invocation ()
   (with-temporary-directory (directory)
     (assert (typep (run-git '("--version")
@@ -121,6 +130,78 @@
       (assert (stringp (git-invocation-stderr invocation)))
       (assert (plusp (length (git-invocation-stderr invocation)))))))
 
+(defun %test-run-git-accepts-binary-input ()
+  (with-test-repository (directory)
+    (let* ((payload
+             (make-array 4
+                         :element-type '(unsigned-byte 8)
+                         :initial-contents '(65 0 255 10)))
+           (hash-invocation
+             (run-git '("hash-object" "-w" "--stdin")
+                      directory
+                      :input payload))
+           (object-id (git-invocation-stdout hash-invocation))
+           (read-invocation
+             (run-git-bytes (list "cat-file"
+                                  "blob"
+                                  object-id)
+                            directory)))
+      (assert (zerop (git-invocation-exit-status hash-invocation)))
+      (assert (equalp payload
+                      (git-invocation-stdout read-invocation))))))
+
+(defun %test-run-git-removes-inherited-git-environment ()
+  (with-test-repository (directory)
+    (let ((original (uiop:getenv "GIT_DIR")))
+      (unwind-protect
+           (progn
+             (setf (uiop:getenv "GIT_DIR")
+                   "/definitely/not/the/test/repository")
+             (let ((invocation
+                     (run-git '("rev-parse" "--is-inside-work-tree")
+                              directory)))
+               (assert (zerop
+                        (git-invocation-exit-status invocation)))
+               (assert (string= "true"
+                                (git-invocation-stdout invocation)))))
+        (%restore-environment-variable "GIT_DIR"
+                                       original)))))
+
+(defun %test-run-git-accepts-explicit-git-environment ()
+  (with-test-repository (directory)
+    (let ((invocation
+            (run-git '("var" "GIT_AUTHOR_IDENT")
+                     directory
+                     :git-environment
+                     '(("GIT_AUTHOR_NAME" . "Explicit Author")
+                       ("GIT_AUTHOR_EMAIL" . "author@example.invalid")
+                       ("GIT_AUTHOR_DATE" . "@0 +0000")))))
+      (assert (zerop (git-invocation-exit-status invocation)))
+      (assert (search "Explicit Author <author@example.invalid>"
+                      (git-invocation-stdout invocation))))))
+
+(defun %test-run-git-ignores-inherited-global-config ()
+  (with-test-repository (directory)
+    (let* ((config-path (merge-pathnames "hostile-global-config"
+                                         directory))
+           (original (uiop:getenv "GIT_CONFIG_GLOBAL")))
+      (write-test-octets
+       config-path
+       (babel:string-to-octets
+        "[gaw-test]\nvalue = inherited\n"
+        :encoding :utf-8))
+      (unwind-protect
+           (progn
+             (setf (uiop:getenv "GIT_CONFIG_GLOBAL")
+                   (namestring config-path))
+             (let ((invocation
+                     (run-git '("config" "--get" "gaw-test.value")
+                              directory)))
+               (assert (= 1
+                          (git-invocation-exit-status invocation)))))
+        (%restore-environment-variable "GIT_CONFIG_GLOBAL"
+                                       original)))))
+
 (defun %run-git-tests ()
   (%test-run-git-returns-git-invocation)
   (%test-run-git-preserves-arguments)
@@ -132,6 +213,10 @@
   (%test-run-git-copies-arguments)
   (%test-run-git-bytes-preserves-exact-output)
   (%test-run-git-bytes-retains-failure-metadata)
+  (%test-run-git-accepts-binary-input)
+  (%test-run-git-removes-inherited-git-environment)
+  (%test-run-git-accepts-explicit-git-environment)
+  (%test-run-git-ignores-inherited-global-config)
   (format t
           "~&All Git tests passed.~%")
   t)
