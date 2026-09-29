@@ -2,4 +2,5 @@
 
 (defun run-tests ()
   (%run-ref-tests)
+  (%run-current-ref-tests)
   t)

@@ -34,6 +34,9 @@
                 #:ref-dangling-p
                 #:register-ref
                 #:unregister-ref
+                #:current-ref
+                #:current-ref-error
+                #:current-ref-error-reason
                 #:ref-state-name
                 #:ref-state-exists-p
                 #:ref-state-symbolic-p

@@ -11,6 +11,9 @@
                              (:file "refs"
                               :depends-on ("package"
                                            "git"))
+                             (:file "refs.current"
+                              :depends-on ("package"
+                                           "refs"))
                              (:file "cli"
                               :depends-on ("package")))))
 
@@ -37,9 +40,14 @@
                              (:file "refs"
                               :depends-on ("package"
                                            "package.support"))
+                             (:file "refs.current"
+                              :depends-on ("package"
+                                           "package.support"
+                                           "refs"))
                              (:file "refs.tests"
                               :depends-on ("package"
-                                           "refs"))
+                                           "refs"
+                                           "refs.current"))
                              (:file "tests"
                               :depends-on ("package"
                                            "git.tests"
