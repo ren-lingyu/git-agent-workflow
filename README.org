@@ -121,6 +121,34 @@ author, committer, UTC timestamps, message, hook policy, and unsigned commit
 policy explicitly.  The branch ref is updated with an expected-old-object
 check so a concurrent ref change is never overwritten.
 
+** Showing History
+The command =git gaw show= delegates object display and formatting to =git
+show= while enforcing the canonical GAW history semantics:
+
+#+begin_src text
+git gaw show [git-show-options] [object-or-range...] [-- pathspec...]
+#+end_src
+
+History traversal follows only first-parent edges, and a merge commit's patch
+is generated only against its first parent.  Options such as =--stat=,
+=--name-only=, =--format=, =--no-patch=, and pathspecs retain their native Git
+meaning.  Merge display modes that compare the result with additional parents,
+including =-m=, =-c=, =--cc=, and =--remerge-diff=, are rejected.
+
+=--no-diff-merges= and the equivalent =--diff-merges=off= and
+=--diff-merges=none= remain available when only commit metadata is wanted.
+Explicit object selection also retains its Git meaning, so a user may still
+request an associated project commit directly, for example with =HEAD^2=.
+Only implicit traversal and the patch base of a selected merge commit are
+restricted.
+
+GAW does not currently provide a =diff= subcommand.  Arbitrary tree, index, or
+worktree comparisons remain available through =git diff= itself.
+
+The same operation is available to Common Lisp callers as
+=(git-agent-workflow.show:show directory arguments)=.  It writes Git's output
+directly to the current process streams and returns Git's exit status.
+
 ** History Semantics
 The first parent of a GAW commit represents temporal GAW history.
 
