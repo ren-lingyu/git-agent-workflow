@@ -379,6 +379,27 @@
                       (%read-config-at-commit fixed-oid
                                               directory)))))))
 
+(defun %test-runtime-reads-explicit-tree-object ()
+  (with-test-repository (directory)
+    (let* ((commit-oid
+             (%create-config-commit
+              directory
+              (%octets "(:workspace ((:file \"tree\")))")))
+           (tree-oid
+             (%repository-git directory
+                              "rev-parse"
+                              (concatenate 'string
+                                           commit-oid
+                                           "^{tree}"))))
+      (assert (equal '((:file "tree"))
+                     (%workspace-summary
+                      (read-config-at-tree directory
+                                           tree-oid))))
+      (assert
+       (signals error
+         (read-config-at-tree directory
+                              (subseq tree-oid 0 12)))))))
+
 (defun %test-runtime-receives-source-ref-explicitly ()
   (with-test-repository (directory)
     (%create-config-commit
@@ -457,6 +478,7 @@
 (defun %test-public-package-boundary ()
   (let ((package (find-package '#:git-agent-workflow.config)))
     (dolist (name '("READ-CONFIG"
+                    "READ-CONFIG-AT-TREE"
                     "CONFIG"
                     "CONFIG-P"
                     "CONFIG-WORKSPACE"
@@ -494,6 +516,7 @@
   (%test-public-values-are-defensively-readable)
   (%test-runtime-reads-current-gaw-commit)
   (%test-runtime-fixes-commit-before-reading)
+  (%test-runtime-reads-explicit-tree-object)
   (%test-runtime-receives-source-ref-explicitly)
   (%test-runtime-classifies-config-tree-entries)
   (%test-runtime-enforces-size-before-decoding)

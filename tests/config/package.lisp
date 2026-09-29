@@ -9,6 +9,7 @@
                 #:write-test-octets)
   (:import-from #:git-agent-workflow.config
                 #:read-config
+                #:read-config-at-tree
                 #:config
                 #:config-p
                 #:config-workspace

@@ -14,6 +14,7 @@
   (:import-from #:git-agent-workflow.refs
                 #:current-ref)
   (:export #:read-config
+           #:read-config-at-tree
            #:config
            #:config-p
            #:config-workspace

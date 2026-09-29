@@ -2,6 +2,7 @@
 
 (eval-when (:load-toplevel :execute)
   (dolist (function '(%read-config
+                      %read-config-at-tree
                       current-ref))
     (unless (fboundp function)
       (error "Required config API dependency is unavailable: ~S"
@@ -27,3 +28,12 @@
                 +maximum-list-depth+
                 +maximum-workspace-entries+
                 +maximum-workspace-path-size+))
+
+(defun read-config-at-tree (directory tree-oid)
+  (%read-config-at-tree tree-oid
+                        ".gaw/config"
+                        directory
+                        +maximum-config-size+
+                        +maximum-list-depth+
+                        +maximum-workspace-entries+
+                        +maximum-workspace-path-size+))
