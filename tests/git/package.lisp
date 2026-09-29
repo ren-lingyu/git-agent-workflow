@@ -2,9 +2,12 @@
   (:use #:cl)
   (:import-from #:git-agent-workflow/tests
                 #:with-temporary-directory
-                #:with-test-repository)
+                #:with-test-repository
+                #:call-git
+                #:write-test-octets)
   (:import-from #:git-agent-workflow.git
                 #:run-git
+                #:run-git-bytes
                 #:git-invocation
                 #:git-invocation-command
                 #:git-invocation-arguments

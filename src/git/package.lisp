@@ -1,6 +1,7 @@
 (defpackage #:git-agent-workflow.git
   (:use #:cl)
   (:export #:run-git
+           #:run-git-bytes
            #:git-invocation
            #:git-invocation-command
            #:git-invocation-arguments

@@ -17,6 +17,17 @@
    :ignore-error-status ignore-error-status
    :force-shell nil))
 
+(defun write-test-octets (pathname octets)
+  (ensure-directories-exist pathname)
+  (with-open-file (stream pathname
+                          :direction :output
+                          :if-exists :supersede
+                          :if-does-not-exist :create
+                          :element-type '(unsigned-byte 8))
+    (write-sequence octets
+                    stream))
+  pathname)
+
 (defmacro with-temporary-directory ((directory) &body body)
   `(let ((,directory
            (uiop:merge-pathnames*

@@ -44,6 +44,31 @@ Workspace contents are intentionally opaque to GAW.  GAW manages their Git
 history and validates the surrounding repository protocol, but does not
 prescribe their internal format.
 
+** Configuration
+The current GAW workspace declaration is stored as a =100644= blob at
+=.gaw/config= in the active independent GAW history.  The bootstrap schema is
+intentionally unversioned:
+
+#+begin_src lisp
+(:workspace
+ ((:file "AGENTS.md")
+  (:directory "notes")))
+#+end_src
+
+Workspace paths are literal repository-root-relative Git paths.  They use
+=/= as their component separator, are not silently normalized, and may not
+contain =.= or =..= components.  The repository-root =.gaw= namespace and
+every =.git= component are reserved.
+
+The Common Lisp entry point =(git-agent-workflow.config:read-config
+directory)= resolves the current GAW source ref to an immutable commit ID,
+reads the blob as exact bytes, strictly decodes UTF-8, and validates a
+restricted S-expression grammar and schema.  It does not inspect current
+worktree path kinds; that matching belongs to later workspace operations.
+The API layer resolves the current source ref and supplies the fixed config
+path and resource limits as explicit runtime arguments; runtime and core do
+not read those defaults from package-level state.
+
 ** Project Association
 A GAW commit may be associated with zero, one, or multiple project commits.
 

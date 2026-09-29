@@ -43,6 +43,12 @@
         src = cl.mkLispSource {
           root = ./.;
         };
+        lispDependencies = [
+          (cl.fromNixpkgsLisp {
+            drv = pkgs.sbcl.pkgs.babel;
+            lispImplementation = "sbcl";
+          })
+        ];
       };
 
     in {
@@ -58,7 +64,7 @@
         default = cl.mkExecutable {
           args = {
             pname = "git-gaw";
-            inherit (lispArgs) lispSystem version src;
+            inherit (lispArgs) lispSystem version src lispDependencies;
           };
           programPath = "git-gaw";
         };
@@ -67,7 +73,7 @@
       checks = {
         "${lispArgs.lispSystem}-test" = cl.mkTestCheck (
           cl.lispDerivation {
-            inherit (lispArgs) lispSystem version src;
+            inherit (lispArgs) lispSystem version src lispDependencies;
             nativeBuildInputs = [
               pkgs.git
             ];

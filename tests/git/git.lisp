@@ -72,6 +72,55 @@
       (assert (equal '("--version")
                      (git-invocation-arguments invocation))))))
 
+(defun %test-run-git-bytes-preserves-exact-output ()
+  (with-test-repository (directory)
+    (let* ((payload (make-array 4
+                                :element-type '(unsigned-byte 8)
+                                :initial-contents '(65 0 255 10)))
+           (input-path (merge-pathnames "binary-output"
+                                        directory)))
+      (write-test-octets input-path
+                         payload)
+      (let* ((object-id
+               (call-git (list "-C"
+                               (namestring directory)
+                               "hash-object"
+                               "-w"
+                               "--"
+                               "binary-output")))
+             (arguments (list "cat-file"
+                              "blob"
+                              object-id))
+             (invocation (run-git-bytes arguments
+                                        directory)))
+        (setf (first arguments)
+              "status")
+        (assert (typep invocation
+                       'git-invocation))
+        (assert (typep (git-invocation-stdout invocation)
+                       '(vector (unsigned-byte 8))))
+        (assert (equalp payload
+                        (git-invocation-stdout invocation)))
+        (assert (equal '("cat-file" "blob")
+                       (subseq (git-invocation-arguments invocation)
+                               0
+                               2)))
+        (assert (equal directory
+                       (git-invocation-directory invocation)))
+        (assert (zerop (git-invocation-exit-status invocation)))))))
+
+(defun %test-run-git-bytes-retains-failure-metadata ()
+  (with-test-repository (directory)
+    (let ((invocation
+            (run-git-bytes '("cat-file"
+                             "blob"
+                             "definitely-not-an-object")
+                           directory)))
+      (assert (not (zerop
+                    (git-invocation-exit-status invocation))))
+      (assert (stringp (git-invocation-stderr invocation)))
+      (assert (plusp (length (git-invocation-stderr invocation)))))))
+
 (defun %run-git-tests ()
   (%test-run-git-returns-git-invocation)
   (%test-run-git-preserves-arguments)
@@ -81,6 +130,8 @@
   (%test-run-git-uses-directory)
   (%test-run-git-retains-failed-operation)
   (%test-run-git-copies-arguments)
+  (%test-run-git-bytes-preserves-exact-output)
+  (%test-run-git-bytes-retains-failure-metadata)
   (format t
           "~&All Git tests passed.~%")
   t)

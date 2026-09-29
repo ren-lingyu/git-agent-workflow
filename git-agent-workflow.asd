@@ -1,7 +1,8 @@
 (asdf:defsystem "git-agent-workflow"
   :version "0.0.0"
   :description "Git Agent Workflow (GAW)"
-  :depends-on ("uiop")
+  :depends-on ("uiop"
+               "babel")
 
   :components ((:module "src"
                 :pathname "src/"
@@ -33,6 +34,18 @@
                                            (:file "current.api"
                                             :depends-on ("refs.api"
                                                          "current.runtime"))))
+                             (:module "config"
+                              :pathname "config/"
+                              :depends-on ("package"
+                                           "git"
+                                           "refs")
+                              :components ((:file "package")
+                                           (:file "config.core"
+                                            :depends-on ("package"))
+                                           (:file "config.runtime"
+                                            :depends-on ("config.core"))
+                                           (:file "config.api"
+                                            :depends-on ("config.runtime"))))
                              (:module "cli"
                               :pathname "cli/"
                               :depends-on ("package")
@@ -75,10 +88,20 @@
                                            (:file "tests"
                                             :depends-on ("refs"
                                                          "current"))))
+                             (:module "config"
+                              :pathname "config/"
+                              :depends-on ("package"
+                                           "support")
+                              :components ((:file "package")
+                                           (:file "config"
+                                            :depends-on ("package"))
+                                           (:file "tests"
+                                            :depends-on ("config"))))
                              (:file "tests"
                               :depends-on ("package"
                                            "git"
-                                           "refs")))))
+                                           "refs"
+                                           "config")))))
 
   :perform (asdf:test-op (operation component)
                          (declare (ignore operation
