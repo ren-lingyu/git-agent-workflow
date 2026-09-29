@@ -120,12 +120,22 @@
                                             :depends-on ("package"))
                                            (:file "tests"
                                             :depends-on ("commit"))))
+                             (:module "cli"
+                              :pathname "cli/"
+                              :depends-on ("package"
+                                           "support")
+                              :components ((:file "package")
+                                           (:file "cli"
+                                            :depends-on ("package"))
+                                           (:file "tests"
+                                            :depends-on ("cli"))))
                              (:file "tests"
                               :depends-on ("package"
                                            "git"
                                            "refs"
                                            "config"
-                                           "commit")))))
+                                           "commit"
+                                           "cli")))))
 
   :perform (asdf:test-op (operation component)
                          (declare (ignore operation
