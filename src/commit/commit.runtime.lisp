@@ -8,7 +8,6 @@
                       worktree-root
                       current-local-head-ref
                       operation-states
-                      configured-identity
                       read-tree-snapshot
                       validate-workspace
                       find-project-path-conflict))
@@ -159,23 +158,22 @@
         (%signal-commit-error :path-conflict
                               "A project parent tracks a reserved or workspace path")))))
 
-(defun %identity-environment (directory timestamp)
-  (multiple-value-bind (name email)
-      (%call-with-workspace-error-as-commit-error
-       (lambda () (configured-identity directory)))
-    (let ((date (format nil "@~D +0000" timestamp)))
-      (list (cons "GIT_AUTHOR_NAME" name)
-            (cons "GIT_AUTHOR_EMAIL" email)
-            (cons "GIT_COMMITTER_NAME" name)
-            (cons "GIT_COMMITTER_EMAIL" email)
-            (cons "GIT_AUTHOR_DATE" date)
-            (cons "GIT_COMMITTER_DATE" date)))))
+(defun %identity-environment (name email timestamp)
+  (let ((date (format nil "@~D +0000" timestamp)))
+    (list (cons "GIT_AUTHOR_NAME" name)
+          (cons "GIT_AUTHOR_EMAIL" email)
+          (cons "GIT_COMMITTER_NAME" name)
+          (cons "GIT_COMMITTER_EMAIL" email)
+          (cons "GIT_AUTHOR_DATE" date)
+          (cons "GIT_COMMITTER_DATE" date))))
 
 (defun %create-commit-object (tree-oid
                               first-parent
                               project-commits
                               message
                               directory
+                              identity-name
+                              identity-email
                               timestamp)
   (let ((arguments (list "commit-tree"
                          tree-oid
@@ -190,7 +188,8 @@
               directory
               :input message
               :git-environment
-              (%identity-environment directory
+              (%identity-environment identity-name
+                                     identity-email
                                      timestamp))
      "creating the GAW commit object")))
 
@@ -241,6 +240,8 @@
                          project-revisions
                          allow-empty
                          reflog-message
+                         identity-name
+                         identity-email
                          timestamp)
   (let* ((project-commits
            (%resolve-project-commits project-revisions
@@ -266,6 +267,8 @@
                               project-commits
                               message
                               root
+                              identity-name
+                              identity-email
                               timestamp)
        root
        reflog-message)))

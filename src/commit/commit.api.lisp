@@ -16,6 +16,12 @@
 (defparameter *reflog-message*
   "git-gaw commit")
 
+(defparameter *identity-name*
+  "Git Agent Workflow")
+
+(defparameter *identity-email*
+  "gaw@invalid")
+
 (defun %ensure-registered-source-ref (source-ref directory)
   (let* ((registration-ref (make-ref source-ref))
          (state (inspect-ref registration-ref
@@ -72,5 +78,7 @@
                       project-commits
                       allow-empty
                       *reflog-message*
+                      *identity-name*
+                      *identity-email*
                       (- (get-universal-time)
                          +unix-to-universal-time-offset+))))

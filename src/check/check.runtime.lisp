@@ -2,7 +2,7 @@
 
 (eval-when (:load-toplevel :execute)
   (dolist (function '(run-git worktree-root current-local-head-ref
-                      operation-states configured-identity read-tree-snapshot
+                      operation-states read-tree-snapshot
                       read-index-snapshot validate-snapshot-shape
                       validate-workspace find-project-path-conflict
                       read-config-at-tree read-config-blob))
@@ -122,7 +122,7 @@
                       "The directory is not a Git worktree"))))
       (unless root
         (dolist (name '(:branch :registration :head :head-config
-                        :head-workspace :project-parents :index :identity
+                        :head-workspace :project-parents :index
                         :operation-state))
           (skip name "Skipped because no Git worktree is available"))
         (return-from %check-runtime (finish)))
@@ -192,18 +192,6 @@
       (multiple-value-bind (ok detail)
           (%check-index root config-path)
         (record :index (if ok :ok :error) detail))
-
-      (handler-case
-          (progn
-            (multiple-value-bind (name email)
-                (configured-identity root)
-              (declare (ignore name email)))
-            (record :identity :ok
-                    "Repository/worktree-local Git identity is configured"))
-        (workspace-error (condition)
-          (record :identity :error
-                  (or (workspace-error-detail condition)
-                      "Git identity is not configured"))))
 
       (let ((states (operation-states root)))
         (if states

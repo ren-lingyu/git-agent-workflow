@@ -21,7 +21,6 @@
                 #:worktree-root
                 #:current-local-head-ref
                 #:operation-states
-                #:configured-identity
                 #:read-tree-snapshot
                 #:validate-workspace
                 #:find-project-path-conflict

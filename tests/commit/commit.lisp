@@ -251,6 +251,16 @@
      (%repository-git directory
                       "config"
                       "--local"
+                      "user.name"
+                      "Hostile User")
+     (%repository-git directory
+                      "config"
+                      "--local"
+                      "user.email"
+                      "hostile@example.invalid")
+     (%repository-git directory
+                      "config"
+                      "--local"
                       "commit.gpgSign"
                       "true")
      (let* ((new (commit directory
@@ -260,14 +270,40 @@
                                   "cat-file"
                                   "commit"
                                   new)))
-       (assert (search "author GAW Test <gaw-test@example.invalid>"
+       (assert (search "author Git Agent Workflow <gaw@invalid>"
                        raw))
-       (assert (search "committer GAW Test <gaw-test@example.invalid>"
+       (assert (search "committer Git Agent Workflow <gaw@invalid>"
                        raw))
        (assert (search " +0000"
                        raw))
        (assert (not (search "gpgsig "
                             raw)))))))
+
+(defun %test-commit-does-not-require-configured-identity ()
+  (%with-gaw-repository
+   (lambda (directory initial)
+     (declare (ignore initial))
+     (%repository-git directory
+                      "config"
+                      "--local"
+                      "--unset-all"
+                      "user.name")
+     (%repository-git directory
+                      "config"
+                      "--local"
+                      "--unset-all"
+                      "user.email")
+     (let* ((new (commit directory
+                         (%message "built-in identity")
+                         :allow-empty t))
+            (raw (%repository-git directory
+                                  "cat-file"
+                                  "commit"
+                                  new)))
+       (assert (search "author Git Agent Workflow <gaw@invalid>"
+                       raw))
+       (assert (search "committer Git Agent Workflow <gaw@invalid>"
+                       raw))))))
 
 (defun %test-commit-rejects-invalid-worktree-and-tree ()
   (%with-gaw-repository
@@ -374,6 +410,7 @@
   (%test-commit-enforces-empty-policies)
   (%test-commit-preserves-message-bytes)
   (%test-commit-controls-identity-time-and-signing)
+  (%test-commit-does-not-require-configured-identity)
   (%test-commit-rejects-invalid-worktree-and-tree)
   (%test-commit-rejects-gitlink-inside-workspace-directory)
   (%test-commit-ignores-shared-gaw-head)
