@@ -1,7 +1,5 @@
 (defpackage #:git-agent-workflow.commit
   (:use #:cl)
-  (:import-from #:babel
-                #:string-to-octets)
   (:import-from #:git-agent-workflow.git
                 #:run-git
                 #:run-git-bytes
@@ -19,6 +17,17 @@
                 #:config-workspace
                 #:workspace-entry-kind
                 #:workspace-entry-path)
+  (:import-from #:git-agent-workflow.workspace
+                #:worktree-root
+                #:current-local-head-ref
+                #:operation-states
+                #:configured-identity
+                #:read-tree-snapshot
+                #:validate-workspace
+                #:find-project-path-conflict
+                #:workspace-error
+                #:workspace-error-reason
+                #:workspace-error-detail)
   (:export #:commit
            #:commit-error
            #:commit-error-reason))

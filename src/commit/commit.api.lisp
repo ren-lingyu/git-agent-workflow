@@ -13,37 +13,6 @@
 (defconstant +unix-to-universal-time-offset+
   2208988800)
 
-(defparameter *source-ref-prefix*
-  "refs/heads/")
-
-(defparameter *protocol-root*
-  ".gaw")
-
-(defparameter *operation-state-paths*
-  '("MERGE_HEAD"
-    "CHERRY_PICK_HEAD"
-    "REVERT_HEAD"
-    "REBASE_HEAD"
-    "rebase-merge"
-    "rebase-apply"
-    "sequencer"
-    "BISECT_LOG"))
-
-(defparameter *file-modes*
-  '("100644" "100755" "120000"))
-
-(defparameter *tree-mode*
-  "040000")
-
-(defparameter *gitlink-mode*
-  "160000")
-
-(defparameter *blob-type*
-  "blob")
-
-(defparameter *tree-type*
-  "tree")
-
 (defparameter *reflog-message*
   "git-gaw commit")
 
@@ -88,9 +57,7 @@
     (%signal-commit-error :empty-message
                           "The commit message is empty"))
   (multiple-value-bind (root source-ref first-parent tree-oid entries)
-      (%prepare-commit directory
-                       *source-ref-prefix*
-                       *operation-state-paths*)
+      (%prepare-commit directory)
     (%ensure-registered-source-ref source-ref
                                    root)
     (%complete-commit root
@@ -104,12 +71,6 @@
                       message
                       project-commits
                       allow-empty
-                      *protocol-root*
-                      *file-modes*
-                      *tree-mode*
-                      *gitlink-mode*
-                      *blob-type*
-                      *tree-type*
                       *reflog-message*
                       (- (get-universal-time)
                          +unix-to-universal-time-offset+))))
