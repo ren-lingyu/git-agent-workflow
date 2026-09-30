@@ -2,8 +2,8 @@
 
 (eval-when (:load-toplevel :execute)
   (dolist (function '(%worktree-root %current-local-head-ref %operation-states
-                      %configured-identity %read-tree-snapshot
-                      %read-index-snapshot %validate-snapshot-shape
+                      %read-tree-snapshot %read-index-snapshot
+                      %validate-snapshot-shape
                       %validate-workspace
                       %find-project-path-conflict))
     (unless (fboundp function)
@@ -29,9 +29,6 @@
 
 (defun operation-states (directory)
   (%operation-states directory *operation-state-paths*))
-
-(defun configured-identity (directory)
-  (%configured-identity directory))
 
 (defun read-tree-snapshot (directory tree-oid)
   (%read-tree-snapshot directory tree-oid))

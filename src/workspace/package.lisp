@@ -11,7 +11,6 @@
   (:export #:worktree-root
            #:current-local-head-ref
            #:operation-states
-           #:configured-identity
            #:read-tree-snapshot
            #:read-index-snapshot
            #:validate-snapshot-shape

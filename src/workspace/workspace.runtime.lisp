@@ -103,26 +103,6 @@
   (remove-if-not (lambda (path) (probe-file (%git-path path directory)))
                  operation-state-paths))
 
-(defun %configured-identity-value (key directory)
-  (let ((invocation (run-git (list "config" "--get" key) directory)))
-    (cond
-      ((zerop (git-invocation-exit-status invocation))
-       (let ((value (git-invocation-stdout invocation)))
-         (if (plusp (length value))
-             value
-             (%signal-workspace-error :missing-identity
-                                      "Git config ~A is empty" key))))
-      ((= (git-invocation-exit-status invocation) 1)
-       (%signal-workspace-error :missing-identity
-                                "Git config ~A is missing" key))
-      (t
-       (error "Git failed while reading ~A: ~A"
-              key (git-invocation-stderr invocation))))))
-
-(defun %configured-identity (directory)
-  (values (%configured-identity-value "user.name" directory)
-          (%configured-identity-value "user.email" directory)))
-
 (defun %read-tree-snapshot (directory tree-oid)
   (%parse-records
    (%successful-stdout
