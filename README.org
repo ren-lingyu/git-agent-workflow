@@ -11,11 +11,38 @@ context as the primary store of working state, GAW keeps selected agent state
 in Git and lets Git provide its history and reachability model.
 
 * Status
-GAW is currently under early development.
+The current release is =0.1.0=.  It is the first runtime release for use in an
+already provisioned GAW repository and worktree.  It provides the daily
+=check=, edit, stage, =commit=, and =show= loop, command help, and optional
+protection against ordinary Git commands updating registered GAW branches.
 
-The repository currently contains an early Common Lisp implementation and its
-Nix build configuration.  The repository protocol and user-facing interface
-are still under development and are not yet available for general use.
+This release does not provide a provisioning command or automate branch
+creation, registration, hook configuration, or deployment.  Those setup
+operations remain external to the runtime CLI.  The repository protocol and
+user-facing interface may still change before a stable release.
+
+* Installation
+GAW currently supports =x86_64-linux= and requires Nix with flakes enabled.
+Git 2.54 or newer is required for the configured hook support used by branch
+protection.
+
+Build the default package from a checkout:
+
+#+begin_src sh
+nix build .#default
+./result/bin/git-gaw --help
+#+end_src
+
+The executable must be available on =PATH= under the name =git-gaw= for Git to
+discover it as the =git gaw= subcommand:
+
+#+begin_src sh
+git gaw --help
+#+end_src
+
+The flake also exports the package as =packages.x86_64-linux.default= and as
+=git-agent-workflow= through its default overlay.  Building and testing do not
+provision a GAW worktree or modify repository-local hook configuration.
 
 * Design
 ** Separate GAW History
@@ -263,6 +290,12 @@ GAW is implemented in Common Lisp and built as an ASDF system.
 The build is managed with Nix flakes and =cl-nix-forge=.  The currently
 supported system is =x86_64-linux=, and GAW requires Git 2.54 or newer.
 
+Run the complete Common Lisp and Git integration test suite with:
+
+#+begin_src sh
+nix flake check
+#+end_src
+
 ** Package Layout
 Source packages are organized as directories under =src/=.  Each package
 directory contains its own =package.lisp= and the implementation files owned
@@ -300,3 +333,6 @@ Package directories are represented by ASDF modules with explicit
 order and cross-package dependencies rather than relying on incidental source
 file ordering.  The test system uses corresponding modules for tested
 packages and dispatches their runners from a top-level test entry point.
+
+* License
+GAW is distributed under the [[file:LICENSE][MIT License]].
