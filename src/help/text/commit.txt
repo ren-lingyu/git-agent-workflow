@@ -1,0 +1,16 @@
+usage: git gaw commit [--allow-empty] [--allow-empty-message]
+                      (-m <message> | -F <file>)...
+                      [--] [project-commit...]
+
+Create a commit on the registered GAW branch from the complete current index.
+Unstaged and untracked files are not included.  The command must run at the
+GAW worktree root.
+
+Options:
+   -m, --message <message>    append a UTF-8 commit message fragment
+   -F, --file <file>          append exact message bytes; '-' reads stdin
+       --allow-empty          allow an unchanged tree without project parents
+       --allow-empty-message  allow an empty commit message
+
+Additional project commits become parents after the previous GAW commit.
+Their trees are checked for conflicts but are not merged into the GAW tree.

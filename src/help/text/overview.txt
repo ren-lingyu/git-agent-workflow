@@ -1,0 +1,14 @@
+usage: git gaw <command> [<args>]
+   or: git gaw help [commit|show|check]
+   or: git gaw --help
+
+Git Agent Workflow maintains an independent first-parent history for an
+agent workspace in an already provisioned GAW worktree.
+
+Commands:
+   commit    create a GAW commit from the current index
+   show      show canonical GAW history through git show
+   check     check whether the current GAW worktree is ready
+   help      show help for GAW or one of its commands
+
+Run 'git gaw help <command>' or 'git gaw <command> --help' for details.

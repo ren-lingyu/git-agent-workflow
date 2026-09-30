@@ -40,8 +40,13 @@
       lispArgs = {
         lispSystem = pkgs.lib.removeSuffix ".asd" (builtins.baseNameOf ./git-agent-workflow.asd);
         version = cl.fromAsdSystem ./git-agent-workflow.asd;
-        src = cl.mkLispSource {
+        src = pkgs.lib.fileset.toSource {
           root = ./.;
+          fileset = pkgs.lib.fileset.unions [
+            ./git-agent-workflow.asd
+            ./src
+            ./tests
+          ];
         };
         lispDependencies = [
           (cl.fromNixpkgsLisp {

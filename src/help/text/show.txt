@@ -1,0 +1,10 @@
+usage: git gaw show [git-show-options] [object-or-range...] [-- pathspec...]
+
+Run git show with canonical GAW history semantics.  Traversal follows first
+parents, and merge patches compare only with the first parent.  Other object,
+format, diff, and pathspec arguments retain their native git show meaning.
+
+Merge modes that compare with additional parents (-m, -c, --cc, and
+--remerge-diff) are rejected.  Use --no-diff-merges when only commit metadata
+is wanted.  Associated project commits remain explicitly addressable, for
+example as HEAD^2.

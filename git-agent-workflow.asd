@@ -96,6 +96,21 @@
                                             :depends-on ("check.core"))
                                            (:file "check.api"
                                             :depends-on ("check.runtime"))))
+                             (:module "help"
+                              :pathname "help/"
+                              :depends-on ("package")
+                              :components ((:file "package")
+                                           (:module "text"
+                                            :pathname "text/"
+                                            :components
+                                            ((:static-file "overview.txt")
+                                             (:static-file "commit.txt")
+                                             (:static-file "show.txt")
+                                             (:static-file "check.txt")))
+                                           (:file "help.core"
+                                            :depends-on ("package" "text"))
+                                           (:file "help.api"
+                                            :depends-on ("help.core"))))
                              (:module "cli"
                               :pathname "cli/"
                               :depends-on ("package"
@@ -181,6 +196,12 @@
                               :components ((:file "package")
                                            (:file "check"
                                             :depends-on ("package"))))
+                             (:module "help"
+                              :pathname "help/"
+                              :depends-on ("package")
+                              :components ((:file "package")
+                                           (:file "help"
+                                            :depends-on ("package"))))
                              (:module "cli"
                               :pathname "cli/"
                               :depends-on ("package"
@@ -199,6 +220,7 @@
                                            "workspace"
                                            "show"
                                            "check"
+                                           "help"
                                            "cli")))))
 
   :perform (asdf:test-op (operation component)
