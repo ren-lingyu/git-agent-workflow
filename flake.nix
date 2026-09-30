@@ -10,7 +10,7 @@
       url = "git+https://github.com/hercules-ci/flake-parts.git?ref=refs/heads/main&shallow=1";
     };
     cl-nix-forge = {
-      url = "git+https://github.com/nerima-lisp/cl-nix-forge.git?ref=refs/tags/v0.5.0&shallow=1";
+      url = "git+https://github.com/nerima-lisp/cl-nix-forge.git?ref=refs/tags/v0.6.1&shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
