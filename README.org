@@ -237,17 +237,20 @@ directory.
 Implementation files use the naming pattern =<name>.<layer>.lisp=.  The
 available layers have the following responsibilities:
 
+- =*.external.lisp= resolves package-owned external programs from the build
+  environment, with source-tree fallbacks.
 - =*.core.lisp= contains pure transformations, validation, policy, and data
   definitions.  It does not perform Git I/O or read dynamically bound
   configuration.
 - =*.runtime.lisp= performs Git I/O and orchestrates operations using explicit
   arguments and the core layer.
 - =*.api.lisp= provides package entry points.  Where configurable defaults
-  exist, it converts special variables or default configuration into explicit
-  arguments for the runtime layer.
+  exist, it converts special variables, external programs, or default
+  configuration into explicit arguments for the runtime layer.
 
-Dependencies flow from =api= to =runtime= to =core=.  A package only defines
-the layers it needs; empty layer files are not required.
+The API layer depends on the external and runtime layers; the runtime layer
+depends on the core layer.  A package only defines the layers it needs; empty
+layer files are not required.
 
 ** ASDF Composition
 Package directories are represented by ASDF modules with explicit

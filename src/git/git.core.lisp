@@ -8,7 +8,12 @@
   stderr
   exit-status)
 
-(defun %prepare-git-command (args directory)
+(defun %prepare-git-command (git-program args directory)
+  (check-type git-program
+              string)
+  (assert (plusp (length git-program))
+          (git-program)
+          "Git program must not be empty")
   (check-type directory
               pathname)
   (assert (every #'stringp
@@ -19,7 +24,7 @@
   (let ((arguments (copy-list
                     args)))
     (values (concatenate 'list
-                         (list "git"
+                         (list git-program
                                "-C"
                                (namestring directory))
                          arguments)

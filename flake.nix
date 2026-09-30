@@ -70,6 +70,9 @@
           args = {
             pname = "git-gaw";
             inherit (lispArgs) lispSystem version src lispDependencies;
+            env = {
+              GIT = pkgs.lib.getExe pkgs.git;
+            };
           };
           programPath = "git-gaw";
         };

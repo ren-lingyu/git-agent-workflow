@@ -87,9 +87,10 @@
       (write-sequence input
                       stream))))
 
-(defun %run-git-octets (args directory input git-environment)
+(defun %run-git-octets (git-program args directory input git-environment)
   (multiple-value-bind (command arguments)
-      (%prepare-git-command args
+      (%prepare-git-command git-program
+                            args
                             directory)
     (multiple-value-bind (stdout stderr exit-status)
         (uiop:run-program command
@@ -107,9 +108,10 @@
               stderr
               exit-status))))
 
-(defun run-git (args directory &key input git-environment)
+(defun %run-git (git-program args directory &key input git-environment)
   (multiple-value-bind (command arguments stdout stderr exit-status)
-      (%run-git-octets args
+      (%run-git-octets git-program
+                       args
                        directory
                        input
                        git-environment)
@@ -120,9 +122,10 @@
                           :stderr (%decode-git-stderr stderr)
                           :exit-status exit-status)))
 
-(defun run-git-bytes (args directory &key input git-environment)
+(defun %run-git-bytes (git-program args directory &key input git-environment)
   (multiple-value-bind (command arguments stdout stderr exit-status)
-      (%run-git-octets args
+      (%run-git-octets git-program
+                       args
                        directory
                        input
                        git-environment)
@@ -133,9 +136,10 @@
                           :stderr (%decode-git-stderr stderr)
                           :exit-status exit-status)))
 
-(defun run-git-passthrough (args directory &key git-environment)
+(defun %run-git-passthrough (git-program args directory &key git-environment)
   (multiple-value-bind (command arguments)
-      (%prepare-git-command args
+      (%prepare-git-command git-program
+                            args
                             directory)
     (multiple-value-bind (stdout stderr exit-status)
         (uiop:run-program command

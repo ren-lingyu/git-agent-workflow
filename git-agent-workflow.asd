@@ -11,10 +11,15 @@
                               :pathname "git/"
                               :depends-on ("package")
                               :components ((:file "package")
+                                           (:file "git.external"
+                                            :depends-on ("package"))
                                            (:file "git.core"
                                             :depends-on ("package"))
                                            (:file "git.runtime"
-                                            :depends-on ("git.core"))))
+                                            :depends-on ("git.core"))
+                                           (:file "git.api"
+                                            :depends-on ("git.external"
+                                                         "git.runtime"))))
                              (:module "refs"
                               :pathname "refs/"
                               :depends-on ("package"
