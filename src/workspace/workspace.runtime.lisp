@@ -2,6 +2,7 @@
 
 (eval-when (:load-toplevel :execute)
   (dolist (function '(run-git run-git-bytes %make-git-entry
+                      %mark-intent-to-add-entries
                       %synthesize-index-directories))
     (unless (fboundp function)
       (error "Required workspace runtime dependency is unavailable: ~S"
@@ -71,6 +72,41 @@
        (%copy-octet-range octets (1+ tab) end)
        stage))))
 
+(defun %read-path-records (arguments directory operation)
+  (%parse-records
+   (%successful-stdout
+    (run-git-bytes arguments directory)
+    operation)
+   #'%copy-octet-range))
+
+(defun %head-tree-object-id (directory)
+  (let ((invocation
+          (run-git '("rev-parse" "--verify" "--end-of-options" "HEAD^{tree}")
+                   directory)))
+    (when (zerop (git-invocation-exit-status invocation))
+      (git-invocation-stdout invocation))))
+
+(defun %intent-to-add-paths (directory)
+  (let ((head-tree (%head-tree-object-id directory)))
+    (unless head-tree
+      (return-from %intent-to-add-paths '()))
+    (let* ((base-arguments
+             (list "diff-index" "--cached" "--name-only" "-z"
+                   "--no-ext-diff" "--no-renames"))
+           (visible
+             (%read-path-records
+              (append base-arguments
+                      (list "--ita-visible-in-index" head-tree "--"))
+              directory
+              "reading visible intent-to-add entries"))
+           (invisible
+             (%read-path-records
+              (append base-arguments
+                      (list "--ita-invisible-in-index" head-tree "--"))
+              directory
+              "reading hidden intent-to-add entries")))
+      (set-difference visible invisible :test #'equalp))))
+
 (defun %worktree-root (directory)
   (check-type directory pathname)
   (let ((invocation (run-git '("rev-parse" "--show-toplevel") directory)))
@@ -113,11 +149,20 @@
 
 (defun %read-index-snapshot (directory gitlink-mode blob-type commit-type
                              tree-mode tree-type)
-  (%synthesize-index-directories
-   (%parse-records
-    (%successful-stdout
-     (run-git-bytes '("ls-files" "--stage" "-z") directory)
-     "reading the Git index")
-    (lambda (octets start end)
-      (%parse-index-record octets start end gitlink-mode blob-type commit-type)))
-   tree-mode tree-type))
+  (let* ((entries
+           (%parse-records
+            (%successful-stdout
+             (run-git-bytes '("ls-files" "--stage" "-z") directory)
+             "reading the Git index")
+            (lambda (octets start end)
+              (%parse-index-record octets start end
+                                   gitlink-mode blob-type commit-type))))
+         (marked-entries
+           (if (find-if (lambda (entry)
+                          (plusp (git-entry-stage entry)))
+                        entries)
+               entries
+               (%mark-intent-to-add-entries
+                entries
+                (%intent-to-add-paths directory)))))
+    (%synthesize-index-directories marked-entries tree-mode tree-type)))

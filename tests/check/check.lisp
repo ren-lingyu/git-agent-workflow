@@ -3,6 +3,15 @@
 (defun %git (directory &rest arguments)
   (call-git (append (list "-C" (namestring directory)) arguments)))
 
+(defun %git-input (directory input &rest arguments)
+  (uiop:run-program
+   (append (list "git" "-C" (namestring directory)) arguments)
+   :input (lambda (stream)
+            (write-string input stream))
+   :output '(:string :stripped t)
+   :error-output '(:string :stripped t)
+   :force-shell nil))
+
 (defun %octets (text)
   (string-to-octets text :encoding :utf-8))
 
@@ -24,10 +33,17 @@
     (%git directory "symbolic-ref" "refs/gaw/heads/gaw" "refs/heads/gaw")
     commit))
 
+(defun %finding (report name)
+  (find name (check-report-findings report)
+        :key #'check-finding-name))
+
 (defun %finding-status (report name)
-  (let ((finding (find name (check-report-findings report)
-                       :key #'check-finding-name)))
+  (let ((finding (%finding report name)))
     (and finding (check-finding-status finding))))
+
+(defun %finding-detail (report name)
+  (let ((finding (%finding report name)))
+    (and finding (check-finding-detail finding))))
 
 (defun %with-repository (function)
   (with-test-repository (directory)
@@ -69,6 +85,44 @@
        (assert (search "not ready"
                        (with-output-to-string (stream)
                          (write-check-report report stream))))))))
+
+(defun %test-staged-index-shape-failures ()
+  (%with-repository
+   (lambda (directory)
+     (%git directory
+           "update-index"
+           "--add"
+           "--cacheinfo"
+           "160000"
+           (%git directory "rev-parse" "HEAD")
+           "notes/submodule")
+     (let ((report (check directory)))
+       (assert (eq :error (%finding-status report :index)))
+       (assert (search "Gitlinks"
+                       (%finding-detail report :index))))))
+  (%with-repository
+   (lambda (directory)
+     (%write directory "new" "intent")
+     (%git directory "add" "-N" "--" "new")
+     (let ((report (check directory)))
+       (assert (eq :error (%finding-status report :index)))
+       (assert (search "intent-to-add"
+                       (%finding-detail report :index))))))
+  (%with-repository
+   (lambda (directory)
+     (let ((blob (%git directory "rev-parse" "HEAD:AGENTS.md")))
+       (%git directory "rm" "--cached" "--quiet" "AGENTS.md")
+       (%git-input
+        directory
+        (format nil
+                "100644 ~A 1~CAGENTS.md~%100644 ~A 2~CAGENTS.md~%"
+                blob #\Tab blob #\Tab)
+        "update-index"
+        "--index-info"))
+     (let ((report (check directory)))
+       (assert (eq :error (%finding-status report :index)))
+       (assert (search "unmerged"
+                       (%finding-detail report :index)))))))
 
 (defun %test-empty-workspace-is-valid ()
   (%with-repository
@@ -122,7 +176,8 @@
     (dolist (name '("CHECK" "WRITE-CHECK-REPORT" "CHECK-REPORT"
                     "CHECK-REPORT-OK-P" "CHECK-REPORT-FINDINGS"
                     "CHECK-FINDING" "CHECK-FINDING-NAME"
-                    "CHECK-FINDING-STATUS" "CHECK-ERROR"
+                    "CHECK-FINDING-STATUS" "CHECK-FINDING-DETAIL"
+                    "CHECK-ERROR"
                     "CHECK-ERROR-REASON"))
       (multiple-value-bind (symbol status) (find-symbol name package)
         (assert symbol)
@@ -131,6 +186,7 @@
 (defun run-tests ()
   (%test-healthy-and-nested-check)
   (%test-index-failure-and-aggregation)
+  (%test-staged-index-shape-failures)
   (%test-empty-workspace-is-valid)
   (%test-existing-project-parent-conflict)
   (%test-outside-worktree-is-a-report)

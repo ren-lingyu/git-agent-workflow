@@ -18,13 +18,15 @@
 
 (defstruct (git-entry
             (:constructor %make-git-entry
-                (mode type object-id path &optional (stage 0)))
+                (mode type object-id path
+                 &optional (stage 0) (intent-to-add-p nil)))
             (:copier nil))
   (mode "" :type string :read-only t)
   (type "" :type string :read-only t)
   (object-id "" :type string :read-only t)
   (path #() :type (vector (unsigned-byte 8)) :read-only t)
-  (stage 0 :type (integer 0 3) :read-only t))
+  (stage 0 :type (integer 0 3) :read-only t)
+  (intent-to-add-p nil :type boolean :read-only t))
 
 (defun %signal-workspace-error (reason control &rest arguments)
   (error 'workspace-error
@@ -112,13 +114,27 @@
   (and (plusp (length object-id))
        (every (lambda (character) (char= character #\0)) object-id)))
 
+(defun %mark-intent-to-add-entries (entries paths)
+  (mapcar
+   (lambda (entry)
+     (%make-git-entry (git-entry-mode entry)
+                      (git-entry-type entry)
+                      (git-entry-object-id entry)
+                      (git-entry-path entry)
+                      (git-entry-stage entry)
+                      (not (null (member (git-entry-path entry)
+                                         paths
+                                         :test #'equalp)))))
+   entries))
+
 (defun %validate-snapshot-shape (entries file-modes tree-mode gitlink-mode
                                  blob-type tree-type)
   (dolist (entry entries)
       (when (plusp (git-entry-stage entry))
         (%signal-workspace-error :unmerged-index
                                  "The index contains unmerged entries"))
-      (when (%zero-object-id-p (git-entry-object-id entry))
+      (when (or (git-entry-intent-to-add-p entry)
+                (%zero-object-id-p (git-entry-object-id entry)))
         (%signal-workspace-error :invalid-workspace
                                  "The index contains an intent-to-add entry"))
       (when (string= (git-entry-mode entry) gitlink-mode)

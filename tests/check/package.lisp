@@ -14,5 +14,6 @@
                 #:check-report-findings
                 #:check-finding-name
                 #:check-finding-status
+                #:check-finding-detail
                 #:write-check-report)
   (:export #:run-tests))
