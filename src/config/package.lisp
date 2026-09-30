@@ -15,6 +15,7 @@
                 #:current-ref)
   (:export #:read-config
            #:read-config-at-tree
+           #:read-config-blob
            #:config
            #:config-p
            #:config-workspace

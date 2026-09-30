@@ -83,6 +83,20 @@
              tree-oid)))
   tree-oid)
 
+(defun %ensure-exact-blob-object-id (blob-oid directory)
+  (check-type blob-oid string)
+  (unless (and (= (length blob-oid) (%object-id-length directory))
+               (every #'%hex-digit-p blob-oid))
+    (error "Not a full Git blob object ID: ~S" blob-oid))
+  (let* ((invocation (run-git (list "cat-file" "-t" blob-oid) directory))
+         (type (%successful-git-stdout invocation
+                                       "verifying the GAW config blob")))
+    (unless (string= type "blob")
+      (%signal-config-error :invalid-object
+                            "Git object is not a blob: ~S"
+                            blob-oid)))
+  blob-oid)
+
 (defun %commit-tree-object-id (commit-oid directory)
   (let* ((revision (concatenate 'string
                                 commit-oid
@@ -214,6 +228,20 @@
                          maximum-list-depth
                          maximum-workspace-entries
                          maximum-workspace-path-size)))
+
+(defun %read-config-blob-object (blob-oid
+                                 directory
+                                 maximum-config-size
+                                 maximum-list-depth
+                                 maximum-workspace-entries
+                                 maximum-workspace-path-size)
+  (%ensure-exact-blob-object-id blob-oid directory)
+  (%config-from-octets
+   (%read-config-blob blob-oid directory maximum-config-size)
+   maximum-config-size
+   maximum-list-depth
+   maximum-workspace-entries
+   maximum-workspace-path-size))
 
 (defun %read-config-at-commit (commit-oid
                                config-path

@@ -82,6 +82,20 @@
                                             :depends-on ("show.core"))
                                            (:file "show.api"
                                             :depends-on ("show.runtime"))))
+                             (:module "check"
+                              :pathname "check/"
+                              :depends-on ("package"
+                                           "git"
+                                           "refs"
+                                           "config"
+                                           "workspace")
+                              :components ((:file "package")
+                                           (:file "check.core"
+                                            :depends-on ("package"))
+                                           (:file "check.runtime"
+                                            :depends-on ("check.core"))
+                                           (:file "check.api"
+                                            :depends-on ("check.runtime"))))
                              (:module "cli"
                               :pathname "cli/"
                               :depends-on ("package"
@@ -160,6 +174,13 @@
                                             :depends-on ("package"))
                                            (:file "tests"
                                             :depends-on ("show"))))
+                             (:module "check"
+                              :pathname "check/"
+                              :depends-on ("package"
+                                           "support")
+                              :components ((:file "package")
+                                           (:file "check"
+                                            :depends-on ("package"))))
                              (:module "cli"
                               :pathname "cli/"
                               :depends-on ("package"
@@ -177,6 +198,7 @@
                                            "commit"
                                            "workspace"
                                            "show"
+                                           "check"
                                            "cli")))))
 
   :perform (asdf:test-op (operation component)

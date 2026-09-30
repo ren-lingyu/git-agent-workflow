@@ -3,6 +3,7 @@
 (eval-when (:load-toplevel :execute)
   (dolist (function '(%read-config
                       %read-config-at-tree
+                      %read-config-blob-object
                       current-ref))
     (unless (fboundp function)
       (error "Required config API dependency is unavailable: ~S"
@@ -37,3 +38,11 @@
                         +maximum-list-depth+
                         +maximum-workspace-entries+
                         +maximum-workspace-path-size+))
+
+(defun read-config-blob (directory blob-oid)
+  (%read-config-blob-object blob-oid
+                            directory
+                            +maximum-config-size+
+                            +maximum-list-depth+
+                            +maximum-workspace-entries+
+                            +maximum-workspace-path-size+))
