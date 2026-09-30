@@ -164,42 +164,83 @@
             allow-empty
             allow-empty-message)))
 
-(defun %run-commit (arguments)
+(defun %run-commit (arguments directory stream)
   (multiple-value-bind (message
                         project-commits
                         allow-empty
                         allow-empty-message)
       (%parse-commit-arguments arguments)
-    (let ((oid (commit (uiop:getcwd)
+    (let ((oid (commit directory
                        message
                        :project-commits project-commits
                        :allow-empty allow-empty
                        :allow-empty-message allow-empty-message)))
-      (format t "~A~%" oid)
+      (format stream "~A~%" oid)
       0)))
 
-(defun %run-show (arguments)
-  (show (uiop:getcwd)
-        arguments))
+(defun %run-show (arguments directory)
+  (show directory arguments))
+
+(defun %run-check (arguments directory stream)
+  (when arguments
+    (%cli-error "git gaw check does not accept arguments"))
+  (let ((report (check directory)))
+    (write-check-report report stream)
+    (if (check-report-ok-p report) 0 1)))
+
+(defun %help-topic (name)
+  (cond
+    ((string= name "commit") :commit)
+    ((string= name "show") :show)
+    ((string= name "check") :check)
+    (t (%cli-error "Unknown help topic: ~A" name))))
+
+(defun %run-help (arguments stream)
+  (cond
+    ((null arguments)
+     (print-help :overview stream))
+    ((null (rest arguments))
+     (print-help (%help-topic (first arguments)) stream))
+    (t
+     (%cli-error "git gaw help accepts at most one topic")))
+  0)
 
 (defun %usage-error ()
   (%cli-error
-   "Usage:~%  git gaw commit [options] [--] [project-commit...]~%  git gaw show [options] [object...] [-- path...]"))
+   "Usage:~%  git gaw commit [options] [--] [project-commit...]~%  git gaw show [options] [object...] [-- path...]~%  git gaw check~%  git gaw help [commit|show|check]"))
+
+(defun %sole-help-option-p (arguments)
+  (and arguments
+       (null (rest arguments))
+       (string= (first arguments) "--help")))
+
+(defun %dispatch (arguments directory output-stream)
+  (cond
+    ((or (equal arguments '("--help"))
+         (equal arguments '("-h")))
+     (%run-help '() output-stream))
+    ((and arguments (string= (first arguments) "help"))
+     (%run-help (rest arguments) output-stream))
+    ((and arguments (string= (first arguments) "commit"))
+     (if (%sole-help-option-p (rest arguments))
+         (progn (print-help :commit output-stream) 0)
+         (%run-commit (rest arguments) directory output-stream)))
+    ((and arguments (string= (first arguments) "show"))
+     (if (%sole-help-option-p (rest arguments))
+         (progn (print-help :show output-stream) 0)
+         (%run-show (rest arguments) directory)))
+    ((and arguments (string= (first arguments) "check"))
+     (if (%sole-help-option-p (rest arguments))
+         (progn (print-help :check output-stream) 0)
+         (%run-check (rest arguments) directory output-stream)))
+    (t
+     (%usage-error))))
 
 (defun main ()
   (handler-case
-      (let ((arguments (uiop:command-line-arguments)))
-        (cond
-          ((and arguments
-                (string= (first arguments)
-                         "commit"))
-           (%run-commit (rest arguments)))
-          ((and arguments
-                (string= (first arguments)
-                         "show"))
-           (%run-show (rest arguments)))
-          (t
-           (%usage-error))))
+      (%dispatch (uiop:command-line-arguments)
+                 (uiop:getcwd)
+                 *standard-output*)
     (error (condition)
       (format *error-output*
               "git-gaw: ~A~%"

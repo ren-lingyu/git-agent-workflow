@@ -29,9 +29,49 @@
     (assert allow-empty)
     (assert (not allow-empty-message))))
 
+(defun %dispatch-output (arguments directory)
+  (let ((status nil))
+    (values
+     (with-output-to-string (stream)
+       (setf status
+             (git-agent-workflow.cli::%dispatch arguments directory stream)))
+     status)))
+
+(defun %test-help-dispatch ()
+  (with-temporary-directory (directory)
+    (multiple-value-bind (overview status)
+        (%dispatch-output '("help") directory)
+      (assert (zerop status))
+      (assert (string= overview
+                       (nth-value 0 (%dispatch-output '("--help") directory))))
+      (assert (string= overview
+                       (nth-value 0 (%dispatch-output '("-h") directory)))))
+    (dolist (command '("commit" "show" "check"))
+      (let ((topic (nth-value 0
+                             (%dispatch-output (list "help" command)
+                                               directory)))
+            (option (nth-value 0
+                              (%dispatch-output (list command "--help")
+                                                directory))))
+        (assert (string= topic option))))
+    (assert (handler-case
+                (progn
+                  (%dispatch-output '("help" "config") directory)
+                  nil)
+              (error () t)))))
+
+(defun %test-check-dispatch ()
+  (with-temporary-directory (directory)
+    (multiple-value-bind (output status)
+        (%dispatch-output '("check") directory)
+      (assert (= status 1))
+      (assert (search "GAW worktree is not ready" output)))))
+
 (defun %run-cli-tests ()
   (%test-message-fragments-follow-commit-tree-semantics)
   (%test-commit-argument-parser)
+  (%test-help-dispatch)
+  (%test-check-dispatch)
   (format t
           "~&All CLI tests passed.~%")
   t)

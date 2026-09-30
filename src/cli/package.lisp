@@ -6,4 +6,10 @@
                 #:commit)
   (:import-from #:git-agent-workflow.show
                 #:show)
+  (:import-from #:git-agent-workflow.check
+                #:check
+                #:check-report-ok-p
+                #:write-check-report)
+  (:import-from #:git-agent-workflow.help
+                #:print-help)
   (:export #:main))

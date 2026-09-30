@@ -115,7 +115,9 @@
                               :pathname "cli/"
                               :depends-on ("package"
                                            "commit"
-                                           "show")
+                                           "show"
+                                           "check"
+                                           "help")
                               :components ((:file "package")
                                            (:file "cli.api"
                                             :depends-on ("package")))))))
