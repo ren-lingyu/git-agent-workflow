@@ -6,6 +6,30 @@
   symbolic-p
   symbolic-target)
 
+(define-condition registration-error (error)
+  ((reason :initarg :reason
+           :reader registration-error-reason)
+   (ref :initarg :ref
+        :reader registration-error-ref)
+   (target :initarg :target
+           :initform nil
+           :reader registration-error-target))
+  (:report (lambda (condition stream)
+             (case (registration-error-reason condition)
+               (:direct-registration
+                (format stream
+                        "GAW branch registration is not a symbolic ref: ~S"
+                        (registration-error-ref condition)))
+               (:target-mismatch
+                (format stream
+                        "GAW branch registration ~S points to the wrong ref: ~S"
+                        (registration-error-ref condition)
+                        (registration-error-target condition)))
+               (otherwise
+                (format stream
+                        "Invalid GAW branch registration: ~S"
+                        (registration-error-ref condition)))))))
+
 (defun %ref-under-prefix-p (checked-ref prefix)
   (and (> (length checked-ref)
           (length prefix))
@@ -29,6 +53,23 @@
   (and (ref-state-exists-p ref-state)
        (ref-state-symbolic-p ref-state)
        (not (ref-state-exists-p target-state))))
+
+(defun %registration-state-registered-p (registration-state source-ref)
+  (cond
+    ((not (ref-state-exists-p registration-state))
+     nil)
+    ((not (ref-state-symbolic-p registration-state))
+     (error 'registration-error
+            :reason :direct-registration
+            :ref (ref-state-name registration-state)))
+    ((not (string= source-ref
+                   (ref-state-symbolic-target registration-state)))
+     (error 'registration-error
+            :reason :target-mismatch
+            :ref (ref-state-name registration-state)
+            :target (ref-state-symbolic-target registration-state)))
+    (t
+     t)))
 
 (defun %ensure-registration-available (target-state
                                        overwrite

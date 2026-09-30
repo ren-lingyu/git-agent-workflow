@@ -7,6 +7,7 @@
                       git-invocation-exit-status
                       %make-ref-state
                       %make-ref
+                      %registration-state-registered-p
                       %ref-state-dangling-p
                       %ensure-registration-available
                       %validate-target-ref
@@ -14,6 +15,18 @@
     (unless (fboundp function)
       (error "Required runtime dependency is unavailable: ~S"
              function))))
+
+(defun %registered-ref-p (source-ref
+                          directory
+                          source-ref-prefix
+                          target-ref-prefix)
+  (let ((registration-ref
+          (%make-ref source-ref
+                     source-ref-prefix
+                     target-ref-prefix)))
+    (%registration-state-registered-p
+     (inspect-ref registration-ref directory)
+     source-ref)))
 
 (defun %ref-exists-p (checked-ref directory)
   (let ((invocation (run-git (list "show-ref"

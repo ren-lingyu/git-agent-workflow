@@ -6,6 +6,11 @@
                 #:git-invocation-stderr
                 #:git-invocation-exit-status)
   (:export #:make-ref
+           #:registered-ref-p
+           #:registration-error
+           #:registration-error-reason
+           #:registration-error-ref
+           #:registration-error-target
            #:inspect-ref
            #:ref-dangling-p
            #:register-ref

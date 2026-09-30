@@ -91,6 +91,62 @@
     (assert (string= "refs/gaw/remotes/origin/test"
                      (make-ref "refs/remotes/origin/test")))))
 
+(defun %registration-failure-reason (source-ref directory)
+  (handler-case
+      (progn
+        (registered-ref-p source-ref directory)
+        nil)
+    (registration-error (condition)
+      (registration-error-reason condition))))
+
+(defun %test-registered-ref-p-detects-missing-registration ()
+  (with-test-repository (directory)
+    (assert (not (registered-ref-p "refs/heads/test"
+                                   directory)))))
+
+(defun %test-registered-ref-p-detects-exact-registration ()
+  (with-test-repository (directory)
+    (%create-direct-ref "refs/heads/test" directory)
+    (%create-symbolic-ref "refs/gaw/heads/test"
+                          "refs/heads/test"
+                          directory)
+    (assert (registered-ref-p "refs/heads/test"
+                              directory))))
+
+(defun %test-registered-ref-p-detects-dangling-registration ()
+  (with-test-repository (directory)
+    (%create-direct-ref "refs/heads/test" directory)
+    (%create-symbolic-ref "refs/gaw/heads/test"
+                          "refs/heads/test"
+                          directory)
+    (%delete-direct-ref "refs/heads/test" directory)
+    (assert (registered-ref-p "refs/heads/test"
+                              directory))))
+
+(defun %test-registered-ref-p-rejects-direct-registration ()
+  (with-test-repository (directory)
+    (%create-direct-ref "refs/gaw/heads/test" directory)
+    (assert (eq :direct-registration
+                (%registration-failure-reason "refs/heads/test"
+                                              directory)))))
+
+(defun %test-registered-ref-p-rejects-target-mismatch ()
+  (with-test-repository (directory)
+    (%create-symbolic-ref "refs/gaw/heads/test"
+                          "refs/heads/other"
+                          directory)
+    (assert (eq :target-mismatch
+                (%registration-failure-reason "refs/heads/test"
+                                              directory)))))
+
+(defun %test-registered-ref-p-preserves-nested-name ()
+  (with-test-repository (directory)
+    (%create-symbolic-ref "refs/gaw/heads/feature/test"
+                          "refs/heads/feature/test"
+                          directory)
+    (assert (registered-ref-p "refs/heads/feature/test"
+                              directory))))
+
 (defun %test-inspect-ref-detects-missing-ref ()
   (with-test-repository (directory)
     (let ((state (inspect-ref "refs/heads/missing"
@@ -239,6 +295,12 @@
   (%test-make-ref-preserves-nested-name)
   (%test-make-ref-rejects-invalid-source-ref)
   (%test-make-ref-uses-special-ref-prefixes)
+  (%test-registered-ref-p-detects-missing-registration)
+  (%test-registered-ref-p-detects-exact-registration)
+  (%test-registered-ref-p-detects-dangling-registration)
+  (%test-registered-ref-p-rejects-direct-registration)
+  (%test-registered-ref-p-rejects-target-mismatch)
+  (%test-registered-ref-p-preserves-nested-name)
   (%test-inspect-ref-detects-missing-ref)
   (%test-inspect-ref-detects-direct-ref)
   (%test-inspect-ref-detects-symbolic-ref)

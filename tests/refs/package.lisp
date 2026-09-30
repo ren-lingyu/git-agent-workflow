@@ -6,6 +6,9 @@
                 #:with-test-repository)
   (:import-from #:git-agent-workflow.refs
                 #:make-ref
+                #:registered-ref-p
+                #:registration-error
+                #:registration-error-reason
                 #:inspect-ref
                 #:ref-dangling-p
                 #:register-ref

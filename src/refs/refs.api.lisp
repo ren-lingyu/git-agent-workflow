@@ -2,6 +2,7 @@
 
 (eval-when (:load-toplevel :execute)
   (dolist (function '(%make-ref
+                      %registered-ref-p
                       %register-ref
                       %unregister-ref))
     (unless (fboundp function)
@@ -21,6 +22,12 @@
   (%make-ref source-ref
              *source-ref-prefix*
              *target-ref-prefix*))
+
+(defun registered-ref-p (source-ref directory)
+  (%registered-ref-p source-ref
+                     directory
+                     *source-ref-prefix*
+                     *target-ref-prefix*))
 
 (defun register-ref (source-ref directory &key overwrite)
   (%register-ref source-ref
