@@ -72,6 +72,9 @@ not read those defaults from package-level state.
 The related entry point =(git-agent-workflow.config:read-config-at-tree
 directory tree-oid)= accepts a full tree object ID.  It is used when a staged
 tree must be validated before a commit makes it reachable.
+=(git-agent-workflow.config:read-config-blob directory blob-oid)= provides the
+same strict parsing for an already resolved immutable config blob, allowing an
+index consumer to parse one coherent index snapshot without rereading it.
 
 ** Project Association
 A GAW commit may be associated with zero, one, or multiple project commits.
@@ -148,6 +151,46 @@ worktree comparisons remain available through =git diff= itself.
 The same operation is available to Common Lisp callers as
 =(git-agent-workflow.show:show directory arguments)=.  It writes Git's output
 directly to the current process streams and returns Git's exit status.
+
+** Checking a Provisioned Worktree
+The command =git gaw check= performs a read-only readiness check for an already
+provisioned GAW worktree.  It checks the local branch and registration, the
+committed config and workspace, additional project-parent tip trees, the
+complete staged candidate, repository/worktree-local identity, and conflicting
+Git operation state.
+
+The command may run from a subdirectory and reports the resolved worktree root,
+although =git gaw commit= must still run at that root.  It does not replace
+=git status= or =git diff=: untracked and unstaged changes remain native Git
+concerns.  Commit-message validity, command-line project parents, and
+=--allow-empty= are also checked only by the particular commit invocation.
+
+Expected readiness failures are aggregated into one report.  The exit status
+is zero when the report has no error finding and one otherwise; warnings do not
+make the report fail.  The check does not write the index, refs, worktree, or
+object database.
+
+** Command Help
+GAW provides overview and command-specific help through =git gaw help=,
+=git gaw help commit=, =git gaw help show=, and =git gaw help check=.  The
+overview is also available as =git gaw --help= or =git gaw -h=, while each
+command accepts =--help= as its sole argument.
+
+Help text is maintained as independent UTF-8 plain-text source files.  It is
+strictly decoded and embedded when the Lisp system is compiled, so the packaged
+executable does not locate or read those source files at runtime.
+
+** Daily Runtime Loop
+Once a GAW worktree has been provisioned, the intended daily loop is:
+
+#+begin_src text
+git gaw check
+edit workspace files
+git status / git diff
+git add <paths>
+git gaw commit [options] [project-commit...]
+git gaw show
+#+end_src
 
 ** History Semantics
 The first parent of a GAW commit represents temporal GAW history.
