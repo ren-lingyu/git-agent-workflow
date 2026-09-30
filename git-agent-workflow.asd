@@ -116,13 +116,25 @@
                                             :depends-on ("package" "text"))
                                            (:file "help.api"
                                             :depends-on ("help.core"))))
+                             (:module "hook"
+                              :pathname "hook/"
+                              :depends-on ("package"
+                                           "refs")
+                              :components ((:file "package")
+                                           (:file "hook.core"
+                                            :depends-on ("package"))
+                                           (:file "hook.runtime"
+                                            :depends-on ("hook.core"))
+                                           (:file "hook.api"
+                                            :depends-on ("hook.runtime"))))
                              (:module "cli"
                               :pathname "cli/"
                               :depends-on ("package"
                                            "commit"
                                            "show"
                                            "check"
-                                           "help")
+                                           "help"
+                                           "hook")
                               :components ((:file "package")
                                            (:file "cli.api"
                                             :depends-on ("package")))))))
@@ -209,6 +221,18 @@
                               :components ((:file "package")
                                            (:file "help"
                                             :depends-on ("package"))))
+                             (:module "hook"
+                              :pathname "hook/"
+                              :depends-on ("package"
+                                           "support")
+                              :components ((:file "package")
+                                           (:file "hook"
+                                            :depends-on ("package"))
+                                           (:file "integration"
+                                            :depends-on ("package"))
+                                           (:file "tests"
+                                            :depends-on ("hook"
+                                                         "integration"))))
                              (:module "cli"
                               :pathname "cli/"
                               :depends-on ("package"
@@ -228,6 +252,7 @@
                                            "show"
                                            "check"
                                            "help"
+                                           "hook"
                                            "cli")))))
 
   :perform (asdf:test-op (operation component)

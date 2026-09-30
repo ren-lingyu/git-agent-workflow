@@ -9,5 +9,6 @@
   (git-agent-workflow/tests.show:run-tests)
   (git-agent-workflow/tests.check:run-tests)
   (git-agent-workflow/tests.help:run-tests)
+  (git-agent-workflow/tests.hook:run-tests)
   (git-agent-workflow/tests.cli:run-tests)
   t)

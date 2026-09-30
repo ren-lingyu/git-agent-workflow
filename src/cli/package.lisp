@@ -12,4 +12,7 @@
                 #:write-check-report)
   (:import-from #:git-agent-workflow.help
                 #:print-help)
+  (:import-from #:git-agent-workflow.hook
+                #:reference-transaction
+                #:hook-error)
   (:export #:main))

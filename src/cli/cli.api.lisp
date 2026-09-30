@@ -188,6 +188,23 @@
     (write-check-report report stream)
     (if (check-report-ok-p report) 0 1)))
 
+(defun %run-reference-transaction (arguments directory)
+  (unless (and arguments
+               (null (rest arguments)))
+    (%cli-error
+     "git-gaw --reference-transaction requires exactly one phase"))
+  (handler-case
+      (progn
+        (reference-transaction (first arguments)
+                               directory
+                               *standard-input*)
+        0)
+    (hook-error (condition)
+      (format *error-output*
+              "git-gaw: ~A~%"
+              condition)
+      1)))
+
 (defun %help-topic (name)
   (cond
     ((string= name "commit") :commit)
@@ -216,6 +233,9 @@
 
 (defun %dispatch (arguments directory output-stream)
   (cond
+    ((and arguments
+          (string= (first arguments) "--reference-transaction"))
+     (%run-reference-transaction (rest arguments) directory))
     ((or (equal arguments '("--help"))
          (equal arguments '("-h")))
      (%run-help '() output-stream))
@@ -236,7 +256,7 @@
     (t
      (%usage-error))))
 
-(defun main ()
+(defun %main-status ()
   (handler-case
       (%dispatch (uiop:command-line-arguments)
                  (uiop:getcwd)
@@ -246,3 +266,6 @@
               "git-gaw: ~A~%"
               condition)
       1)))
+
+(defun main ()
+  (uiop:quit (%main-status)))

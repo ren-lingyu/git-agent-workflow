@@ -89,12 +89,83 @@
       (assert (= status 1))
       (assert (search "GAW worktree is not ready" output)))))
 
+(defun %test-reference-transaction-machine-option ()
+  (with-temporary-directory (directory)
+    (let* ((symbol 'git-agent-workflow.hook:reference-transaction)
+           (original (symbol-function symbol))
+           (seen nil))
+      (unwind-protect
+           (progn
+             (setf (symbol-function symbol)
+                   (lambda (phase hook-directory input-stream)
+                     (setf seen
+                           (list phase
+                                 hook-directory
+                                 (read-line input-stream nil nil)))
+                     t))
+             (let ((*standard-input*
+                     (make-string-input-stream "transaction input")))
+               (assert
+                (zerop
+                 (git-agent-workflow.cli::%dispatch
+                  '("--reference-transaction" "preparing")
+                  directory
+                  (make-broadcast-stream)))))
+             (assert (equal (list "preparing"
+                                  directory
+                                  "transaction input")
+                            seen)))
+        (setf (symbol-function symbol) original)))))
+
+(defun %test-reference-transaction-machine-option-reports-hook-error ()
+  (with-temporary-directory (directory)
+    (let ((*standard-input* (make-string-input-stream ""))
+          (*error-output* (make-string-output-stream)))
+      (assert
+       (= 1
+          (git-agent-workflow.cli::%dispatch
+           '("--reference-transaction" "unknown")
+           directory
+           (make-broadcast-stream))))
+      (assert (search "Invalid reference-transaction phase"
+                      (get-output-stream-string *error-output*))))))
+
+(defun %test-reference-transaction-machine-option-requires-phase ()
+  (with-temporary-directory (directory)
+    (assert
+     (handler-case
+         (progn
+           (git-agent-workflow.cli::%dispatch
+            '("--reference-transaction")
+            directory
+            (make-broadcast-stream))
+           nil)
+       (error () t)))))
+
+(defun %test-main-status-preserves-dispatch-failure ()
+  (let ((symbol 'git-agent-workflow.cli::%dispatch)
+        (original nil))
+    (setf original (symbol-function symbol))
+    (unwind-protect
+         (progn
+           (setf (symbol-function symbol)
+                 (lambda (arguments directory output-stream)
+                   (declare (ignore arguments directory output-stream))
+                   23))
+           (assert (= 23
+                      (git-agent-workflow.cli::%main-status))))
+      (setf (symbol-function symbol) original))))
+
 (defun %run-cli-tests ()
   (%test-message-fragments-follow-commit-tree-semantics)
   (%test-commit-argument-parser)
   (%test-help-dispatch)
   (%test-show-help-interception-is-exact)
   (%test-check-dispatch)
+  (%test-reference-transaction-machine-option)
+  (%test-reference-transaction-machine-option-reports-hook-error)
+  (%test-reference-transaction-machine-option-requires-phase)
+  (%test-main-status-preserves-dispatch-failure)
   (format t
           "~&All CLI tests passed.~%")
   t)

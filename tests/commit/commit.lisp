@@ -392,6 +392,38 @@
                 (%message "operation")
                 :allow-empty t))))))
 
+(defun %test-commit-disables-only-gaw-configured-hook ()
+  (%with-gaw-repository
+   (lambda (directory initial)
+     (declare (ignore initial))
+     (%repository-git directory
+                      "config"
+                      "--local"
+                      "hook.gaw-reference-transaction.event"
+                      "reference-transaction")
+     (%repository-git directory
+                      "config"
+                      "--local"
+                      "hook.gaw-reference-transaction.command"
+                      "false")
+     (%repository-git directory
+                      "config"
+                      "--local"
+                      "hook.gaw-test-observer.event"
+                      "reference-transaction")
+     (%repository-git directory
+                      "config"
+                      "--local"
+                      "hook.gaw-test-observer.command"
+                      "touch configured-hook-ran")
+     (assert (stringp
+              (commit directory
+                      (%message "configured hooks")
+                      :allow-empty t)))
+     (assert (probe-file
+              (merge-pathnames "configured-hook-ran"
+                               directory))))))
+
 (defun %test-public-package-boundary ()
   (let ((package (find-package '#:git-agent-workflow.commit)))
     (dolist (name '("COMMIT"
@@ -416,6 +448,7 @@
   (%test-commit-ignores-shared-gaw-head)
   (%test-commit-requires-registration)
   (%test-commit-rejects-operation-state)
+  (%test-commit-disables-only-gaw-configured-hook)
   (%test-public-package-boundary)
   (format t
           "~&All commit tests passed.~%")

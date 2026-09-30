@@ -59,8 +59,8 @@
         overlays = [
           (final: prev: {
             git = assert (prev.lib.assertMsg
-              (prev.lib.versionAtLeast prev.git.version "2.43")
-              "GAW requires Git >= 2.43, but got ${prev.git.version}"
+              (prev.lib.versionAtLeast prev.git.version "2.54")
+              "GAW requires Git >= 2.54, but got ${prev.git.version}"
             );
             prev.git;
           })
@@ -88,6 +88,7 @@
           cl.lispDerivation {
             inherit (lispArgs) lispSystem version src lispDependencies;
             nativeBuildInputs = [
+              self.packages.${system}.default
               pkgs.git
             ];
           }

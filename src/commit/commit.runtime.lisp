@@ -201,6 +201,8 @@
   (let ((invocation
           (run-git (list "-c"
                          "core.hooksPath=/dev/null"
+                         "-c"
+                         "hook.gaw-reference-transaction.enabled=false"
                          "update-ref"
                          "-m"
                          reflog-message
