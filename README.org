@@ -119,10 +119,11 @@ merged into the GAW tree.
 
 Git subprocesses ignore inherited =GIT_*= and =EMAIL= variables and ignore
 system and user Git configuration.  Repository and worktree configuration is
-retained for repository interpretation and commit identity.  GAW supplies
-author, committer, UTC timestamps, message, hook policy, and unsigned commit
-policy explicitly.  The branch ref is updated with an expected-old-object
-check so a concurrent ref change is never overwritten.
+retained only for repository interpretation.  GAW always records both author
+and committer as =Git Agent Workflow <gaw@invalid>=, and supplies that identity,
+UTC timestamps, message, hook policy, and unsigned commit policy explicitly.
+The branch ref is updated with an expected-old-object check so a concurrent ref
+change is never overwritten.
 
 ** Showing History
 The command =git gaw show= delegates object display and formatting to =git
@@ -156,8 +157,7 @@ directly to the current process streams and returns Git's exit status.
 The command =git gaw check= performs a read-only readiness check for an already
 provisioned GAW worktree.  It checks the local branch and registration, the
 committed config and workspace, additional project-parent tip trees, the
-complete staged candidate, repository/worktree-local identity, and conflicting
-Git operation state.
+complete staged candidate, and conflicting Git operation state.
 
 The command may run from a subdirectory and reports the resolved worktree root,
 although =git gaw commit= must still run at that root.  It does not replace
@@ -205,7 +205,7 @@ relative to its first parent.
 ** Git as the History Store
 GAW deliberately relies on Git itself for:
 
-- commit identity;
+- recording commit identity;
 - temporal history;
 - object storage;
 - parent relationships;
