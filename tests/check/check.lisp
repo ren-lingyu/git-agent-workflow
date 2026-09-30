@@ -45,6 +45,17 @@
   (let ((finding (%finding report name)))
     (and finding (check-finding-detail finding))))
 
+(defun %repository-state (directory)
+  (list (%git directory "symbolic-ref" "HEAD")
+        (%git directory "rev-parse" "HEAD")
+        (%git directory "ls-files" "--stage" "-z")
+        (%git directory
+              "for-each-ref"
+              "--format=%(refname)%00%(objectname)%00%(symref)"
+              "refs/heads/"
+              "refs/gaw/")
+        (%git directory "count-objects" "-v")))
+
 (defun %with-repository (function)
   (with-test-repository (directory)
     (%initialize directory)
@@ -55,13 +66,13 @@
    (lambda (directory)
      (%git directory "config" "--local" "--unset-all" "user.name")
      (%git directory "config" "--local" "--unset-all" "user.email")
-     (let* ((before (%git directory "count-objects" "-v"))
+     (let* ((before (%repository-state directory))
             (report (check directory))
-            (after (%git directory "count-objects" "-v")))
+            (after (%repository-state directory)))
        (assert (check-report-ok-p report))
        (assert (eq :ok (%finding-status report :index)))
        (assert (null (%finding-status report :identity)))
-       (assert (string= before after)))
+       (assert (equal before after)))
      (let ((nested (merge-pathnames "notes/" directory)))
        (ensure-directories-exist (merge-pathnames "placeholder" nested))
        (let ((report (check nested)))
@@ -85,6 +96,75 @@
        (assert (search "not ready"
                        (with-output-to-string (stream)
                          (write-check-report report stream))))))))
+
+(defun %test-head-and-registration-failures ()
+  (%with-repository
+   (lambda (directory)
+     (%git directory "checkout" "--quiet" "--detach" "HEAD")
+     (let ((report (check directory)))
+       (assert (not (check-report-ok-p report)))
+       (assert (eq :error (%finding-status report :branch)))
+       (assert (eq :skipped (%finding-status report :registration)))
+       (assert (eq :skipped (%finding-status report :head))))))
+  (with-test-repository (directory)
+    (%git directory "symbolic-ref" "HEAD" "refs/heads/gaw")
+    (%git directory
+          "symbolic-ref"
+          "refs/gaw/heads/gaw"
+          "refs/heads/gaw")
+    (let ((report (check directory)))
+      (assert (not (check-report-ok-p report)))
+      (assert (eq :ok (%finding-status report :branch)))
+      (assert (eq :ok (%finding-status report :registration)))
+      (assert (eq :error (%finding-status report :head)))
+      (assert (eq :skipped (%finding-status report :head-config)))))
+  (%with-repository
+   (lambda (directory)
+     (%git directory
+           "symbolic-ref"
+           "refs/gaw/heads/gaw"
+           "refs/heads/other")
+     (let ((report (check directory)))
+       (assert (not (check-report-ok-p report)))
+       (assert (eq :error (%finding-status report :registration)))
+       (assert (search "invalid"
+                       (%finding-detail report :registration)))))))
+
+(defun %test-staged-config-variants ()
+  (%with-repository
+   (lambda (directory)
+     (%write directory
+             ".gaw/config"
+             "(:workspace ((:file \"TASKS.md\")))")
+     (%write directory "TASKS.md" "tasks")
+     (%git directory "rm" "--cached" "--quiet" "AGENTS.md")
+     (%git directory "add" "--" ".gaw/config" "TASKS.md")
+     (let ((report (check directory)))
+       (assert (check-report-ok-p report))
+       (assert (eq :ok (%finding-status report :index))))))
+  (%with-repository
+   (lambda (directory)
+     (%git directory "rm" "--cached" "--quiet" "AGENTS.md")
+     (let ((report (check directory)))
+       (assert (check-report-ok-p report))
+       (assert (eq :ok (%finding-status report :index))))))
+  (%with-repository
+   (lambda (directory)
+     (%git directory "rm" "--cached" "--quiet" ".gaw/config")
+     (let ((report (check directory)))
+       (assert (not (check-report-ok-p report)))
+       (assert (eq :error (%finding-status report :index)))
+       (assert (search "no .gaw/config"
+                       (%finding-detail report :index))))))
+  (%with-repository
+   (lambda (directory)
+     (%write directory ".gaw/config" "(:workspace (")
+     (%git directory "add" "--" ".gaw/config")
+     (let ((report (check directory)))
+       (assert (not (check-report-ok-p report)))
+       (assert (eq :error (%finding-status report :index)))
+       (assert (search "Invalid staged config"
+                       (%finding-detail report :index)))))))
 
 (defun %test-staged-index-shape-failures ()
   (%with-repository
@@ -186,6 +266,8 @@
 (defun run-tests ()
   (%test-healthy-and-nested-check)
   (%test-index-failure-and-aggregation)
+  (%test-head-and-registration-failures)
+  (%test-staged-config-variants)
   (%test-staged-index-shape-failures)
   (%test-empty-workspace-is-valid)
   (%test-existing-project-parent-conflict)

@@ -11,5 +11,6 @@
                 #:validate-workspace
                 #:entry-at-path
                 #:git-entry-mode
+                #:git-entry-path
                 #:workspace-error)
   (:export #:run-tests))

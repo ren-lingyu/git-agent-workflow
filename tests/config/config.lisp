@@ -400,6 +400,23 @@
          (read-config-at-tree directory
                               (subseq tree-oid 0 12)))))))
 
+(defun %test-runtime-reads-explicit-blob-object ()
+  (with-test-repository (directory)
+    (let ((valid
+            (%hash-test-octets
+             directory
+             (%octets "(:workspace ((:file \"blob\")))")))
+          (invalid
+            (%hash-test-octets
+             directory
+             (%octets "(:workspace ((:file \"bad\\npath\")))"))))
+      (assert (equal '((:file "blob"))
+                     (%workspace-summary
+                      (read-config-blob directory valid))))
+      (%assert-config-error :invalid-syntax
+                            (lambda ()
+                              (read-config-blob directory invalid))))))
+
 (defun %test-runtime-receives-source-ref-explicitly ()
   (with-test-repository (directory)
     (%create-config-commit
@@ -479,6 +496,7 @@
   (let ((package (find-package '#:git-agent-workflow.config)))
     (dolist (name '("READ-CONFIG"
                     "READ-CONFIG-AT-TREE"
+                    "READ-CONFIG-BLOB"
                     "CONFIG"
                     "CONFIG-P"
                     "CONFIG-WORKSPACE"
@@ -517,6 +535,7 @@
   (%test-runtime-reads-current-gaw-commit)
   (%test-runtime-fixes-commit-before-reading)
   (%test-runtime-reads-explicit-tree-object)
+  (%test-runtime-reads-explicit-blob-object)
   (%test-runtime-receives-source-ref-explicitly)
   (%test-runtime-classifies-config-tree-entries)
   (%test-runtime-enforces-size-before-decoding)

@@ -60,6 +60,28 @@
                   nil)
               (error () t)))))
 
+(defun %test-show-help-interception-is-exact ()
+  (with-temporary-directory (directory)
+    (let* ((symbol 'git-agent-workflow.show:show)
+           (original (symbol-function symbol))
+           (seen nil))
+      (unwind-protect
+           (progn
+             (setf (symbol-function symbol)
+                   (lambda (show-directory arguments)
+                     (assert (equal directory show-directory))
+                     (setf seen arguments)
+                     23))
+             (dolist (arguments '(("show" "--" "--help")
+                                  ("show" "HEAD" "--help")))
+               (setf seen nil)
+               (multiple-value-bind (output status)
+                   (%dispatch-output arguments directory)
+                 (assert (string= "" output))
+                 (assert (= 23 status))
+                 (assert (equal (rest arguments) seen)))))
+        (setf (symbol-function symbol) original)))))
+
 (defun %test-check-dispatch ()
   (with-temporary-directory (directory)
     (multiple-value-bind (output status)
@@ -71,6 +93,7 @@
   (%test-message-fragments-follow-commit-tree-semantics)
   (%test-commit-argument-parser)
   (%test-help-dispatch)
+  (%test-show-help-interception-is-exact)
   (%test-check-dispatch)
   (format t
           "~&All CLI tests passed.~%")
