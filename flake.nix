@@ -60,16 +60,19 @@
       };
 
       packages = {
-        default = cl.mkExecutable {
-          args = {
-            pname = "git-gaw";
-            inherit (lispArgs) lispSystem version src lispDependencies;
-            env = {
-              GIT = pkgs.lib.getExe pkgs.git;
+        default = (pkgs.lib.makeOverridable
+          ({ git ? pkgs.git } : cl.mkExecutable {
+            args = {
+              pname = "git-gaw";
+              inherit (lispArgs) lispSystem version src lispDependencies;
+              env = {
+                GIT = pkgs.lib.getExe git;
+              };
             };
-          };
-          programPath = "git-gaw";
-        };
+            programPath = "git-gaw";
+          })
+          { }
+        );
       };
 
       checks = {
