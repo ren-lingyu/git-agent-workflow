@@ -21,6 +21,14 @@
       "x86_64-linux"
     ];
 
+    flake = {
+      overlays = {
+        default = _final: prev: {
+          git-agent-workflow = self.packages.${prev.stdenv.hostPlatform.system}.default;
+        };
+      };
+    };
+
     perSystem = { system, pkgs, ... } :  let
 
       cl = inputs.cl-nix-forge.lib.${system};
