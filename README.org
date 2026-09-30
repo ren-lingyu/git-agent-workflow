@@ -125,6 +125,48 @@ UTC timestamps, message, hook policy, and unsigned commit policy explicitly.
 The branch ref is updated with an expected-old-object check so a concurrent ref
 change is never overwritten.
 
+When branch protection is configured, the final ref update disables only the
+=gaw-reference-transaction= named hook.  Other configured hooks remain enabled.
+The existing suppression of traditional hooks through =core.hooksPath= is a
+separate commit policy and is not the branch-protection bypass mechanism.
+
+** Protecting Registered Branches
+GAW can use Git 2.54's configured =reference-transaction= hook to prevent
+ordinary Git commands from modifying a registered GAW branch.  Protection is
+enabled manually for the repository:
+
+#+begin_src sh
+git config --local hook.gaw-reference-transaction.event reference-transaction
+git config --local hook.gaw-reference-transaction.command \
+  'git-gaw --reference-transaction'
+#+end_src
+
+The machine-facing option is intentionally absent from command help.  During
+the =preparing= phase it checks direct =refs/heads/*= updates.  For object
+updates through a symbolic ref such as =HEAD= or a registration ref, it also
+resolves the symbolic chain to determine which branch Git will actually
+modify.  Symbolic-ref updates themselves, such as switching =HEAD= or changing
+a registration target, do not modify the referenced branch and are not
+blocked.  The hook rejects the complete ref transaction when the resulting
+branch has an exact =refs/gaw/heads/*= symbolic registration.  A registration
+continues to protect its branch name when the branch itself is missing.
+Malformed transaction input, an invalid registration, or a failed
+registration query is rejected rather than treated as safe.  The =prepared=,
+=committed=, and =aborted= phases perform no work; unknown phases are protocol
+errors.
+
+The protection does not apply to changes to =refs/gaw/*= themselves.  An
+object update addressed through a symbolic registration is still rejected
+when Git would dereference it and modify the protected branch.  =git gaw
+commit= performs its own complete validation and disables this one named hook
+for its final guarded =update-ref=.  Hook configuration is currently
+repository-local state managed by the user; GAW does not yet provision or
+repair it.
+
+This hook is a local guard against accidental ref updates, not an authorization
+boundary.  A user who controls the repository can disable its configuration or
+modify ref storage directly.
+
 ** Showing History
 The command =git gaw show= delegates object display and formatting to =git
 show= while enforcing the canonical GAW history semantics:
@@ -219,7 +261,7 @@ separate metadata database.
 GAW is implemented in Common Lisp and built as an ASDF system.
 
 The build is managed with Nix flakes and =cl-nix-forge=.  The currently
-supported system is =x86_64-linux=.
+supported system is =x86_64-linux=, and GAW requires Git 2.54 or newer.
 
 ** Package Layout
 Source packages are organized as directories under =src/=.  Each package
