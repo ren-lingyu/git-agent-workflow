@@ -6,6 +6,13 @@
                 control
                 arguments)))
 
+(defun %version ()
+  (load-time-value
+   (or (asdf:component-version
+        (asdf:find-system "git-agent-workflow"))
+       (error "The git-agent-workflow system has no version"))
+   t))
+
 (defun %option-value (argument long-name short-name arguments)
   (cond
     ((or (string= argument long-name)
@@ -205,6 +212,14 @@
               condition)
       1)))
 
+(defun %run-version (arguments stream)
+  (when arguments
+    (%cli-error "git gaw version does not accept arguments"))
+  (format stream
+          "git-gaw ~A~%"
+          (%version))
+  0)
+
 (defun %help-topic (name)
   (cond
     ((string= name "commit") :commit)
@@ -236,6 +251,10 @@
     ((and arguments
           (string= (first arguments) "--reference-transaction"))
      (%run-reference-transaction (rest arguments) directory))
+    ((and arguments
+          (or (string= (first arguments) "--version")
+              (string= (first arguments) "version")))
+     (%run-version (rest arguments) output-stream))
     ((or (equal arguments '("--help"))
          (equal arguments '("-h")))
      (%run-help '() output-stream))

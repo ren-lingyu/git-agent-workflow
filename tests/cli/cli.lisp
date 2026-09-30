@@ -89,6 +89,28 @@
       (assert (= status 1))
       (assert (search "GAW worktree is not ready" output)))))
 
+(defun %test-version-dispatch ()
+  (with-temporary-directory (directory)
+    (let ((expected
+            (format nil
+                    "git-gaw ~A~%"
+                    (asdf:component-version
+                     (asdf:find-system "git-agent-workflow")))))
+      (dolist (arguments '(("--version")
+                           ("version")))
+        (multiple-value-bind (output status)
+            (%dispatch-output arguments directory)
+          (assert (zerop status))
+          (assert (string= expected output))))
+      (dolist (arguments '(("--version" "extra")
+                           ("version" "extra")))
+        (assert
+         (handler-case
+             (progn
+               (%dispatch-output arguments directory)
+               nil)
+           (error () t)))))))
+
 (defun %test-reference-transaction-machine-option ()
   (with-temporary-directory (directory)
     (let* ((symbol 'git-agent-workflow.hook:reference-transaction)
@@ -162,6 +184,7 @@
   (%test-help-dispatch)
   (%test-show-help-interception-is-exact)
   (%test-check-dispatch)
+  (%test-version-dispatch)
   (%test-reference-transaction-machine-option)
   (%test-reference-transaction-machine-option-reports-hook-error)
   (%test-reference-transaction-machine-option-requires-phase)

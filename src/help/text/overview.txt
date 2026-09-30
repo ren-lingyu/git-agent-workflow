@@ -1,6 +1,8 @@
 usage: git gaw <command> [<args>]
    or: git gaw help [commit|show|check]
    or: git gaw --help
+   or: git gaw --version
+   or: git gaw version
 
 Git Agent Workflow maintains an independent first-parent history for an
 agent workspace in an already provisioned GAW worktree.

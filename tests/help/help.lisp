@@ -10,6 +10,7 @@
       (assert (plusp (length text)))
       (assert (char= #\Newline (char text (1- (length text)))))))
   (assert (search "git gaw check" (%render :check)))
+  (assert (search "git gaw --version" (%render :overview)))
   (assert (handler-case
               (progn (print-help :unknown) nil)
             (help-error () t))))
