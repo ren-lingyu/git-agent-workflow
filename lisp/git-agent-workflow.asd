@@ -1,5 +1,5 @@
 (asdf:defsystem "git-agent-workflow"
-  :version "0.2.0"
+  :version (:read-file-line "VERSION")
   :description "Git Agent Workflow (GAW)"
   :depends-on ("uiop"
                "babel")

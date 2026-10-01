@@ -9,88 +9,73 @@
     flake-parts = {
       url = "git+https://github.com/hercules-ci/flake-parts.git?ref=refs/heads/main&shallow=1";
     };
-    cl-nix-forge = {
-      url = "git+https://github.com/nerima-lisp/cl-nix-forge.git?ref=refs/tags/v0.6.1&shallow=1";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
-  outputs = { self, ... }@inputs : inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+  outputs = { self, ... }@inputs : let
+
+    mkProject_ = pkgs_ : lib_ : lib_.asdfFunctions.mkProject {
+      pkgs = pkgs_;
+      asdFile = ./lisp/git-agent-workflow.asd;
+      program = "git-gaw";
+      lispDependencies = ps_ : [
+        ps_.babel
+      ];
+      derivationAttrs = {
+        git ? pkgs_.git,
+      } : assert
+      (pkgs_.lib.assertMsg
+        (pkgs_.lib.versionAtLeast git.version "2.54")
+        "GAW requires Git >= 2.54, but got ${git.version}"
+      );
+      {
+        package = {
+          nativeBuildInputs = [
+            git
+          ];
+          GIT = pkgs_.lib.getExe git;
+        };
+        check = {
+          nativeBuildInputs = [
+            git
+          ];
+        };
+      };
+      meta = {
+        description = "Git Agent Workflow (GAW)";
+        platforms = [
+          "x86_64-linux"
+        ];
+      };
+    };
+
+  in inputs.flake-parts.lib.mkFlake { inherit inputs; } {
 
     systems = [
       "x86_64-linux"
     ];
 
     flake = {
+      lib = import ./lib;
       overlays = {
-        default = _final: prev: {
-          git-agent-workflow = self.packages.${prev.stdenv.hostPlatform.system}.default;
+        default = final_ : prev_ : {
+          git-agent-workflow = (mkProject_ final_ self.lib).package;
         };
       };
     };
 
-    perSystem = { system, pkgs, ... } :  let
+    perSystem = { pkgs, ... } : let
 
-      cl = inputs.cl-nix-forge.lib.${system};
-
-      lispArgs = {
-        lispSystem = pkgs.lib.removeSuffix ".asd" (builtins.baseNameOf ./lisp/git-agent-workflow.asd);
-        version = cl.fromAsdSystem ./lisp/git-agent-workflow.asd;
-        src = pkgs.lib.fileset.toSource {
-          root = ./lisp;
-          fileset = pkgs.lib.fileset.unions [
-            ./lisp
-          ];
-        };
-        lispDependencies = [
-          (cl.fromNixpkgsLisp {
-            drv = pkgs.sbcl.pkgs.babel;
-            lispImplementation = "sbcl";
-          })
-        ];
-      };
+      project_ = mkProject_ pkgs self.lib;
 
     in {
 
-      _module.args.pkgs = import inputs.nixpkgs {
-        inherit system;
-        overlays = [
-          (final: prev: {
-            git = assert (prev.lib.assertMsg
-              (prev.lib.versionAtLeast prev.git.version "2.54")
-              "GAW requires Git >= 2.54, but got ${prev.git.version}"
-            );
-            prev.git;
-          })
-        ];
-      };
-
       packages = {
-        default = (pkgs.lib.makeOverridable
-          ({ git ? pkgs.git } : cl.mkExecutable {
-            args = {
-              pname = "git-gaw";
-              inherit (lispArgs) lispSystem version src lispDependencies;
-              env = {
-                GIT = pkgs.lib.getExe git;
-              };
-            };
-            programPath = "git-gaw";
-          })
-          { }
-        );
+        default = project_.package;
+        git-agent-workflow = project_.package;
       };
 
       checks = {
-        "${lispArgs.lispSystem}-test" = cl.mkTestCheck (
-          cl.lispDerivation {
-            inherit (lispArgs) lispSystem version src lispDependencies;
-            nativeBuildInputs = [
-              self.packages.${system}.default
-              pkgs.git
-            ];
-          }
-        );
+        git-agent-workflow-check = project_.check;
       };
 
       devShells = { };
