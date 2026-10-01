@@ -11,15 +11,16 @@ context as the primary store of working state, GAW keeps selected agent state
 in Git and lets Git provide its history and reachability model.
 
 * Status
-The current release is =0.1.0=.  It is the first runtime release for use in an
-already provisioned GAW repository and worktree.  It provides the daily
-=check=, edit, stage, =commit=, and =show= loop, command help, and optional
-protection against ordinary Git commands updating registered GAW branches.
+The current release is =0.2.0=.  It adds repository lifecycle operations to
+the daily runtime introduced in 0.1.0.  A new repository can be initialized
+with =git gaw init=, an existing local GAW branch can be materialized with
+=git gaw deploy=, and registered branches can be renamed or safely deleted
+with =git gaw branch=.  The =check=, edit, stage, =commit=, and =show= loop and
+local ref-transaction protection remain the normal daily interface.
 
-This release does not provide a provisioning command or automate branch
-creation, registration, hook configuration, or deployment.  Those setup
-operations remain external to the runtime CLI.  The repository protocol and
-user-facing interface may still change before a stable release.
+The repository protocol and user-facing interface may still change before a
+stable release.  Remote-side enforcement, automatic fetching, arbitrary
+corruption repair, and system-wide deployment integration remain out of scope.
 
 * Installation
 GAW currently supports =x86_64-linux= and requires Nix with flakes enabled.
@@ -60,6 +61,26 @@ They are parent edges used to associate project snapshots with agent history
 and to keep those commits reachable through ordinary Git object reachability.
 
 The canonical temporal history of GAW is therefore its first-parent chain.
+
+** Portable and Local State
+The portable truth of a GAW branch is its ordinary Git branch representation,
+commit history, =.gaw/config=, and workspace state.  Remote transport uses
+ordinary branch history; GAW does not require =refs/gaw/*= to be pushed or
+fetched.
+
+The =refs/gaw/*= namespace is rebuildable local deployment metadata:
+
+#+begin_src text
+refs/gaw/heads/<name> -> refs/heads/<name>
+refs/gaw/HEAD         -> refs/gaw/heads/<name>
+#+end_src
+
+The first symbolic ref records local GAW membership for validation and branch
+protection.  The second is a persisted local selector.  It is not portable
+remote state and is not authoritative for =git gaw commit=, which uses the
+current worktree's symbolic =HEAD=.  Rebuildable means that no irreplaceable
+repository information lives in this namespace; it does not authorize runtime
+commands to repair malformed metadata automatically.
 
 ** Workspace
 GAW manages a selected set of paths as its workspace.
@@ -114,6 +135,74 @@ workspace or reserved GAW protocol paths.  This is a local validity condition
 on commits that participate in GAW history rather than a repository-wide
 restriction on unrelated branches.
 
+** Initializing a Repository
+=git gaw init= creates initial GAW history and immediately uses the normal
+deployment path:
+
+#+begin_src text
+git gaw init --branch <name> [--worktree-path <path>]
+#+end_src
+
+It first performs read-only checks for existing valid or GAW-like history,
+local protocol metadata, hook conflicts, and an obvious requested worktree
+path conflict.  A branch containing a valid committed GAW state means the
+repository is already initialized.  A branch with a =.gaw/config= marker that
+fails complete committed-state validation is treated as ambiguous or corrupt,
+not ignored.
+
+The initial =(:workspace ())= blob, its trees, and the root commit are written
+before any ref becomes visible.  The source branch, its exact symbolic
+registration, and =refs/gaw/HEAD= are then created in one expected-state
+=update-ref --stdin= transaction.  A failed ref transaction may leave
+unreachable objects but cannot leave a partially created ref graph.  The root
+commit message is =Initialize GAW= and its author and committer are =Git Agent
+Workflow <gaw@invalid>=; inherited signing configuration is not used.
+
+** Deploying Local State
+=git gaw deploy= materializes local metadata and optional worktree state for
+history already present in a local ordinary branch:
+
+#+begin_src text
+git gaw deploy [--branch <name>] [--worktree-path <path>]
+#+end_src
+
+With =--branch=, the named =refs/heads/*= branch must already exist and pass
+complete committed-state validation.  Without it, a valid =refs/gaw/HEAD= is a
+fast path.  If the selector is missing, deploy enumerates local branches,
+uses the fixed =<branch>:.gaw/config= path only as a cheap prefilter, and then
+fully validates every matching candidate.  Zero candidates fail; multiple
+candidates require =--branch=.  Malformed existing local registration or
+selector state is corruption and is never overwritten.
+
+Deploy does not fetch, contact remotes, or create a missing source branch.  It
+creates or validates the exact local symbolic registration and selector,
+reconciles the requested linked worktree, verifies an attached worktree with
+=git gaw check=, and installs the canonical repository-local configured
+protection hook.  Repeating deploy against the same valid state is safe.
+
+** Registered Branch Lifecycle
+Operations that must coordinate an ordinary source branch with local GAW refs
+are exposed through:
+
+#+begin_src text
+git gaw branch -m <new-name>
+git gaw branch -d <name>
+#+end_src
+
+Rename operates on the registered GAW branch checked out by the current
+worktree.  It uses native =git branch -m= so Git maintains worktree =HEAD=,
+reflogs, and branch configuration, then atomically moves the registration and
+selector and verifies the final invariant.
+
+Delete accepts only a branch with an exact local registration.  It uses native
+=git branch -d=, retaining Git's checked-out-branch and safe-delete checks,
+then removes the registration and the selector when it selected that branch.
+Unregistered branches remain native Git's responsibility.  Because native
+branch operations and protocol-ref changes cannot share one transaction, both
+operations use strict preflight checks, ordered updates, and best-effort
+compensation.  Incomplete compensation is reported explicitly as a partial
+failure.
+
 ** Creating Commits
 The command =git gaw commit= creates commits on the registered GAW branch
 checked out by the current worktree.  It must be run at that worktree's root.
@@ -160,35 +249,37 @@ separate commit policy and is not the branch-protection bypass mechanism.
 ** Protecting Registered Branches
 GAW can use Git 2.54's configured =reference-transaction= hook to prevent
 ordinary Git commands from modifying a registered GAW branch.  Protection is
-enabled manually for the repository:
+installed or validated by =git gaw init= and =git gaw deploy=.  Its canonical
+repository-local configuration is:
 
 #+begin_src sh
 git config --local hook.gaw-reference-transaction.event reference-transaction
 git config --local hook.gaw-reference-transaction.command \
   'git-gaw --reference-transaction'
+git config --local hook.gaw-reference-transaction.enabled true
 #+end_src
 
 The machine-facing option is intentionally absent from command help.  During
 the =preparing= phase it checks direct =refs/heads/*= updates.  For object
 updates through a symbolic ref such as =HEAD= or a registration ref, it also
 resolves the symbolic chain to determine which branch Git will actually
-modify.  Symbolic-ref updates themselves, such as switching =HEAD= or changing
-a registration target, do not modify the referenced branch and are not
-blocked.  The hook rejects the complete ref transaction when the resulting
-branch has an exact =refs/gaw/heads/*= symbolic registration.  A registration
+modify.  Switching a worktree's =HEAD= between branches remains allowed when
+it does not move a registered branch.  The hook rejects the complete ref
+transaction when the resulting branch has an exact =refs/gaw/heads/*=
+symbolic registration, and it also rejects ordinary transactions which
+directly create, modify, or delete any =refs/gaw/*= protocol ref.  A registration
 continues to protect its branch name when the branch itself is missing.
 Malformed transaction input, an invalid registration, or a failed
 registration query is rejected rather than treated as safe.  The =prepared=,
 =committed=, and =aborted= phases perform no work; unknown phases are protocol
 errors.
 
-The protection does not apply to changes to =refs/gaw/*= themselves.  An
-object update addressed through a symbolic registration is still rejected
-when Git would dereference it and modify the protected branch.  =git gaw
-commit= performs its own complete validation and disables this one named hook
-for its final guarded =update-ref=.  Hook configuration is currently
-repository-local state managed by the user; GAW does not yet provision or
-repair it.
+An object update addressed through a symbolic registration is also rejected
+when Git would dereference it and modify the protected branch.  Valid GAW
+commit and lifecycle operations perform their own validation and disable only
+this named hook for guarded ref mutations; unrelated configured hooks remain
+enabled.  Divergent or incomplete configuration is reported as a deployment
+conflict rather than silently overwritten.
 
 This hook is a local guard against accidental ref updates, not an authorization
 boundary.  A user who controls the repository can disable its configuration or
@@ -240,8 +331,8 @@ make the report fail.  The check does not write the index, refs, worktree, or
 object database.
 
 ** Command Help
-GAW provides overview and command-specific help through =git gaw help=,
-=git gaw help commit=, =git gaw help show=, and =git gaw help check=.  The
+GAW provides overview and command-specific help through =git gaw help= and
+=git gaw help init|deploy|branch|commit|show|check=.  The
 overview is also available as =git gaw --help= or =git gaw -h=, while each
 command accepts =--help= as its sole argument.
 
@@ -250,7 +341,22 @@ strictly decoded and embedded when the Lisp system is compiled, so the packaged
 executable does not locate or read those source files at runtime.
 
 ** Daily Runtime Loop
-Once a GAW worktree has been provisioned, the intended daily loop is:
+For a new repository, initialize a source branch and optionally materialize a
+linked worktree:
+
+#+begin_src text
+git gaw init --branch agents --worktree-path .agents
+#+end_src
+
+After cloning history which contains a GAW branch, first ensure the ordinary
+source branch exists locally, then deploy it without any implicit network
+operation:
+
+#+begin_src text
+git gaw deploy --branch agents --worktree-path .agents
+#+end_src
+
+Once deployed, the intended daily loop is:
 
 #+begin_src text
 git gaw check
