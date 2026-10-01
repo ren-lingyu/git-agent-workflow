@@ -96,15 +96,58 @@
           (worktree (merge-pathnames "agent/" outer)))
       (call-git (list "init" "--quiet" (namestring repository)))
       (%make-gaw-branch repository "gaw")
+      (deploy repository :branch "gaw")
+      (assert (eq :canonical
+                  (hook-configuration-status
+                   (inspect-protection-hook repository))))
+      (%deploy-git repository
+                   "config" "--local"
+                   "hook.gaw-test-observer.event"
+                   "reference-transaction")
+      (%deploy-git repository
+                   "config" "--local"
+                   "hook.gaw-test-observer.command"
+                   "touch deploy-observer-ran")
       (let ((result (deploy repository
                             :branch "gaw"
                             :worktree-path (namestring worktree))))
         (assert (eq :created-worktree (deploy-result-mode result)))
         (assert (check-report-ok-p (check worktree))))
+      (assert (probe-file
+               (merge-pathnames "deploy-observer-ran" repository)))
       (assert (eq :existing-worktree
                   (deploy-result-mode
                    (deploy repository :branch "gaw"
                            :worktree-path (namestring worktree))))))))
+
+(defun %test-worktree-deploy-compensates-after-check-failure ()
+  (with-temporary-directory (outer)
+    (let ((repository (merge-pathnames "repository/" outer))
+          (worktree (merge-pathnames "agent/" outer)))
+      (call-git (list "init" "--quiet" (namestring repository)))
+      (%make-gaw-branch repository "gaw")
+      (deploy repository :branch "gaw")
+      (%deploy-git repository
+                   "config" "--local"
+                   "hook.gaw-test-break-check.event"
+                   "post-checkout")
+      (%deploy-git
+       repository
+       "config" "--local"
+       "hook.gaw-test-break-check.command"
+       "sh -c 'git rev-parse HEAD > \"$(git rev-parse --git-path MERGE_HEAD)\"'")
+      (assert
+       (eq :invalid-worktree
+           (%deploy-error-reason
+            (lambda ()
+              (deploy repository
+                      :branch "gaw"
+                      :worktree-path (namestring worktree))))))
+      (assert (not (probe-file worktree)))
+      (assert
+       (not (search (namestring worktree)
+                    (%deploy-git repository
+                                 "worktree" "list" "--porcelain")))))))
 
 (defun run-tests ()
   (%test-explicit-repository-only-deploy)
@@ -115,5 +158,6 @@
   (%test-explicit-branch-does-not-repair-registration)
   (%test-remote-tracking-branch-is-not-a-candidate)
   (%test-explicit-worktree-deploy)
+  (%test-worktree-deploy-compensates-after-check-failure)
   (format t "~&All deploy tests passed.~%")
   t)

@@ -215,7 +215,9 @@
 (defun %create-worktree (directory path source-ref source-ref-prefix)
   (let* ((branch (subseq source-ref (length source-ref-prefix)))
          (invocation
-           (run-git (list "worktree" "add" "--quiet"
+           (run-git (list "-c"
+                          "hook.gaw-reference-transaction.enabled=false"
+                          "worktree" "add" "--quiet"
                           (uiop:native-namestring path) branch)
                     directory)))
     (unless (zerop (git-invocation-exit-status invocation))
@@ -225,7 +227,10 @@
 
 (defun %remove-worktree (directory path)
   (let ((invocation
-          (run-git (list "worktree" "remove" (uiop:native-namestring path))
+          (run-git (list "-c"
+                         "hook.gaw-reference-transaction.enabled=false"
+                         "worktree" "remove"
+                         (uiop:native-namestring path))
                    directory)))
     (unless (zerop (git-invocation-exit-status invocation))
       (error "Cannot remove worktree ~A: ~A"
