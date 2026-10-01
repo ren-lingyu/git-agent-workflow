@@ -12,7 +12,13 @@
 !lisp/**/
 !lisp/**/*.asd
 !lisp/**/*.lisp
+!lisp/**/VERSION
 !lisp/**/text/*.txt
+
+!lib/
+!lib/**/
+!lib/**/*.lisp
+!lib/**/*.nix
 
 !.github/
 !.github/**/
