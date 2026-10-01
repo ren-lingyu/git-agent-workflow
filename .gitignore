@@ -8,24 +8,11 @@
 !flake.nix
 !flake.lock
 
-!*.asd
-!*.lisp
-
-!src/
-!src/**/
-!src/**/*.lisp
-!src/**/text/*.txt
-
-!pkgs/
-!pkgs/**/
-!pkgs/**/*.lisp
-!pkgs/**/*.nix
-!pkgs/**/*.sh
-
-!tests/
-!tests/**/
-!tests/**/*.lisp
-!tests/**/*.nix
+!lisp/
+!lisp/**/
+!lisp/**/*.asd
+!lisp/**/*.lisp
+!lisp/**/text/*.txt
 
 !.github/
 !.github/**/

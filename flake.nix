@@ -34,14 +34,12 @@
       cl = inputs.cl-nix-forge.lib.${system};
 
       lispArgs = {
-        lispSystem = pkgs.lib.removeSuffix ".asd" (builtins.baseNameOf ./git-agent-workflow.asd);
-        version = cl.fromAsdSystem ./git-agent-workflow.asd;
+        lispSystem = pkgs.lib.removeSuffix ".asd" (builtins.baseNameOf ./lisp/git-agent-workflow.asd);
+        version = cl.fromAsdSystem ./lisp/git-agent-workflow.asd;
         src = pkgs.lib.fileset.toSource {
-          root = ./.;
+          root = ./lisp;
           fileset = pkgs.lib.fileset.unions [
-            ./git-agent-workflow.asd
-            ./src
-            ./tests
+            ./lisp
           ];
         };
         lispDependencies = [
