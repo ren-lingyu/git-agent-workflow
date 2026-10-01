@@ -143,6 +143,21 @@
                                             :depends-on ("hook.core"))
                                            (:file "hook.api"
                                             :depends-on ("hook.runtime"))))
+                             (:module "deploy"
+                              :pathname "deploy/"
+                              :depends-on ("package"
+                                           "git"
+                                           "refs"
+                                           "state"
+                                           "hook"
+                                           "check")
+                              :components ((:file "package")
+                                           (:file "deploy.core"
+                                            :depends-on ("package"))
+                                           (:file "deploy.runtime"
+                                            :depends-on ("deploy.core"))
+                                           (:file "deploy.api"
+                                            :depends-on ("deploy.runtime"))))
                              (:module "cli"
                               :pathname "cli/"
                               :depends-on ("package"
@@ -222,6 +237,13 @@
                               :components ((:file "package")
                                            (:file "state"
                                             :depends-on ("package"))))
+                             (:module "deploy"
+                              :pathname "deploy/"
+                              :depends-on ("package"
+                                           "support")
+                              :components ((:file "package")
+                                           (:file "deploy"
+                                            :depends-on ("package"))))
                              (:module "show"
                               :pathname "show/"
                               :depends-on ("package"
@@ -273,6 +295,7 @@
                                            "commit"
                                            "workspace"
                                            "state"
+                                           "deploy"
                                            "show"
                                            "check"
                                            "help"
