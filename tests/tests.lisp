@@ -7,6 +7,7 @@
   (git-agent-workflow/tests.workspace:run-tests)
   (git-agent-workflow/tests.state:run-tests)
   (git-agent-workflow/tests.deploy:run-tests)
+  (git-agent-workflow/tests.init:run-tests)
   (git-agent-workflow/tests.commit:run-tests)
   (git-agent-workflow/tests.show:run-tests)
   (git-agent-workflow/tests.check:run-tests)

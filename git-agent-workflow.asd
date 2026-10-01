@@ -158,6 +158,21 @@
                                             :depends-on ("deploy.core"))
                                            (:file "deploy.api"
                                             :depends-on ("deploy.runtime"))))
+                             (:module "init"
+                              :pathname "init/"
+                              :depends-on ("package"
+                                           "git"
+                                           "refs"
+                                           "state"
+                                           "hook"
+                                           "deploy")
+                              :components ((:file "package")
+                                           (:file "init.core"
+                                            :depends-on ("package"))
+                                           (:file "init.runtime"
+                                            :depends-on ("init.core"))
+                                           (:file "init.api"
+                                            :depends-on ("init.runtime"))))
                              (:module "cli"
                               :pathname "cli/"
                               :depends-on ("package"
@@ -244,6 +259,13 @@
                               :components ((:file "package")
                                            (:file "deploy"
                                             :depends-on ("package"))))
+                             (:module "init"
+                              :pathname "init/"
+                              :depends-on ("package"
+                                           "support")
+                              :components ((:file "package")
+                                           (:file "init"
+                                            :depends-on ("package"))))
                              (:module "show"
                               :pathname "show/"
                               :depends-on ("package"
@@ -296,6 +318,7 @@
                                            "workspace"
                                            "state"
                                            "deploy"
+                                           "init"
                                            "show"
                                            "check"
                                            "help"
