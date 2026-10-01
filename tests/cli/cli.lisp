@@ -46,7 +46,7 @@
                        (nth-value 0 (%dispatch-output '("--help") directory))))
       (assert (string= overview
                        (nth-value 0 (%dispatch-output '("-h") directory)))))
-    (dolist (command '("commit" "show" "check"))
+    (dolist (command '("commit" "show" "check" "deploy" "init" "branch"))
       (let ((topic (nth-value 0
                              (%dispatch-output (list "help" command)
                                                directory)))
@@ -57,6 +57,21 @@
     (assert (handler-case
                 (progn
                   (%dispatch-output '("help" "config") directory)
+                  nil)
+              (error () t)))))
+
+(defun %test-deploy-argument-parser ()
+  (multiple-value-bind (branch path)
+      (git-agent-workflow.cli::%parse-deploy-arguments
+       '("--branch=gaw" "--worktree-path" "agent"))
+    (assert (string= "gaw" branch))
+    (assert (string= "agent" path)))
+  (dolist (arguments '(("positional")
+                       ("--branch")
+                       ("--branch" "one" "--branch" "two")))
+    (assert (handler-case
+                (progn
+                  (git-agent-workflow.cli::%parse-deploy-arguments arguments)
                   nil)
               (error () t)))))
 
@@ -182,6 +197,7 @@
   (%test-message-fragments-follow-commit-tree-semantics)
   (%test-commit-argument-parser)
   (%test-help-dispatch)
+  (%test-deploy-argument-parser)
   (%test-show-help-interception-is-exact)
   (%test-check-dispatch)
   (%test-version-dispatch)

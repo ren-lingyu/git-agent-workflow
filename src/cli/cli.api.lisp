@@ -44,6 +44,18 @@
     (t
      (values nil arguments))))
 
+(defun %long-option-value (argument name arguments)
+  (cond
+    ((string= argument name)
+     (unless arguments
+       (%cli-error "Option ~A requires a value" name))
+     (values (first arguments) (rest arguments)))
+    ((let ((prefix (concatenate 'string name "=")))
+       (and (>= (length argument) (length prefix))
+            (string= prefix argument :end2 (length prefix))))
+     (values (subseq argument (1+ (length name))) arguments))
+    (t (values nil arguments))))
+
 (defun %read-octets (stream)
   (let ((buffer
           (make-array 0
@@ -195,6 +207,75 @@
     (write-check-report report stream)
     (if (check-report-ok-p report) 0 1)))
 
+(defun %parse-deploy-arguments (arguments)
+  (let ((branch nil) (worktree-path nil))
+    (loop while arguments
+          for argument = (pop arguments)
+          do (multiple-value-bind (value remaining)
+                 (%long-option-value argument "--branch" arguments)
+               (if value
+                   (progn
+                     (when branch
+                       (%cli-error "Option --branch may be specified only once"))
+                     (setf branch value arguments remaining))
+                   (multiple-value-bind (path path-remaining)
+                       (%long-option-value argument "--worktree-path" arguments)
+                     (if path
+                         (progn
+                           (when worktree-path
+                             (%cli-error
+                              "Option --worktree-path may be specified only once"))
+                           (setf worktree-path path
+                                 arguments path-remaining))
+                         (%cli-error "Unsupported deploy argument: ~A"
+                                     argument))))))
+    (values branch worktree-path)))
+
+(defun %run-init (arguments directory stream)
+  (multiple-value-bind (branch worktree-path)
+      (%parse-deploy-arguments arguments)
+    (unless branch
+      (%cli-error "git gaw init requires --branch <name>"))
+    (let ((result (initialize directory
+                              :branch branch
+                              :worktree-path worktree-path)))
+      (format stream "Initialized GAW branch ~A at ~A (~(~A~))~%"
+              (init-result-branch result)
+              (init-result-commit-oid result)
+              (deploy-result-mode (init-result-deploy-result result)))
+      0)))
+
+(defun %run-deploy (arguments directory stream)
+  (multiple-value-bind (branch worktree-path)
+      (%parse-deploy-arguments arguments)
+    (let ((result (deploy directory
+                          :branch branch
+                          :worktree-path worktree-path)))
+      (format stream "Deployed GAW branch ~A (~(~A~))"
+              (deploy-result-branch result)
+              (deploy-result-mode result))
+      (when (deploy-result-worktree-path result)
+        (format stream " at ~A" (deploy-result-worktree-path result)))
+      (terpri stream)
+      (dolist (warning (deploy-result-warnings result))
+        (format stream "warning: ~A~%" warning))
+      0)))
+
+(defun %run-branch (arguments directory stream)
+  (unless (and (= 2 (length arguments))
+               (member (first arguments) '("-m" "-d") :test #'string=))
+    (%cli-error "Usage: git gaw branch -m <new-name> | -d <name>"))
+  (let ((operation (first arguments))
+        (name (second arguments)))
+    (if (string= operation "-m")
+        (progn
+          (rename-branch directory name)
+          (format stream "Renamed GAW branch to ~A.~%" name))
+        (progn
+          (delete-branch directory name)
+          (format stream "Deleted GAW branch ~A.~%" name))))
+  0)
+
 (defun %run-reference-transaction (arguments directory)
   (unless (and arguments
                (null (rest arguments)))
@@ -225,6 +306,9 @@
     ((string= name "commit") :commit)
     ((string= name "show") :show)
     ((string= name "check") :check)
+    ((string= name "deploy") :deploy)
+    ((string= name "init") :init)
+    ((string= name "branch") :branch)
     (t (%cli-error "Unknown help topic: ~A" name))))
 
 (defun %run-help (arguments stream)
@@ -239,7 +323,7 @@
 
 (defun %usage-error ()
   (%cli-error
-   "Usage:~%  git gaw commit [options] [--] [project-commit...]~%  git gaw show [options] [object...] [-- path...]~%  git gaw check~%  git gaw help [commit|show|check]"))
+   "Usage:~%  git gaw init --branch <name> [--worktree-path <path>]~%  git gaw deploy [--branch <name>] [--worktree-path <path>]~%  git gaw branch -m <new-name> | -d <name>~%  git gaw commit [options] [--] [project-commit...]~%  git gaw show [options] [object...] [-- path...]~%  git gaw check~%  git gaw help [init|deploy|branch|commit|show|check]"))
 
 (defun %sole-help-option-p (arguments)
   (and arguments
@@ -272,6 +356,18 @@
      (if (%sole-help-option-p (rest arguments))
          (progn (print-help :check output-stream) 0)
          (%run-check (rest arguments) directory output-stream)))
+    ((and arguments (string= (first arguments) "deploy"))
+     (if (%sole-help-option-p (rest arguments))
+         (progn (print-help :deploy output-stream) 0)
+         (%run-deploy (rest arguments) directory output-stream)))
+    ((and arguments (string= (first arguments) "init"))
+     (if (%sole-help-option-p (rest arguments))
+         (progn (print-help :init output-stream) 0)
+         (%run-init (rest arguments) directory output-stream)))
+    ((and arguments (string= (first arguments) "branch"))
+     (if (%sole-help-option-p (rest arguments))
+         (progn (print-help :branch output-stream) 0)
+         (%run-branch (rest arguments) directory output-stream)))
     (t
      (%usage-error))))
 

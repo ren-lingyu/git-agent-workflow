@@ -1,0 +1,15 @@
+usage: git gaw init --branch <name> [--worktree-path <path>]
+
+Create a new GAW root history on a new local branch and immediately deploy it.
+The initial commit contains a valid empty workspace configuration and is made
+as Git Agent Workflow <gaw@invalid> without inheriting signing configuration.
+
+Initialization refuses existing GAW history, GAW-like invalid history,
+existing refs/gaw metadata, hook configuration conflicts, and an existing
+requested worktree path.  The source branch, exact symbolic registration, and
+refs/gaw/HEAD are created in one ref transaction.
+
+Options:
+   --branch <name>         name of the new local GAW source branch (required)
+   --worktree-path <path> create the deployed linked worktree at path
+   --help                  show this help

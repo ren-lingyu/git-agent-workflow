@@ -1,5 +1,5 @@
 usage: git gaw <command> [<args>]
-   or: git gaw help [commit|show|check]
+   or: git gaw help [init|deploy|branch|commit|show|check]
    or: git gaw --help
    or: git gaw --version
    or: git gaw version
@@ -8,6 +8,9 @@ Git Agent Workflow maintains an independent first-parent history for an
 agent workspace in an already provisioned GAW worktree.
 
 Commands:
+   init      create initial GAW history and local deployment state
+   deploy    materialize local GAW state for an existing branch
+   branch    rename or safely delete a registered GAW branch
    commit    create a GAW commit from the current index
    show      show canonical GAW history through git show
    check     check whether the current GAW worktree is ready

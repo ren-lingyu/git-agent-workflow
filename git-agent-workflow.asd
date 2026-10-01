@@ -126,7 +126,10 @@
                                             ((:static-file "overview.txt")
                                              (:static-file "commit.txt")
                                              (:static-file "show.txt")
-                                             (:static-file "check.txt")))
+                                             (:static-file "check.txt")
+                                             (:static-file "deploy.txt")
+                                             (:static-file "init.txt")
+                                             (:static-file "branch.txt")))
                                            (:file "help.core"
                                             :depends-on ("package" "text"))
                                            (:file "help.api"
@@ -193,6 +196,9 @@
                                            "commit"
                                            "show"
                                            "check"
+                                           "deploy"
+                                           "init"
+                                           "branch"
                                            "help"
                                            "hook")
                               :components ((:file "package")
