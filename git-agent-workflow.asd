@@ -173,6 +173,20 @@
                                             :depends-on ("init.core"))
                                            (:file "init.api"
                                             :depends-on ("init.runtime"))))
+                             (:module "branch"
+                              :pathname "branch/"
+                              :depends-on ("package"
+                                           "git"
+                                           "refs"
+                                           "workspace"
+                                           "state")
+                              :components ((:file "package")
+                                           (:file "branch.core"
+                                            :depends-on ("package"))
+                                           (:file "branch.runtime"
+                                            :depends-on ("branch.core"))
+                                           (:file "branch.api"
+                                            :depends-on ("branch.runtime"))))
                              (:module "cli"
                               :pathname "cli/"
                               :depends-on ("package"
@@ -266,6 +280,13 @@
                               :components ((:file "package")
                                            (:file "init"
                                             :depends-on ("package"))))
+                             (:module "branch"
+                              :pathname "branch/"
+                              :depends-on ("package"
+                                           "support")
+                              :components ((:file "package")
+                                           (:file "branch"
+                                            :depends-on ("package"))))
                              (:module "show"
                               :pathname "show/"
                               :depends-on ("package"
@@ -319,6 +340,7 @@
                                            "state"
                                            "deploy"
                                            "init"
+                                           "branch"
                                            "show"
                                            "check"
                                            "help"
