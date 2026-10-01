@@ -62,6 +62,19 @@
                                             :depends-on ("workspace.core"))
                                            (:file "workspace.api"
                                             :depends-on ("workspace.runtime"))))
+                             (:module "state"
+                              :pathname "state/"
+                              :depends-on ("package"
+                                           "git"
+                                           "config"
+                                           "workspace")
+                              :components ((:file "package")
+                                           (:file "state.core"
+                                            :depends-on ("package"))
+                                           (:file "state.runtime"
+                                            :depends-on ("state.core"))
+                                           (:file "state.api"
+                                            :depends-on ("state.runtime"))))
                              (:module "commit"
                               :pathname "commit/"
                               :depends-on ("package"
@@ -93,7 +106,9 @@
                                            "git"
                                            "refs"
                                            "config"
-                                           "workspace")
+                                           "workspace"
+                                           "state"
+                                           "hook")
                               :components ((:file "package")
                                            (:file "check.core"
                                             :depends-on ("package"))
@@ -200,6 +215,13 @@
                               :components ((:file "package")
                                            (:file "workspace"
                                             :depends-on ("package"))))
+                             (:module "state"
+                              :pathname "state/"
+                              :depends-on ("package"
+                                           "support")
+                              :components ((:file "package")
+                                           (:file "state"
+                                            :depends-on ("package"))))
                              (:module "show"
                               :pathname "show/"
                               :depends-on ("package"
@@ -250,6 +272,7 @@
                                            "config"
                                            "commit"
                                            "workspace"
+                                           "state"
                                            "show"
                                            "check"
                                            "help"

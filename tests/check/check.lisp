@@ -71,6 +71,7 @@
             (after (%repository-state directory)))
        (assert (check-report-ok-p report))
        (assert (eq :ok (%finding-status report :index)))
+       (assert (eq :warning (%finding-status report :protection-hook)))
        (assert (null (%finding-status report :identity)))
        (assert (equal before after)))
      (let ((nested (merge-pathnames "notes/" directory)))
@@ -80,6 +81,22 @@
          (assert (eq :warning (%finding-status report :worktree)))
          (assert (equal (namestring directory)
                         (namestring (check-report-root report)))))))))
+
+(defun %test-protection-hook-finding ()
+  (%with-repository
+   (lambda (directory)
+     (%git directory "config" "--local"
+           "hook.gaw-reference-transaction.command"
+           "git-gaw --reference-transaction")
+     (%git directory "config" "--local"
+           "hook.gaw-reference-transaction.event"
+           "reference-transaction")
+     (%git directory "config" "--local"
+           "hook.gaw-reference-transaction.enabled"
+           "true")
+     (let ((report (check directory)))
+       (assert (check-report-ok-p report))
+       (assert (eq :ok (%finding-status report :protection-hook)))))))
 
 (defun %test-index-failure-and-aggregation ()
   (%with-repository
@@ -265,6 +282,7 @@
 
 (defun run-tests ()
   (%test-healthy-and-nested-check)
+  (%test-protection-hook-finding)
   (%test-index-failure-and-aggregation)
   (%test-head-and-registration-failures)
   (%test-staged-config-variants)

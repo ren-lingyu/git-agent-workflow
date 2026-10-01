@@ -14,7 +14,6 @@
                 #:ref-state-symbolic-p
                 #:ref-state-symbolic-target)
   (:import-from #:git-agent-workflow.config
-                #:read-config-at-tree
                 #:read-config-blob
                 #:config-workspace
                 #:workspace-entry-kind
@@ -24,11 +23,9 @@
                 #:worktree-root
                 #:current-local-head-ref
                 #:operation-states
-                #:read-tree-snapshot
                 #:read-index-snapshot
                 #:validate-snapshot-shape
                 #:validate-workspace
-                #:find-project-path-conflict
                 #:entry-at-path
                 #:git-entry-mode
                 #:git-entry-type
@@ -36,6 +33,16 @@
                 #:git-entry-stage
                 #:workspace-error
                 #:workspace-error-detail)
+  (:import-from #:git-agent-workflow.state
+                #:inspect-committed-state
+                #:committed-state-report-findings
+                #:committed-state-finding-name
+                #:committed-state-finding-status
+                #:committed-state-finding-detail)
+  (:import-from #:git-agent-workflow.hook
+                #:inspect-protection-hook
+                #:hook-configuration-status
+                #:hook-configuration-detail)
   (:export #:check
            #:write-check-report
            #:check-report

@@ -5,9 +5,11 @@ edit, stage, commit, and show loop.  The check is read-only and may run from a
 subdirectory, although git gaw commit itself must run at the worktree root.
 
 The report covers branch registration, HEAD config and workspace, associated
-project parents, the staged candidate, and conflicting Git operation state.
+project parents, the staged candidate, conflicting Git operation state, and
+the optional repository-local branch-protection hook.
 It does not replace git status or git diff and does not inspect untracked or
 unstaged changes.
 
 Exit status is 0 when no error finding exists and 1 otherwise.  Warnings do
-not make the report fail.
+not make the report fail.  A missing or divergent protection hook is reported
+as a warning because it is a local guard rather than a runtime prerequisite.

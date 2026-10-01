@@ -2,47 +2,18 @@
 
 (eval-when (:load-toplevel :execute)
   (dolist (function '(run-git worktree-root current-local-head-ref
-                      operation-states read-tree-snapshot
+                      operation-states inspect-committed-state
                       read-index-snapshot validate-snapshot-shape
-                      validate-workspace find-project-path-conflict
-                      read-config-at-tree read-config-blob))
+                      validate-workspace read-config-blob
+                      inspect-protection-hook
+                      hook-configuration-status
+                      hook-configuration-detail))
     (unless (fboundp function)
       (error "Required check runtime dependency is unavailable: ~S" function))))
-
-(defun %successful-stdout (invocation operation)
-  (unless (zerop (git-invocation-exit-status invocation))
-    (error "Git failed while ~A: ~A"
-           operation (git-invocation-stderr invocation)))
-  (git-invocation-stdout invocation))
 
 (defun %canonical-directory (directory)
   (check-type directory pathname)
   (uiop:ensure-directory-pathname (truename directory)))
-
-(defun %resolve-head-commit (directory)
-  (let ((invocation
-          (run-git '("rev-parse" "--verify" "--end-of-options" "HEAD^{commit}")
-                   directory)))
-    (unless (zerop (git-invocation-exit-status invocation))
-      (return-from %resolve-head-commit nil))
-    (git-invocation-stdout invocation)))
-
-(defun %resolve-tree (commit-oid directory)
-  (%successful-stdout
-   (run-git (list "rev-parse" "--verify" "--end-of-options"
-                  (concatenate 'string commit-oid "^{tree}"))
-            directory)
-   "resolving a commit tree"))
-
-(defun %commit-parents (commit-oid directory)
-  (let* ((line (%successful-stdout
-                (run-git (list "rev-list" "--parents" "-n" "1" commit-oid)
-                         directory)
-                "reading GAW commit parents"))
-         (fields (uiop:split-string line :separator '(#\Space))))
-    (unless (and fields (string= (first fields) commit-oid))
-      (error "Git returned malformed parent output"))
-    (rest fields)))
 
 (defun %workspace-declarations (config)
   (mapcar (lambda (entry)
@@ -61,16 +32,6 @@
        (values nil "The current branch has an invalid GAW registration"))
       (t
        (values t "The current branch registration is valid")))))
-
-(defun %check-project-parents (commit-oid workspace directory)
-  (dolist (parent (rest (%commit-parents commit-oid directory)))
-    (let* ((tree-oid (%resolve-tree parent directory))
-           (entries (read-tree-snapshot directory tree-oid)))
-      (when (find-project-path-conflict workspace entries)
-        (return-from %check-project-parents
-          (values nil
-                  "An associated project parent tracks a reserved or workspace path")))))
-  (values t "The associated project parent trees are disjoint"))
 
 (defun %index-config-entry (entries config-path)
   (entry-at-path (string-to-octets config-path :encoding :utf-8) entries))
@@ -103,11 +64,7 @@
 (defun %check-runtime (directory config-path)
   (let ((findings '())
         (root nil)
-        (source-ref nil)
-        (head-oid nil)
-        (head-tree nil)
-        (head-workspace nil)
-        (head-config-valid-p nil))
+        (source-ref nil))
     (labels ((record (name status detail)
                (push (%make-check-finding name status detail) findings))
              (skip (name detail)
@@ -123,7 +80,7 @@
       (unless root
         (dolist (name '(:branch :registration :head :head-config
                         :head-workspace :project-parents :index
-                        :operation-state))
+                        :operation-state :protection-hook))
           (skip name "Skipped because no Git worktree is available"))
         (return-from %check-runtime (finish)))
 
@@ -150,44 +107,15 @@
           (skip :registration "Skipped because no local branch is available"))
 
       (if source-ref
-          (progn
-            (setf head-oid (%resolve-head-commit root))
-            (if head-oid
-                (record :head :ok "HEAD resolves to a commit")
-                (record :head :error "The current GAW branch is unborn")))
-          (skip :head "Skipped because no local branch is available"))
-
-      (when head-oid
-        (setf head-tree (%resolve-tree head-oid root))
-        (handler-case
-            (let ((config (read-config-at-tree root head-tree)))
-              (setf head-workspace (%workspace-declarations config)
-                    head-config-valid-p t)
-              (record :head-config :ok "HEAD contains a valid .gaw/config"))
-          (config-error (condition)
-            (record :head-config :error
-                    (format nil "Invalid HEAD config: ~A" condition)))))
-      (unless head-oid
-        (skip :head-config "Skipped because HEAD does not resolve to a commit"))
-
-      (if head-config-valid-p
-          (handler-case
-              (progn
-                (validate-workspace head-workspace
-                                    (read-tree-snapshot root head-tree))
-                (record :head-workspace :ok
-                        "HEAD satisfies its workspace declaration"))
-            (workspace-error (condition)
-              (record :head-workspace :error
-                      (or (workspace-error-detail condition)
-                          (format nil "~A" condition)))))
-          (skip :head-workspace "Skipped because HEAD config is unavailable"))
-
-      (if head-config-valid-p
-          (multiple-value-bind (ok detail)
-              (%check-project-parents head-oid head-workspace root)
-            (record :project-parents (if ok :ok :error) detail))
-          (skip :project-parents "Skipped because HEAD config is unavailable"))
+          (dolist (finding
+                    (committed-state-report-findings
+                     (inspect-committed-state root source-ref)))
+            (record (committed-state-finding-name finding)
+                    (committed-state-finding-status finding)
+                    (committed-state-finding-detail finding)))
+          (dolist (name '(:head :head-config :head-workspace
+                          :project-parents))
+            (skip name "Skipped because no local branch is available")))
 
       (multiple-value-bind (ok detail)
           (%check-index root config-path)
@@ -200,4 +128,17 @@
                             states))
             (record :operation-state :ok
                     "No conflicting Git operation is in progress")))
+
+      (handler-case
+          (let ((configuration (inspect-protection-hook root)))
+            (if (eq :canonical
+                    (hook-configuration-status configuration))
+                (record :protection-hook :ok
+                        (hook-configuration-detail configuration))
+                (record :protection-hook :warning
+                        (hook-configuration-detail configuration))))
+        (error (condition)
+          (record :protection-hook :warning
+                  (format nil "Cannot inspect the optional protection hook: ~A"
+                          condition))))
       (finish))))
