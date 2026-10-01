@@ -159,13 +159,16 @@
 
 (defun %test-inspect-ref-detects-direct-ref ()
   (with-test-repository (directory)
-    (%create-direct-ref "refs/heads/test"
-                        directory)
+    (let ((object-id (%create-test-commit directory)))
+      (call-git (list "-C" (namestring directory)
+                      "update-ref" "refs/heads/test" object-id))
     (let ((state (inspect-ref "refs/heads/test"
                               directory)))
       (assert (ref-state-exists-p state))
       (assert (not (ref-state-symbolic-p state)))
-      (assert (null (ref-state-symbolic-target state))))))
+      (assert (null (ref-state-symbolic-target state)))
+      (assert (string= object-id
+                       (ref-state-object-id state)))))))
 
 (defun %test-inspect-ref-detects-symbolic-ref ()
   (with-test-repository (directory)

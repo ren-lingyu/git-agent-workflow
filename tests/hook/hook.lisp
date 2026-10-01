@@ -33,7 +33,8 @@
           "refs/heads/current")
          (t
           nil))))
-   registration-query))
+   registration-query
+   "refs/gaw/"))
 
 (defun %test-parser-accepts-object-values ()
   (assert
@@ -85,17 +86,29 @@
       (declare (ignore ref directory))
       nil))))
 
-(defun %test-preparing-ignores-other-namespaces ()
+(defun %test-preparing-rejects-protocol-refs ()
   (let ((queries 0))
     (assert
-     (%call-runtime
-      "preparing"
-      (%transaction-input "refs/gaw/heads/test" "refs/tags/test")
-      (lambda (ref directory)
-        (declare (ignore ref directory))
-        (incf queries)
-        t)))
+     (eq :protected-protocol-ref
+         (%hook-failure-reason
+          (lambda ()
+            (%call-runtime
+             "preparing"
+             (%transaction-input "refs/gaw/heads/test")
+             (lambda (ref directory)
+               (declare (ignore ref directory))
+               (incf queries)
+               t))))))
     (assert (zerop queries))))
+
+(defun %test-preparing-ignores-other-namespaces ()
+  (assert
+   (%call-runtime
+    "preparing"
+    (%transaction-input "refs/tags/test")
+    (lambda (ref directory)
+      (declare (ignore ref directory))
+      (error "registration query must not run")))))
 
 (defun %test-preparing-deduplicates-refs ()
   (let ((queries 0))
@@ -210,6 +223,7 @@
   (%test-parser-rejects-malformed-input)
   (%test-preparing-rejects-registered-ref)
   (%test-preparing-allows-unregistered-ref)
+  (%test-preparing-rejects-protocol-refs)
   (%test-preparing-ignores-other-namespaces)
   (%test-preparing-deduplicates-refs)
   (%test-preparing-resolves-head-to-current-branch)

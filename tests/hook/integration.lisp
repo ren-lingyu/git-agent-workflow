@@ -114,6 +114,8 @@
                    branch
                    "HEAD")
   (%repository-git directory
+                   "-c"
+                   "hook.gaw-reference-transaction.enabled=false"
                    "symbolic-ref"
                    (format nil
                            "refs/gaw/heads/~A"
@@ -242,7 +244,7 @@
                              "refs/heads/free"
                              free-before))))
 
-(defun %test-protection-allows-unregistered-and-gaw-refs ()
+(defun %test-protection-allows-unregistered-and-rejects-gaw-refs ()
   (%with-protected-repository (directory)
     (%repository-git directory
                      "branch"
@@ -263,17 +265,13 @@
                        (%repository-git directory
                                         "rev-parse"
                                         "refs/heads/free"))))
-    (%repository-git directory
-                     "update-ref"
-                     "refs/gaw/unprotected"
-                     "HEAD")
-    (assert (stringp
-             (%repository-git directory
-                              "show-ref"
-                              "--verify"
-                              "refs/gaw/unprotected")))))
+    (assert (not (zerop
+                  (%repository-git-status directory
+                                          "update-ref"
+                                          "refs/gaw/unprotected"
+                                          "HEAD"))))))
 
-(defun %test-protection-distinguishes-symbolic-updates ()
+(defun %test-protection-allows-head-switch-and-rejects-protocol-symref ()
   (%with-protected-repository (directory)
     (%repository-git directory
                      "branch"
@@ -291,14 +289,39 @@
                      "branch"
                      "other"
                      "HEAD")
-    (%repository-git directory
-                     "symbolic-ref"
-                     "refs/gaw/heads/gaw"
-                     "refs/heads/other")
-    (assert (string= "refs/heads/other"
+    (assert (not (zerop
+                  (%repository-git-status directory
+                                          "symbolic-ref"
+                                          "refs/gaw/heads/gaw"
+                                          "refs/heads/other"))))
+    (assert (string= "refs/heads/gaw"
                      (%repository-git directory
                                       "symbolic-ref"
                                       "refs/gaw/heads/gaw")))))
+
+(defun %test-ref-primitives-bypass-only-protection-hook ()
+  (%with-protected-repository (directory)
+    (%repository-git directory "branch" "new" "HEAD")
+    (%repository-git directory
+                     "config" "--local"
+                     "hook.gaw-test-observer.event"
+                     "reference-transaction")
+    (%repository-git directory
+                     "config" "--local"
+                     "hook.gaw-test-observer.command"
+                     "touch refs-observer-ran")
+    (register-ref "refs/heads/new" directory)
+    (assert (string= "refs/heads/new"
+                     (%repository-git directory
+                                      "symbolic-ref"
+                                      "refs/gaw/heads/new")))
+    (assert (probe-file (merge-pathnames "refs-observer-ran" directory)))
+    (unregister-ref "refs/gaw/heads/new" directory)
+    (assert (= 2
+               (%repository-git-status directory
+                                       "show-ref"
+                                       "--exists"
+                                       "refs/gaw/heads/new")))))
 
 (defun %test-protection-rejects-dereferenced-registration-update ()
   (%with-protected-repository (directory)
@@ -362,16 +385,47 @@
                      "--reference-transaction"
                      "future")))))))
 
+(defun %test-protection-hook-configuration-management ()
+  (with-test-repository (directory)
+    (assert (eq :absent
+                (hook-configuration-status
+                 (inspect-protection-hook directory))))
+    (assert (eq :installed (ensure-protection-hook directory)))
+    (assert (eq :canonical
+                (hook-configuration-status
+                 (inspect-protection-hook directory))))
+    (assert (eq :existing (ensure-protection-hook directory)))
+    (assert (string= "true"
+                     (%repository-git directory
+                                      "config" "--local" "--type=bool"
+                                      "--get"
+                                      "hook.gaw-reference-transaction.enabled"))))
+  (with-test-repository (directory)
+    (%repository-git directory
+                     "config" "--local"
+                     "hook.gaw-reference-transaction.event"
+                     "reference-transaction")
+    (assert (eq :conflict
+                (hook-configuration-status
+                 (inspect-protection-hook directory))))
+    (assert (eq :conflict
+                (handler-case
+                    (progn (ensure-protection-hook directory) nil)
+                  (hook-configuration-error (condition)
+                    (hook-configuration-error-reason condition)))))))
+
 (defun %run-hook-integration-tests ()
   (%test-protection-rejects-ordinary-commit)
   (%test-protection-rejects-reset-and-update-ref)
   (%test-protection-rejects-branch-changes)
   (%test-protection-rejects-mixed-transaction)
-  (%test-protection-allows-unregistered-and-gaw-refs)
-  (%test-protection-distinguishes-symbolic-updates)
+  (%test-protection-allows-unregistered-and-rejects-gaw-refs)
+  (%test-protection-allows-head-switch-and-rejects-protocol-symref)
+  (%test-ref-primitives-bypass-only-protection-hook)
   (%test-protection-rejects-dereferenced-registration-update)
   (%test-gaw-commit-bypasses-only-protection-hook)
   (%test-machine-option-rejects-unknown-phase)
+  (%test-protection-hook-configuration-management)
   (format t
           "~&All hook integration tests passed.~%")
   t)

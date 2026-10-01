@@ -19,5 +19,6 @@
                 #:ref-state-name
                 #:ref-state-exists-p
                 #:ref-state-symbolic-p
-                #:ref-state-symbolic-target)
+                #:ref-state-symbolic-target
+                #:ref-state-object-id)
   (:export #:run-tests))

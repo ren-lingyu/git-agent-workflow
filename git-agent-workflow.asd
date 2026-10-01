@@ -119,6 +119,7 @@
                              (:module "hook"
                               :pathname "hook/"
                               :depends-on ("package"
+                                           "git"
                                            "refs")
                               :components ((:file "package")
                                            (:file "hook.core"

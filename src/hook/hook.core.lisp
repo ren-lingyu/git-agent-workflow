@@ -26,6 +26,10 @@
                 (format stream
                         "Refusing to modify registered GAW branch: ~A"
                         (hook-error-ref condition)))
+               (:protected-protocol-ref
+                (format stream
+                        "Refusing to modify GAW protocol ref: ~A"
+                        (hook-error-ref condition)))
                (:invalid-registration
                 (format stream
                         "Cannot protect GAW branch because its registration is invalid: ~A"
@@ -43,6 +47,28 @@
                 (format stream
                         "Reference-transaction hook failed: ~A"
                         (hook-error-reason condition)))))))
+
+(define-condition hook-configuration-error (error)
+  ((reason :initarg :reason
+           :reader hook-configuration-error-reason)
+   (detail :initarg :detail
+           :initform nil
+           :reader %hook-configuration-error-detail))
+  (:report (lambda (condition stream)
+             (format stream "GAW protection hook configuration failed (~S)~@[: ~A~]"
+                     (hook-configuration-error-reason condition)
+                     (%hook-configuration-error-detail condition)))))
+
+(defstruct (hook-configuration
+            (:constructor %make-hook-configuration (status detail))
+            (:copier nil))
+  (status nil :type (member :absent :canonical :conflict) :read-only t)
+  (detail "" :type string :read-only t))
+
+(defun %signal-hook-configuration-error (reason control &rest arguments)
+  (error 'hook-configuration-error
+         :reason reason
+         :detail (when control (apply #'format nil control arguments))))
 
 (defstruct (%reference-update
             (:constructor %make-reference-update))

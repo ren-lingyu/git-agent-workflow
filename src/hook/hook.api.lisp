@@ -3,10 +3,48 @@
 (eval-when (:load-toplevel :execute)
   (unless (fboundp '%reference-transaction)
     (error "Required hook API dependency is unavailable: ~S"
-           '%reference-transaction)))
+           '%reference-transaction))
+  (dolist (function '(%inspect-protection-hook %ensure-protection-hook))
+    (unless (fboundp function)
+      (error "Required hook configuration dependency is unavailable: ~S"
+             function))))
 
 (defparameter *source-ref-prefix*
   "refs/heads/")
+
+(defparameter *protocol-ref-prefix*
+  "refs/gaw/")
+
+(defparameter *hook-event-key*
+  "hook.gaw-reference-transaction.event")
+
+(defparameter *hook-command-key*
+  "hook.gaw-reference-transaction.command")
+
+(defparameter *hook-enabled-key*
+  "hook.gaw-reference-transaction.enabled")
+
+(defparameter *hook-event*
+  "reference-transaction")
+
+(defparameter *hook-command*
+  "git-gaw --reference-transaction")
+
+(defun inspect-protection-hook (directory)
+  (%inspect-protection-hook directory
+                            *hook-event-key*
+                            *hook-command-key*
+                            *hook-enabled-key*
+                            *hook-event*
+                            *hook-command*))
+
+(defun ensure-protection-hook (directory)
+  (%ensure-protection-hook directory
+                           *hook-event-key*
+                           *hook-command-key*
+                           *hook-enabled-key*
+                           *hook-event*
+                           *hook-command*))
 
 (defun %resolve-symbolic-source-ref (ref directory)
   (let ((seen (make-hash-table :test #'equal))
@@ -40,7 +78,8 @@
                               directory
                               input-stream
                               #'%source-ref-for-transaction-ref
-                              #'registered-ref-p)
+                              #'registered-ref-p
+                              *protocol-ref-prefix*)
     (hook-error (condition)
       (error condition))
     (error (condition)

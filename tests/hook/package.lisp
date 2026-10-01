@@ -9,7 +9,14 @@
   (:import-from #:git-agent-workflow.hook
                 #:reference-transaction
                 #:hook-error
-                #:hook-error-reason)
+                #:hook-error-reason
+                #:hook-configuration-status
+                #:hook-configuration-error
+                #:hook-configuration-error-reason
+                #:inspect-protection-hook
+                #:ensure-protection-hook)
   (:import-from #:git-agent-workflow.refs
-                #:registration-error)
+                #:registration-error
+                #:register-ref
+                #:unregister-ref)
   (:export #:run-tests))

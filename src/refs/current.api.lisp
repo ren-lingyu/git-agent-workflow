@@ -11,9 +11,6 @@
       (error "Required refs variable is unavailable: ~S"
              variable))))
 
-(defparameter *head-ref*
-  "refs/gaw/HEAD")
-
 (defun current-ref (directory)
   (%current-ref directory
                 *display-name*

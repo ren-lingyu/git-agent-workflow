@@ -6,6 +6,20 @@
                 #:git-invocation-stderr
                 #:git-invocation-exit-status)
   (:export #:make-ref
+           #:apply-ref-transaction
+           #:registration-refs
+           #:protocol-refs
+           #:select-ref
+           #:restore-selection
+           #:initialize-ref-graph
+           #:remove-initial-ref-graph
+           #:rename-ref-registration
+           #:remove-ref-registration
+           #:restore-ref-registration
+           #:registration-removal
+           #:registration-removal-p
+           #:selection-change
+           #:selection-change-p
            #:registered-ref-p
            #:registration-error
            #:registration-error-reason
@@ -22,4 +36,5 @@
            #:ref-state-name
            #:ref-state-exists-p
            #:ref-state-symbolic-p
-           #:ref-state-symbolic-target))
+           #:ref-state-symbolic-target
+           #:ref-state-object-id))
