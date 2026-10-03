@@ -28,6 +28,46 @@
   (stage 0 :type (integer 0 3) :read-only t)
   (intent-to-add-p nil :type boolean :read-only t))
 
+(defstruct (worktree-record
+            (:constructor %make-worktree-record
+                (path branch detached-p bare-p prunable-p))
+            (:copier nil))
+  (path "" :type string :read-only t)
+  (branch nil :type (or null string) :read-only t)
+  (detached-p nil :type boolean :read-only t)
+  (bare-p nil :type boolean :read-only t)
+  (prunable-p nil :type boolean :read-only t))
+
+(defun %split-worktree-fields (output)
+  (let ((fields '()) (start 0))
+    (loop for position = (position #\Null output :start start)
+          do (push (subseq output start position) fields)
+          if position do (setf start (1+ position)) else do (return))
+    (nreverse fields)))
+
+(defun %parse-worktrees (output)
+  (let ((records '())
+        (path nil) (branch nil) (detached nil) (bare nil) (prunable nil))
+    (labels ((finish ()
+               (when path
+                 (push (%make-worktree-record path branch detached bare
+                                              prunable)
+                       records))
+               (setf path nil branch nil detached nil bare nil prunable nil)))
+      (dolist (field (%split-worktree-fields output))
+        (cond
+          ((zerop (length field)) (finish))
+          ((uiop:string-prefix-p "worktree " field)
+           (finish)
+           (setf path (subseq field 9)))
+          ((uiop:string-prefix-p "branch " field)
+           (setf branch (subseq field 7)))
+          ((string= field "detached") (setf detached t))
+          ((string= field "bare") (setf bare t))
+          ((uiop:string-prefix-p "prunable" field) (setf prunable t))))
+      (finish))
+    (nreverse records)))
+
 (defun %signal-workspace-error (reason control &rest arguments)
   (error 'workspace-error
          :reason reason

@@ -7,7 +7,7 @@
                       committed-state-marker-p local-branches
                       inspect-protection-hook ensure-protection-hook check
                       %signal-deploy-error %make-deploy-result
-                      %make-worktree-record))
+                      list-worktrees))
     (unless (fboundp function)
       (error "Required deploy runtime dependency is unavailable: ~S"
              function))))
@@ -119,53 +119,20 @@
           :ambiguous-branch
           "Multiple valid local GAW branches were found; use --branch"))))))
 
-(defun %split-nul-fields (string)
-  (let ((fields '()) (start 0))
-    (loop for position = (position #\Null string :start start)
-          do (push (subseq string start position) fields)
-          if position do (setf start (1+ position)) else do (return))
-    (nreverse fields)))
-
-(defun %parse-worktrees (output)
-  (let ((records '())
-        (path nil) (branch nil) (detached nil) (prunable nil))
-    (labels ((finish ()
-               (when path
-                 (push (%make-worktree-record path branch detached prunable)
-                       records))
-               (setf path nil branch nil detached nil prunable nil)))
-      (dolist (field (%split-nul-fields output))
-        (cond
-          ((zerop (length field)) (finish))
-          ((uiop:string-prefix-p "worktree " field)
-           (finish)
-           (setf path (subseq field 9)))
-          ((uiop:string-prefix-p "branch " field)
-           (setf branch (subseq field 7)))
-          ((string= field "detached") (setf detached t))
-          ((uiop:string-prefix-p "prunable" field) (setf prunable t))))
-      (finish))
-    (nreverse records)))
-
-(defun %worktrees (directory)
-  (%parse-worktrees
-   (%deploy-git-output '("worktree" "list" "--porcelain" "-z")
-                       directory "listing worktrees")))
-
 (defun %path-key (path)
   (string-right-trim '(#\/)
                      (uiop:native-namestring
                       (uiop:ensure-directory-pathname path))))
 
 (defun %resolve-worktree-plan (directory source-ref requested-path)
-  (let* ((records (%worktrees directory))
+  (let* ((records (list-worktrees directory))
          (attached
            (remove-if-not
             (lambda (record)
               (and (string= source-ref
-                            (or (%worktree-record-branch record) ""))
-                   (not (%worktree-record-detached-p record))
-                   (not (%worktree-record-prunable-p record))))
+                            (or (worktree-record-branch record) ""))
+                   (not (worktree-record-detached-p record))
+                   (not (worktree-record-prunable-p record))))
             records)))
     (if requested-path
         (let* ((absolute
@@ -175,13 +142,13 @@
                (at-path
                  (find key records :test #'string=
                        :key (lambda (record)
-                              (%path-key (%worktree-record-path record))))))
+                              (%path-key (worktree-record-path record))))))
           (cond
             (at-path
              (unless (and (string= source-ref
-                                   (or (%worktree-record-branch at-path) ""))
-                          (not (%worktree-record-detached-p at-path))
-                          (not (%worktree-record-prunable-p at-path)))
+                                   (or (worktree-record-branch at-path) ""))
+                          (not (worktree-record-detached-p at-path))
+                          (not (worktree-record-prunable-p at-path)))
                (%signal-deploy-error
                 :worktree-conflict
                 "Worktree path ~A is attached to different or invalid state"
@@ -191,7 +158,7 @@
              (%signal-deploy-error
               :worktree-conflict
               "Branch ~A is already attached at ~A"
-              source-ref (%worktree-record-path (first attached))))
+              source-ref (worktree-record-path (first attached))))
             ((probe-file absolute)
              (%signal-deploy-error :worktree-conflict
                                    "Worktree path already exists: ~A" absolute))
@@ -200,7 +167,7 @@
           (0 (values :repository-only nil))
           (1 (values :existing-worktree
                      (uiop:ensure-directory-pathname
-                      (%worktree-record-path (first attached)))))
+                      (worktree-record-path (first attached)))))
           (otherwise
            (%signal-deploy-error
             :worktree-conflict

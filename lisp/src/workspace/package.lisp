@@ -9,6 +9,14 @@
                 #:git-invocation-stderr
                 #:git-invocation-exit-status)
   (:export #:worktree-root
+           #:list-worktrees
+           #:worktree-record
+           #:worktree-record-p
+           #:worktree-record-path
+           #:worktree-record-branch
+           #:worktree-record-detached-p
+           #:worktree-record-bare-p
+           #:worktree-record-prunable-p
            #:current-local-head-ref
            #:operation-states
            #:read-tree-snapshot

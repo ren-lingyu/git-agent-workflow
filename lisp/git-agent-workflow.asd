@@ -166,6 +166,7 @@
                                            "git"
                                            "refs"
                                            "state"
+                                           "workspace"
                                            "hook"
                                            "mutation"
                                            "check")

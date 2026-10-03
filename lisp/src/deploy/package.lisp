@@ -17,6 +17,12 @@
                 #:select-ref
                 #:restore-selection
                 #:run-worktree)
+  (:import-from #:git-agent-workflow.workspace
+                #:list-worktrees
+                #:worktree-record-path
+                #:worktree-record-branch
+                #:worktree-record-detached-p
+                #:worktree-record-prunable-p)
   (:import-from #:git-agent-workflow.state
                 #:inspect-committed-state
                 #:committed-state-report-ok-p

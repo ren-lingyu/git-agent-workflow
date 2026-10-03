@@ -116,6 +116,12 @@
     (uiop:ensure-directory-pathname
      (truename (git-invocation-stdout invocation)))))
 
+(defun %list-worktrees (directory)
+  (%parse-worktrees
+   (%successful-stdout
+    (run-git '("worktree" "list" "--porcelain" "-z") directory)
+    "listing worktrees")))
+
 (defun %current-local-head-ref (directory source-ref-prefix)
   (let ((invocation (run-git '("symbolic-ref" "--quiet" "HEAD") directory)))
     (unless (zerop (git-invocation-exit-status invocation))

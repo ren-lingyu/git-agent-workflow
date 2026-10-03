@@ -1,7 +1,8 @@
 (in-package #:git-agent-workflow.workspace)
 
 (eval-when (:load-toplevel :execute)
-  (dolist (function '(%worktree-root %current-local-head-ref %operation-states
+  (dolist (function '(%worktree-root %list-worktrees
+                      %current-local-head-ref %operation-states
                       %read-tree-snapshot %read-index-snapshot
                       %validate-snapshot-shape
                       %validate-workspace
@@ -23,6 +24,9 @@
 
 (defun worktree-root (directory)
   (%worktree-root directory))
+
+(defun list-worktrees (directory)
+  (%list-worktrees directory))
 
 (defun current-local-head-ref (directory)
   (%current-local-head-ref directory *source-ref-prefix*))

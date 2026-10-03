@@ -25,12 +25,3 @@
         :read-only t)
   (worktree-path nil :type (or null pathname) :read-only t)
   (warnings '() :type list :read-only t))
-
-(defstruct (%worktree-record
-            (:constructor %make-worktree-record
-                (path branch detached-p prunable-p))
-            (:copier nil))
-  (path "" :type string :read-only t)
-  (branch nil :type (or null string) :read-only t)
-  (detached-p nil :type boolean :read-only t)
-  (prunable-p nil :type boolean :read-only t))
