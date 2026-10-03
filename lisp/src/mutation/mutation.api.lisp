@@ -1,72 +1,53 @@
 (in-package #:git-agent-workflow.mutation)
 
+(eval-when (:load-toplevel :execute)
+  (dolist (function '(%register-ref %unregister-ref %select-ref
+                      %restore-selection %initialize-ref-graph
+                      %remove-initial-ref-graph %rename-ref-registration
+                      %remove-ref-registration %restore-ref-registration
+                      %run-branch %run-worktree %run-source-ref-update))
+    (unless (fboundp function)
+      (error "Required mutation runtime function is unavailable: ~S"
+             function))))
+
 (defun register-ref (source-ref directory &key overwrite)
-  (git-agent-workflow.refs:register-ref
-   source-ref directory
-   :overwrite overwrite
-   :git-options (hook-disable-options)))
+  (%register-ref source-ref directory overwrite (hook-disable-options)))
 
 (defun unregister-ref (target-ref directory)
-  (git-agent-workflow.refs:unregister-ref
-   target-ref directory
-   :git-options (hook-disable-options)))
+  (%unregister-ref target-ref directory (hook-disable-options)))
 
 (defun select-ref (source-ref directory)
-  (git-agent-workflow.refs:select-ref
-   source-ref directory
-   :git-options (hook-disable-options)))
+  (%select-ref source-ref directory (hook-disable-options)))
 
 (defun restore-selection (change directory)
-  (git-agent-workflow.refs:restore-selection
-   change directory
-   :git-options (hook-disable-options)))
+  (%restore-selection change directory (hook-disable-options)))
 
 (defun initialize-ref-graph (source-ref object-id directory)
-  (git-agent-workflow.refs:initialize-ref-graph
-   source-ref object-id directory
-   :git-options (hook-disable-options)))
+  (%initialize-ref-graph source-ref object-id directory
+                         (hook-disable-options)))
 
 (defun remove-initial-ref-graph (source-ref object-id directory)
-  (git-agent-workflow.refs:remove-initial-ref-graph
-   source-ref object-id directory
-   :git-options (hook-disable-options)))
+  (%remove-initial-ref-graph source-ref object-id directory
+                             (hook-disable-options)))
 
 (defun rename-ref-registration (old-source-ref new-source-ref directory)
-  (git-agent-workflow.refs:rename-ref-registration
-   old-source-ref new-source-ref directory
-   :git-options (hook-disable-options)))
+  (%rename-ref-registration old-source-ref new-source-ref directory
+                            (hook-disable-options)))
 
 (defun remove-ref-registration (source-ref directory)
-  (git-agent-workflow.refs:remove-ref-registration
-   source-ref directory
-   :git-options (hook-disable-options)))
+  (%remove-ref-registration source-ref directory (hook-disable-options)))
 
 (defun restore-ref-registration (removal directory)
-  (git-agent-workflow.refs:restore-ref-registration
-   removal directory
-   :git-options (hook-disable-options)))
+  (%restore-ref-registration removal directory (hook-disable-options)))
 
 (defun run-branch (arguments directory)
-  (run-git
-   (append (hook-disable-options)
-           (cons "branch" arguments))
-   directory))
+  (%run-branch arguments directory (hook-disable-options)))
 
 (defun run-worktree (arguments directory)
-  (run-git
-   (append (hook-disable-options)
-           (cons "worktree" arguments))
-   directory))
+  (%run-worktree arguments directory (hook-disable-options)))
 
 (defun run-source-ref-update (source-ref old-oid new-oid
                               directory reflog-message)
-  (run-git
-   (append (list "-c" "core.hooksPath=/dev/null")
-           (hook-disable-options)
-           (list "update-ref"
-                 "-m"
-                 reflog-message
-                 source-ref
-                 new-oid
-                 old-oid))
-   directory))
+  (%run-source-ref-update source-ref old-oid new-oid directory
+                          reflog-message (hook-disable-options)
+                          (list "-c" "core.hooksPath=/dev/null")))

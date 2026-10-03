@@ -154,8 +154,12 @@
                                            "refs"
                                            "hook")
                               :components ((:file "package")
+                                           (:file "mutation.core"
+                                            :depends-on ("package"))
+                                           (:file "mutation.runtime"
+                                            :depends-on ("mutation.core"))
                                            (:file "mutation.api"
-                                            :depends-on ("package"))))
+                                            :depends-on ("mutation.runtime"))))
                              (:module "deploy"
                               :pathname "deploy/"
                               :depends-on ("package"
