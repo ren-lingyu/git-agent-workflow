@@ -219,8 +219,12 @@
                                            "help"
                                            "hook")
                               :components ((:file "package")
+                                           (:file "cli.core"
+                                            :depends-on ("package"))
+                                           (:file "cli.runtime"
+                                            :depends-on ("cli.core"))
                                            (:file "cli.api"
-                                            :depends-on ("package")))))))
+                                            :depends-on ("cli.runtime")))))))
 
   :build-operation program-op
   :build-pathname "git-gaw"
