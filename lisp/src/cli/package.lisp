@@ -10,6 +10,11 @@
                 #:check
                 #:check-report-ok-p
                 #:write-check-report)
+  (:import-from #:git-agent-workflow.status
+                #:status
+                #:diagnose-status
+                #:status-report-ok-p
+                #:write-status-report)
   (:import-from #:git-agent-workflow.deploy
                 #:deploy
                 #:deploy-result-branch

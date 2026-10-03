@@ -117,6 +117,17 @@
                                             :depends-on ("check.core"))
                                            (:file "check.api"
                                             :depends-on ("check.runtime"))))
+                             (:module "status"
+                              :pathname "status/"
+                              :depends-on ("package" "git" "refs" "state"
+                                           "workspace" "hook")
+                              :components ((:file "package")
+                                           (:file "status.core"
+                                            :depends-on ("package"))
+                                           (:file "status.runtime"
+                                            :depends-on ("status.core"))
+                                           (:file "status.api"
+                                            :depends-on ("status.runtime"))))
                              (:module "help"
                               :pathname "help/"
                               :depends-on ("package")
@@ -128,6 +139,7 @@
                                              (:static-file "commit.txt")
                                              (:static-file "show.txt")
                                              (:static-file "check.txt")
+                                             (:static-file "status.txt")
                                              (:static-file "deploy.txt")
                                              (:static-file "init.txt")
                                              (:static-file "branch.txt")))
@@ -214,6 +226,7 @@
                                            "commit"
                                            "show"
                                            "check"
+                                           "status"
                                            "deploy"
                                            "init"
                                            "branch"
@@ -331,6 +344,12 @@
                               :components ((:file "package")
                                            (:file "check"
                                             :depends-on ("package"))))
+                             (:module "status"
+                              :pathname "status/"
+                              :depends-on ("package" "support")
+                              :components ((:file "package")
+                                           (:file "status"
+                                            :depends-on ("package"))))
                              (:module "help"
                               :pathname "help/"
                               :depends-on ("package")
@@ -371,6 +390,7 @@
                                            "branch"
                                            "show"
                                            "check"
+                                           "status"
                                            "help"
                                            "hook"
                                            "cli")))))

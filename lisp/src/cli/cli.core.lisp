@@ -105,6 +105,7 @@
     ((string= name "commit") :commit)
     ((string= name "show") :show)
     ((string= name "check") :check)
+    ((string= name "status") :status)
     ((string= name "deploy") :deploy)
     ((string= name "init") :init)
     ((string= name "branch") :branch)
@@ -112,7 +113,7 @@
 
 (defun %usage-error ()
   (%cli-error
-   "Usage:~%  git gaw init --branch <name> [--worktree-path <path>]~%  git gaw deploy [--branch <name>] [--worktree-path <path>]~%  git gaw branch -m <new-name> | -d <name>~%  git gaw commit [options] [--] [project-commit...]~%  git gaw show [options] [object...] [-- path...]~%  git gaw check~%  git gaw help [init|deploy|branch|commit|show|check]"))
+   "Usage:~%  git gaw init --branch <name> [--worktree-path <path>]~%  git gaw deploy [--branch <name>] [--worktree-path <path>]~%  git gaw branch -m <new-name> | -d <name>~%  git gaw commit [options] [--] [project-commit...]~%  git gaw show [options] [object...] [-- path...]~%  git gaw check~%  git gaw status [--diagnose]~%  git gaw help [init|deploy|branch|commit|show|check|status]"))
 
 (defun %sole-help-option-p (arguments)
   (and arguments

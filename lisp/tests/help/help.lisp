@@ -5,11 +5,12 @@
     (print-help topic stream)))
 
 (defun %test-help-topics ()
-  (dolist (topic '(:overview :commit :show :check :deploy :init :branch))
+  (dolist (topic '(:overview :commit :show :check :status :deploy :init :branch))
     (let ((text (%render topic)))
       (assert (plusp (length text)))
       (assert (char= #\Newline (char text (1- (length text)))))))
   (assert (search "git gaw check" (%render :check)))
+  (assert (search "git gaw status" (%render :status)))
   (assert (search "git gaw deploy" (%render :deploy)))
   (assert (search "git gaw init" (%render :init)))
   (assert (search "git gaw branch" (%render :branch)))

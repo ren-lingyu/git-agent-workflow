@@ -15,7 +15,8 @@ The current release is =0.2.0=.  It adds repository lifecycle operations to
 the daily runtime introduced in 0.1.0.  A new repository can be initialized
 with =git gaw init=, an existing local GAW branch can be materialized with
 =git gaw deploy=, and registered branches can be renamed or safely deleted
-with =git gaw branch=.  The =check=, edit, stage, =commit=, and =show= loop and
+with =git gaw branch=.  =git gaw status= reports repository-wide local GAW
+state.  The =check=, edit, stage, =commit=, and =show= loop and
 local ref-transaction protection remain the normal daily interface.
 
 The repository protocol and user-facing interface may still change before a
@@ -330,9 +331,45 @@ is zero when the report has no error finding and one otherwise; warnings do not
 make the report fail.  The check does not write the index, refs, worktree, or
 object database.
 
+** Repository-wide Status
+=git gaw status= is a read-only inventory of the current repository's local
+GAW state.  It can run from a nested directory, a linked worktree, or a bare
+repository with either =files= or =reftable= refs.  It reports the common Git
+directory, local GAW and ordinary branches, the local selector, configured
+protection hook, worktree attachments, and discovered =refs/gaw/*= refs
+(including unexpected refs).
+
+Branches with either a local registration or a =.gaw/config= tip marker receive
+full committed-state validation; the marker alone does not establish that a
+branch is valid.  Ref discovery combines Git's normal =refs/gaw/*=
+enumeration with exact probes of =refs/gaw/HEAD=, its symbolic target, and the
+registration name corresponding to each local source branch.  This detects
+damage reachable from the selector or a surviving branch, even when normal
+enumeration hides a dangling symbolic ref.  A broken ref hidden by Git's
+enumeration whose name cannot be derived from any of those entry points may
+not be reported.  Status uses Git commands for both ref backends; it does not
+inspect backend storage directly.
+
+The default command returns zero once it has produced the report, even if the
+report identifies invalid branches, registrations, or selector state.  A fatal
+repository discovery or Git query failure is nonzero.  A repository with no
+GAW state is reportable.  Unlike =git gaw check=, status does not inspect each
+worktree's index or workspace readiness and does not repair local metadata.
+
+=git gaw status --diagnose= additionally runs =git fsck --connectivity-only
+--no-reflogs --no-dangling --no-progress= after the report is generated.  Git's
+stdout and stderr are forwarded unchanged, not parsed into GAW findings.  This
+is a repository-wide check: it can report unrelated ref, object, index, or
+other problems.  Diagnostic mode returns zero only if the GAW report has no
+invalid GAW branch, registration, or selector, no unreadable discovered
+protocol ref or protection-hook conflict, and fsck returns zero.  Missing
+deployment metadata or hook configuration, and unknown but readable protocol
+refs, remain informational.  If the normal status report cannot be generated,
+fsck is not run.
+
 ** Command Help
 GAW provides overview and command-specific help through =git gaw help= and
-=git gaw help init|deploy|branch|commit|show|check=.  The
+=git gaw help init|deploy|branch|commit|show|check|status=.  The
 overview is also available as =git gaw --help= or =git gaw -h=, while each
 command accepts =--help= as its sole argument.
 
@@ -360,6 +397,7 @@ Once deployed, the intended daily loop is:
 
 #+begin_src text
 git gaw check
+git gaw status
 edit workspace files
 git status / git diff
 git add <paths>
@@ -393,8 +431,9 @@ separate metadata database.
 * Development
 GAW is implemented in Common Lisp and built as an ASDF system.
 
-The build is managed with Nix flakes and =cl-nix-forge=.  The currently
-supported system is =x86_64-linux=, and GAW requires Git 2.54 or newer.
+The build is managed with Nix flakes and the repository's ASDF build helpers.
+The currently supported system is =x86_64-linux=, and GAW requires Git 2.54
+or newer.
 
 Run the complete Common Lisp and Git integration test suite with:
 
@@ -403,14 +442,14 @@ nix flake check
 #+end_src
 
 ** Package Layout
-Source packages are organized as directories under =src/=.  Each package
+Source packages are organized as directories under =lisp/src/=.  Each package
 directory contains its own =package.lisp= and the implementation files owned
-by that package.  The top-level =src/package.lisp= defines the
+by that package.  The top-level =lisp/src/package.lisp= defines the
 =git-agent-workflow= package; it is intentionally minimal and reserved for a
 future unified user-facing API.
 
-Tests follow the same package-oriented layout under =tests/=.  Shared test
-support and the top-level test runner remain directly under =tests/=, while
+Tests follow the same package-oriented layout under =lisp/tests/=.  Shared test
+support and the top-level test runner remain directly under =lisp/tests/=, while
 package-specific definitions and tests live in the corresponding package
 directory.
 

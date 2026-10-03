@@ -46,7 +46,7 @@
                        (nth-value 0 (%dispatch-output '("--help") directory))))
       (assert (string= overview
                        (nth-value 0 (%dispatch-output '("-h") directory)))))
-    (dolist (command '("commit" "show" "check" "deploy" "init" "branch"))
+    (dolist (command '("commit" "show" "check" "status" "deploy" "init" "branch"))
       (let ((topic (nth-value 0
                              (%dispatch-output (list "help" command)
                                                directory)))
@@ -103,6 +103,84 @@
         (%dispatch-output '("check") directory)
       (assert (= status 1))
       (assert (search "GAW worktree is not ready" output)))))
+
+(defun %test-status-dispatch ()
+  (with-test-repository (directory)
+    (multiple-value-bind (output status)
+        (%dispatch-output '("status") directory)
+      (assert (zerop status))
+      (assert (search "GAW repository:" output))
+      (assert (search "GAW branches (0):" output)))
+    (assert (zerop (nth-value 1
+                    (%dispatch-output '("status" "--diagnose") directory))))
+    (assert (handler-case
+                (progn (%dispatch-output '("status" "extra") directory)
+                       nil)
+              (error () t)))
+    (assert (handler-case
+                (progn (%dispatch-output '("status" "--diagnose" "extra")
+                                         directory)
+                       nil)
+              (error () t)))))
+
+(defun %test-status-diagnostic-exit-combination ()
+  (with-test-repository (directory)
+    (let* ((diagnose-symbol 'git-agent-workflow.status:diagnose-status)
+           (writer-symbol 'git-agent-workflow.status:write-status-report)
+           (original-diagnose (symbol-function diagnose-symbol))
+           (original-writer (symbol-function writer-symbol))
+           (diagnostic-status 0)
+           (diagnostic-calls 0)
+           (reported nil))
+      (unwind-protect
+           (progn
+             (setf (symbol-function writer-symbol)
+                   (lambda (report &optional (stream *standard-output*))
+                     (prog1 (funcall original-writer report stream)
+                       (setf reported t))))
+             (setf (symbol-function diagnose-symbol)
+                   (lambda (git-directory)
+                     (assert (equal directory git-directory))
+                     (assert reported)
+                     (incf diagnostic-calls)
+                     diagnostic-status))
+             (assert (zerop (nth-value 1
+                             (%dispatch-output '("status") directory))))
+             (assert (zerop diagnostic-calls))
+             (setf reported nil)
+             (assert (zerop (nth-value 1
+                             (%dispatch-output '("status" "--diagnose")
+                                               directory))))
+             (assert (= 1 diagnostic-calls))
+             (setf diagnostic-status 7 reported nil)
+             (assert (= 7 (nth-value 1
+                           (%dispatch-output '("status" "--diagnose")
+                                             directory))))
+             (call-git (list "-C" (namestring directory)
+                             "symbolic-ref" "refs/gaw/HEAD"
+                             "refs/gaw/heads/missing"))
+             (setf diagnostic-status 0 reported nil)
+             (assert (zerop (nth-value 1
+                             (%dispatch-output '("status") directory))))
+             (assert (= 1 (nth-value 1
+                           (%dispatch-output '("status" "--diagnose")
+                                             directory))))
+             (setf diagnostic-status 7 reported nil)
+             (assert (= 7 (nth-value 1
+                           (%dispatch-output '("status" "--diagnose")
+                                             directory))))
+             (with-temporary-directory (outside)
+               (setf reported nil)
+               (let ((before diagnostic-calls))
+                 (assert (handler-case
+                             (progn
+                               (%dispatch-output '("status" "--diagnose")
+                                                 outside)
+                               nil)
+                           (error () t)))
+                 (assert (= before diagnostic-calls)))))
+        (setf (symbol-function diagnose-symbol) original-diagnose
+              (symbol-function writer-symbol) original-writer)))))
 
 (defun %test-version-dispatch ()
   (with-temporary-directory (directory)
@@ -200,6 +278,8 @@
   (%test-deploy-argument-parser)
   (%test-show-help-interception-is-exact)
   (%test-check-dispatch)
+  (%test-status-dispatch)
+  (%test-status-diagnostic-exit-combination)
   (%test-version-dispatch)
   (%test-reference-transaction-machine-option)
   (%test-reference-transaction-machine-option-reports-hook-error)

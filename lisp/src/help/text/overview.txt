@@ -1,5 +1,5 @@
 usage: git gaw <command> [<args>]
-   or: git gaw help [init|deploy|branch|commit|show|check]
+   or: git gaw help [init|deploy|branch|commit|show|check|status]
    or: git gaw --help
    or: git gaw --version
    or: git gaw version
@@ -14,6 +14,7 @@ Commands:
    commit    create a GAW commit from the current index
    show      show canonical GAW history through git show
    check     check whether the current GAW worktree is ready
+   status    report repository-wide GAW branches, refs, hook and worktrees
    help      show help for GAW or one of its commands
 
 Run 'git gaw help <command>' or 'git gaw <command> --help' for details.

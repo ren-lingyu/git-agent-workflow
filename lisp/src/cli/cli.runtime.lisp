@@ -105,6 +105,22 @@
     (write-check-report report stream)
     (if (check-report-ok-p report) 0 1)))
 
+(defun %run-status (arguments directory stream)
+  (unless (or (null arguments)
+              (equal arguments '("--diagnose")))
+    (%cli-error "Usage: git gaw status [--diagnose]"))
+  (let ((report (status directory)))
+    (write-status-report report stream)
+    (if arguments
+        (progn
+          (finish-output stream)
+          (let ((diagnostic-status (diagnose-status directory)))
+            (if (and (status-report-ok-p report)
+                     (zerop diagnostic-status))
+                0
+                (if (zerop diagnostic-status) 1 diagnostic-status))))
+        0)))
+
 (defun %run-init (arguments directory stream)
   (multiple-value-bind (branch worktree-path)
       (%parse-deploy-arguments arguments)
@@ -211,6 +227,10 @@
      (if (%sole-help-option-p (rest arguments))
          (progn (print-help :check output-stream) 0)
          (%run-check (rest arguments) directory output-stream)))
+    ((and arguments (string= (first arguments) "status"))
+     (if (%sole-help-option-p (rest arguments))
+         (progn (print-help :status output-stream) 0)
+         (%run-status (rest arguments) directory output-stream)))
     ((and arguments (string= (first arguments) "deploy"))
      (if (%sole-help-option-p (rest arguments))
          (progn (print-help :deploy output-stream) 0)

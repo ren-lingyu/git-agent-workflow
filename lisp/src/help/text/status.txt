@@ -1,0 +1,20 @@
+usage: git gaw status [--diagnose]
+
+Report repository-wide GAW state without changing it. The report includes
+local branches, GAW protocol refs and selector, the configured protection
+hook, and all local worktree attachments. It can run from a worktree or a
+bare repository.
+
+The default report uses Git's ref APIs and supports both files and reftable.
+It checks refs known from the GAW selector and local branches, plus refs/gaw/*
+visible to Git's normal ref enumeration. An isolated dangling or broken ref
+hidden from that enumeration may not appear in the report.
+
+The default command returns zero when it produces a complete report, even if
+the report identifies GAW protocol errors. Repository discovery or query
+failure returns nonzero.
+
+--diagnose also runs git fsck --connectivity-only --no-reflogs --no-dangling
+--no-progress after a report is produced. Git's output is passed through
+unchanged and may describe unrelated repository problems. This mode returns
+zero only if the GAW report has no protocol errors and Git fsck succeeds.
