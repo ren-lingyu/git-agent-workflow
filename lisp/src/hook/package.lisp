@@ -25,4 +25,5 @@
            #:hook-configuration-error
            #:hook-configuration-error-reason
            #:inspect-protection-hook
-           #:ensure-protection-hook))
+           #:ensure-protection-hook
+           #:hook-disable-options))

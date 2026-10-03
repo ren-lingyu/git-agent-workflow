@@ -16,7 +16,8 @@
                 #:inspect-protection-hook
                 #:ensure-protection-hook)
   (:import-from #:git-agent-workflow.refs
-                #:registration-error
+                #:registration-error)
+  (:import-from #:git-agent-workflow.mutation
                 #:register-ref
                 #:unregister-ref)
   (:export #:run-tests))

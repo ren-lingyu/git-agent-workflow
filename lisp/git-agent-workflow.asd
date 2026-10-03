@@ -80,6 +80,7 @@
                               :depends-on ("package"
                                            "git"
                                            "refs"
+                                           "mutation"
                                            "config"
                                            "workspace")
                               :components ((:file "package")
@@ -146,6 +147,15 @@
                                             :depends-on ("hook.core"))
                                            (:file "hook.api"
                                             :depends-on ("hook.runtime"))))
+                             (:module "mutation"
+                              :pathname "mutation/"
+                              :depends-on ("package"
+                                           "git"
+                                           "refs"
+                                           "hook")
+                              :components ((:file "package")
+                                           (:file "mutation.api"
+                                            :depends-on ("package"))))
                              (:module "deploy"
                               :pathname "deploy/"
                               :depends-on ("package"
@@ -153,6 +163,7 @@
                                            "refs"
                                            "state"
                                            "hook"
+                                           "mutation"
                                            "check")
                               :components ((:file "package")
                                            (:file "deploy.core"
@@ -168,6 +179,7 @@
                                            "refs"
                                            "state"
                                            "hook"
+                                           "mutation"
                                            "deploy")
                               :components ((:file "package")
                                            (:file "init.core"
@@ -181,6 +193,7 @@
                               :depends-on ("package"
                                            "git"
                                            "refs"
+                                           "mutation"
                                            "workspace"
                                            "state")
                               :components ((:file "package")

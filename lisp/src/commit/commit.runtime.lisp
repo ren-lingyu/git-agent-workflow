@@ -3,6 +3,7 @@
 (eval-when (:load-toplevel :execute)
   (dolist (function '(run-git
                       run-git-bytes
+                      run-source-ref-update
                       %signal-commit-error
                       %call-with-workspace-error-as-commit-error
                       worktree-root
@@ -199,17 +200,11 @@
                            directory
                            reflog-message)
   (let ((invocation
-          (run-git (list "-c"
-                         "core.hooksPath=/dev/null"
-                         "-c"
-                         "hook.gaw-reference-transaction.enabled=false"
-                         "update-ref"
-                         "-m"
-                         reflog-message
-                         source-ref
-                         new-oid
-                         old-oid)
-                   directory)))
+          (run-source-ref-update source-ref
+                                 old-oid
+                                 new-oid
+                                 directory
+                                 reflog-message)))
     (unless (zerop (git-invocation-exit-status invocation))
       (%signal-commit-error :ref-moved
                             "The GAW branch changed before it could be updated"))

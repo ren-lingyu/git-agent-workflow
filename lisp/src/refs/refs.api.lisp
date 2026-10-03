@@ -43,19 +43,21 @@
                      *source-ref-prefix*
                      *target-ref-prefix*))
 
-(defun register-ref (source-ref directory &key overwrite)
+(defun register-ref (source-ref directory &key overwrite git-options)
   (%register-ref source-ref
                  directory
                  overwrite
                  *display-name*
                  *source-ref-prefix*
-                 *target-ref-prefix*))
+                 *target-ref-prefix*
+                 git-options))
 
-(defun unregister-ref (target-ref directory)
+(defun unregister-ref (target-ref directory &key git-options)
   (%unregister-ref target-ref
                    directory
                    *display-name*
-                   *target-ref-prefix*))
+                   *target-ref-prefix*
+                   git-options))
 
 (defun registration-refs (directory)
   (%list-refs *target-ref-prefix* directory))
@@ -63,28 +65,35 @@
 (defun protocol-refs (directory)
   (%list-refs *protocol-ref-prefix* directory))
 
-(defun select-ref (source-ref directory)
+(defun select-ref (source-ref directory &key git-options)
   (%select-ref source-ref directory
-               *source-ref-prefix* *target-ref-prefix* *head-ref*))
+               *source-ref-prefix* *target-ref-prefix* *head-ref*
+               git-options))
 
-(defun restore-selection (change directory)
-  (%restore-selection change directory))
+(defun restore-selection (change directory &key git-options)
+  (%restore-selection change directory git-options))
 
-(defun initialize-ref-graph (source-ref object-id directory)
+(defun initialize-ref-graph (source-ref object-id directory &key git-options)
   (%initialize-ref-graph source-ref object-id directory
-                         *source-ref-prefix* *target-ref-prefix* *head-ref*))
+                         *source-ref-prefix* *target-ref-prefix* *head-ref*
+                         git-options))
 
-(defun remove-initial-ref-graph (source-ref object-id directory)
+(defun remove-initial-ref-graph (source-ref object-id directory
+                                 &key git-options)
   (%remove-initial-ref-graph source-ref object-id directory
-                             *source-ref-prefix* *target-ref-prefix* *head-ref*))
+                             *source-ref-prefix* *target-ref-prefix* *head-ref*
+                             git-options))
 
-(defun rename-ref-registration (old-source-ref new-source-ref directory)
+(defun rename-ref-registration (old-source-ref new-source-ref directory
+                                &key git-options)
   (%rename-ref-registration old-source-ref new-source-ref directory
-                            *source-ref-prefix* *target-ref-prefix* *head-ref*))
+                            *source-ref-prefix* *target-ref-prefix* *head-ref*
+                            git-options))
 
-(defun remove-ref-registration (source-ref directory)
+(defun remove-ref-registration (source-ref directory &key git-options)
   (%remove-ref-registration source-ref directory
-                            *source-ref-prefix* *target-ref-prefix* *head-ref*))
+                            *source-ref-prefix* *target-ref-prefix* *head-ref*
+                            git-options))
 
-(defun restore-ref-registration (removal directory)
-  (%restore-ref-registration removal directory))
+(defun restore-ref-registration (removal directory &key git-options)
+  (%restore-ref-registration removal directory git-options))

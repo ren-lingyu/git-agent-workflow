@@ -2,7 +2,7 @@
 
 (eval-when (:load-toplevel :execute)
   (dolist (function '(run-git inspect-ref current-ref registered-ref-p
-                      registration-refs protocol-refs select-ref
+                      registration-refs protocol-refs select-ref run-worktree
                       restore-selection inspect-committed-state
                       committed-state-marker-p local-branches
                       inspect-protection-hook ensure-protection-hook check
@@ -215,11 +215,9 @@
 (defun %create-worktree (directory path source-ref source-ref-prefix)
   (let* ((branch (subseq source-ref (length source-ref-prefix)))
          (invocation
-           (run-git (list "-c"
-                          "hook.gaw-reference-transaction.enabled=false"
-                          "worktree" "add" "--quiet"
-                          (uiop:native-namestring path) branch)
-                    directory)))
+           (run-worktree (list "add" "--quiet"
+                               (uiop:native-namestring path) branch)
+                         directory)))
     (unless (zerop (git-invocation-exit-status invocation))
       (%signal-deploy-error :worktree-create-failed
                             "Cannot create worktree ~A: ~A"
@@ -227,11 +225,8 @@
 
 (defun %remove-worktree (directory path)
   (let ((invocation
-          (run-git (list "-c"
-                         "hook.gaw-reference-transaction.enabled=false"
-                         "worktree" "remove"
-                         (uiop:native-namestring path))
-                   directory)))
+          (run-worktree (list "remove" (uiop:native-namestring path))
+                        directory)))
     (unless (zerop (git-invocation-exit-status invocation))
       (error "Cannot remove worktree ~A: ~A"
              path (git-invocation-stderr invocation)))))

@@ -33,7 +33,7 @@
 
 (defun %test-rename-protocol-failure-is-compensated ()
   (with-deployed-worktree (repository worktree)
-    (let* ((symbol 'git-agent-workflow.refs:rename-ref-registration)
+    (let* ((symbol 'git-agent-workflow.mutation:rename-ref-registration)
            (original (symbol-function symbol)))
       (unwind-protect
            (progn
@@ -86,7 +86,7 @@
       (call-git (list "init" "--quiet" (namestring repository)))
       (initialize repository :branch "gaw")
       (let* ((commit (%branch-git repository "rev-parse" "refs/heads/gaw"))
-             (symbol 'git-agent-workflow.refs:remove-ref-registration)
+             (symbol 'git-agent-workflow.mutation:remove-ref-registration)
              (original (symbol-function symbol)))
         (%branch-git repository "-c"
                      "hook.gaw-reference-transaction.enabled=false"

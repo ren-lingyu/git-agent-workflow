@@ -12,10 +12,12 @@
                 #:ref-state-symbolic-p
                 #:ref-state-object-id
                 #:registered-ref-p
-                #:current-ref
+                #:current-ref)
+  (:import-from #:git-agent-workflow.mutation
                 #:rename-ref-registration
                 #:remove-ref-registration
-                #:restore-ref-registration)
+                #:restore-ref-registration
+                #:run-branch)
   (:import-from #:git-agent-workflow.workspace
                 #:worktree-root
                 #:current-local-head-ref)

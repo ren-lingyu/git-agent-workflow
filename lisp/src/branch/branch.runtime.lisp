@@ -2,7 +2,7 @@
 
 (eval-when (:load-toplevel :execute)
   (dolist (function '(run-git make-ref inspect-ref registered-ref-p current-ref
-                      rename-ref-registration remove-ref-registration
+                      run-branch rename-ref-registration remove-ref-registration
                       restore-ref-registration worktree-root
                       current-local-head-ref inspect-committed-state
                       %signal-branch-error %make-branch-result))
@@ -35,11 +35,7 @@
 
 (defun %native-branch (arguments directory operation)
   (let ((invocation
-          (run-git (append (list "-c"
-                                 "hook.gaw-reference-transaction.enabled=false"
-                                 "branch")
-                           arguments)
-                   directory)))
+          (run-branch arguments directory)))
     (unless (zerop (git-invocation-exit-status invocation))
       (%signal-branch-error :native-failure
                             "Git failed while ~A: ~A"
@@ -47,10 +43,7 @@
 
 (defun %try-native-rename-back (old-name directory)
   (let ((invocation
-          (run-git (list "-c"
-                         "hook.gaw-reference-transaction.enabled=false"
-                         "branch" "-m" old-name)
-                   directory)))
+          (run-branch (list "-m" old-name) directory)))
     (unless (zerop (git-invocation-exit-status invocation))
       (error "Native rename compensation failed: ~A"
              (git-invocation-stderr invocation)))))
@@ -114,10 +107,7 @@
 
 (defun %restore-deleted-source (name object-id directory)
   (let ((invocation
-          (run-git (list "-c"
-                         "hook.gaw-reference-transaction.enabled=false"
-                         "branch" name object-id)
-                   directory)))
+          (run-branch (list name object-id) directory)))
     (unless (zerop (git-invocation-exit-status invocation))
       (error "Cannot recreate deleted branch: ~A"
              (git-invocation-stderr invocation)))))

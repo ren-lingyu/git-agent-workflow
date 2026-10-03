@@ -30,6 +30,10 @@
 (defparameter *hook-command*
   "git-gaw --reference-transaction")
 
+(defun hook-disable-options ()
+  (list "-c"
+        (concatenate 'string *hook-enabled-key* "=false")))
+
 (defun inspect-protection-hook (directory)
   (%inspect-protection-hook directory
                             *hook-event-key*

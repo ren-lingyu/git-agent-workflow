@@ -12,9 +12,11 @@
                 #:current-ref
                 #:registered-ref-p
                 #:registration-refs
-                #:protocol-refs
+                #:protocol-refs)
+  (:import-from #:git-agent-workflow.mutation
                 #:select-ref
-                #:restore-selection)
+                #:restore-selection
+                #:run-worktree)
   (:import-from #:git-agent-workflow.state
                 #:inspect-committed-state
                 #:committed-state-report-ok-p

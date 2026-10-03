@@ -12,6 +12,8 @@
                 #:ref-state-exists-p
                 #:ref-state-symbolic-p
                 #:ref-state-symbolic-target)
+  (:import-from #:git-agent-workflow.mutation
+                #:run-source-ref-update)
   (:import-from #:git-agent-workflow.config
                 #:read-config-at-tree
                 #:config-workspace

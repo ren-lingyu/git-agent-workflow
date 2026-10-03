@@ -9,7 +9,8 @@
   (:import-from #:git-agent-workflow.refs
                 #:inspect-ref
                 #:ref-state-exists-p
-                #:protocol-refs
+                #:protocol-refs)
+  (:import-from #:git-agent-workflow.mutation
                 #:initialize-ref-graph
                 #:remove-initial-ref-graph)
   (:import-from #:git-agent-workflow.state

@@ -23,16 +23,17 @@
              function))))
 
 (defun apply-ref-transaction (commands directory
-                              &key (reflog-message "git-gaw refs"))
+                              &key (reflog-message "git-gaw refs")
+                                git-options)
   (check-type reflog-message string)
+  (check-type git-options list)
   (let ((invocation
-          (run-git (list "-c"
-                         "hook.gaw-reference-transaction.enabled=false"
-                         "update-ref"
-                         "-m"
-                         reflog-message
-                         "--stdin"
-                         "-z")
+          (run-git (append git-options
+                           (list "update-ref"
+                                 "-m"
+                                 reflog-message
+                                 "--stdin"
+                                 "-z"))
                    directory
                    :input (%transaction-command-octets commands))))
     (unless (zerop (git-invocation-exit-status invocation))
@@ -54,7 +55,7 @@
           (uiop:split-string output :separator '(#\Newline))))))
 
 (defun %select-ref (source-ref directory source-ref-prefix
-                    target-ref-prefix head-ref)
+                    target-ref-prefix head-ref git-options)
   (unless (%ref-under-prefix-p source-ref source-ref-prefix)
     (error "Not a local source branch ref: ~S" source-ref))
   (let* ((source-state (inspect-ref source-ref directory))
@@ -94,7 +95,8 @@
       (when commands
         (apply-ref-transaction (nreverse commands)
                                directory
-                               :reflog-message "git-gaw select"))
+                               :reflog-message "git-gaw select"
+                               :git-options git-options))
       (%make-selection-change
        source-ref registration-ref
        (not (ref-state-exists-p registration-state))
@@ -103,7 +105,7 @@
             (ref-state-symbolic-target head-state))
        registration-ref))))
 
-(defun %restore-selection (change directory)
+(defun %restore-selection (change directory git-options)
   (check-type change selection-change)
   (let ((commands '()))
     (if (selection-change-old-head-target change)
@@ -128,11 +130,13 @@
     (when commands
       (apply-ref-transaction (nreverse commands)
                              directory
-                             :reflog-message "git-gaw deploy rollback"))
+                             :reflog-message "git-gaw deploy rollback"
+                             :git-options git-options))
     t))
 
 (defun %initialize-ref-graph (source-ref object-id directory
-                              source-ref-prefix target-ref-prefix head-ref)
+                              source-ref-prefix target-ref-prefix head-ref
+                              git-options)
   (unless (%ref-under-prefix-p source-ref source-ref-prefix)
     (error "Not a local source branch ref: ~S" source-ref))
   (let ((registration-ref
@@ -145,11 +149,13 @@
            (%symref-create-command registration-ref source-ref)
            (%symref-create-command head-ref registration-ref))
      directory
-     :reflog-message "git-gaw init")
+     :reflog-message "git-gaw init"
+     :git-options git-options)
     source-ref))
 
 (defun %remove-initial-ref-graph (source-ref object-id directory
-                                  source-ref-prefix target-ref-prefix head-ref)
+                                  source-ref-prefix target-ref-prefix head-ref
+                                  git-options)
   (let ((registration-ref
           (%make-ref source-ref source-ref-prefix target-ref-prefix)))
     (apply-ref-transaction
@@ -157,11 +163,13 @@
            (%symref-delete-command registration-ref source-ref)
            (%delete-command source-ref object-id))
      directory
-     :reflog-message "git-gaw init rollback")
+     :reflog-message "git-gaw init rollback"
+     :git-options git-options)
     t))
 
 (defun %rename-ref-registration (old-source-ref new-source-ref directory
-                                 source-ref-prefix target-ref-prefix head-ref)
+                                 source-ref-prefix target-ref-prefix head-ref
+                                 git-options)
   (let* ((old-registration
            (%make-ref old-source-ref source-ref-prefix target-ref-prefix))
          (new-registration
@@ -184,11 +192,13 @@
            (%symref-update-command head-ref new-registration
                                    :ref old-registration))
      directory
-     :reflog-message "git-gaw branch rename")
+     :reflog-message "git-gaw branch rename"
+     :git-options git-options)
     new-registration))
 
 (defun %remove-ref-registration (source-ref directory
-                                 source-ref-prefix target-ref-prefix head-ref)
+                                 source-ref-prefix target-ref-prefix head-ref
+                                 git-options)
   (let* ((registration-ref
            (%make-ref source-ref source-ref-prefix target-ref-prefix))
          (registration-state (inspect-ref registration-ref directory))
@@ -207,11 +217,12 @@
       (when selected-p
         (push (%symref-delete-command head-ref registration-ref) commands))
       (apply-ref-transaction (nreverse commands) directory
-                             :reflog-message "git-gaw branch delete")
+                             :reflog-message "git-gaw branch delete"
+                             :git-options git-options)
       (%make-registration-removal
        source-ref registration-ref head-ref selected-p))))
 
-(defun %restore-ref-registration (removal directory)
+(defun %restore-ref-registration (removal directory git-options)
   (check-type removal registration-removal)
   (let ((commands
           (list (%symref-create-command
@@ -223,7 +234,8 @@
              (registration-removal-registration-ref removal))
             commands))
     (apply-ref-transaction (nreverse commands) directory
-                           :reflog-message "git-gaw branch delete rollback")
+                           :reflog-message "git-gaw branch delete rollback"
+                           :git-options git-options)
     t))
 
 (defun %registered-ref-p (source-ref
@@ -309,7 +321,8 @@
                       overwrite
                       display-name
                       source-ref-prefix
-                      target-ref-prefix)
+                      target-ref-prefix
+                      git-options)
   (let* ((target-ref (%make-ref source-ref
                                 source-ref-prefix
                                 target-ref-prefix))
@@ -332,13 +345,15 @@
                target-ref source-ref :oid
                (ref-state-object-id target-state)))))
      directory
-     :reflog-message "git-gaw register")
+     :reflog-message "git-gaw register"
+     :git-options git-options)
     target-ref))
 
 (defun %unregister-ref (target-ref
                         directory
                         display-name
-                        target-ref-prefix)
+                        target-ref-prefix
+                        git-options)
   (%validate-target-ref target-ref
                         target-ref-prefix)
   (let ((target-state (inspect-ref target-ref
@@ -351,5 +366,6 @@
             target-ref
             (ref-state-symbolic-target target-state)))
      directory
-     :reflog-message "git-gaw unregister")
+     :reflog-message "git-gaw unregister"
+     :git-options git-options)
     target-ref))
