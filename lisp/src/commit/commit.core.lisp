@@ -30,3 +30,25 @@
                             "~A"
                             (or (workspace-error-detail condition)
                                 condition)))))
+
+(defun %validate-commit-input (message project-commits
+                               allow-empty-message)
+  (unless (typep message '(vector (unsigned-byte 8)))
+    (error 'type-error
+           :datum message
+           :expected-type '(vector (unsigned-byte 8))))
+  (unless (and (listp project-commits)
+               (every #'stringp project-commits))
+    (error 'type-error
+           :datum project-commits
+           :expected-type 'list))
+  (when (and (zerop (length message))
+             (not allow-empty-message))
+    (%signal-commit-error :empty-message
+                          "The commit message is empty")))
+
+(defun %workspace-declarations (config)
+  (mapcar (lambda (entry)
+            (cons (workspace-entry-kind entry)
+                  (workspace-entry-path entry)))
+          (config-workspace config)))
