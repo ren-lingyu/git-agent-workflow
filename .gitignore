@@ -10,10 +10,12 @@
 
 !asdf/
 !asdf/**/
-!asdf/**/*.asd
-!asdf/**/*.lisp
-!asdf/**/VERSION
-!asdf/**/text/*.txt
+!asdf/*.asd
+!asdf/VERSION
+!asdf/share/**/*.md
+!asdf/src/**/*.lisp
+!asdf/src/**/text/*.txt
+!asdf/tests/**/*.lisp
 
 !lib/
 !lib/**/
