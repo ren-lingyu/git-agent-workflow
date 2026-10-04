@@ -98,6 +98,15 @@
        (assert (check-report-ok-p report))
        (assert (eq :ok (%finding-status report :protection-hook)))))))
 
+(defun %test-missing-selector-is-warning ()
+  (%with-repository
+   (lambda (directory)
+     (%git directory "symbolic-ref" "--delete" "refs/gaw/HEAD")
+     (let ((report (check directory)))
+       (assert (check-report-ok-p report))
+       (assert (eq :warning (%finding-status report :selector)))
+       (assert (eq :ok (%finding-status report :head)))))))
+
 (defun %test-index-failure-and-aggregation ()
   (%with-repository
    (lambda (directory)
@@ -283,6 +292,7 @@
 (defun run-tests ()
   (%test-healthy-and-nested-check)
   (%test-protection-hook-finding)
+  (%test-missing-selector-is-warning)
   (%test-index-failure-and-aggregation)
   (%test-head-and-selector-failures)
   (%test-staged-config-variants)

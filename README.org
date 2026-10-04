@@ -327,9 +327,9 @@ The same operation is available to Common Lisp callers as
 =(git-agent-workflow.show:show directory arguments)=.  It writes Git's output
 directly to the current process streams and returns Git's exit status.
 
-** Checking a Provisioned Worktree
-The command =git gaw check= performs a read-only readiness check for an already
-provisioned GAW worktree.  It checks the local branch and optional selector, the
+** Checking a GAW Worktree
+The command =git gaw check= performs a read-only readiness check for the
+current GAW worktree.  It checks the local branch and optional selector, the
 committed config and workspace, additional project-parent tip trees, the
 complete staged candidate, and conflicting Git operation state.
 
@@ -341,8 +341,9 @@ concerns.  Commit-message validity, command-line project parents, and
 
 Expected readiness failures are aggregated into one report.  The exit status
 is zero when the report has no error finding and one otherwise; warnings do not
-make the report fail.  The check does not write the index, refs, worktree, or
-object database.
+make the report fail.  A missing selector is reported as a warning rather than
+a deployment prerequisite.  The check does not write the index, refs,
+worktree, or object database.
 
 ** Repository-wide Status
 =git gaw status= is a read-only inventory of the current repository's local
