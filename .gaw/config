@@ -1,1 +1,2 @@
-(:workspace ())
+(:workspace ((:directory "memory")
+             (:directory "skills")))
