@@ -9,9 +9,26 @@ let
     program = "fixture-program";
   };
 
+  withoutSkills = llib.asdfFunctions.mkProject {
+    inherit pkgs;
+    asdFile = ./fixture/skill-install-fixture.asd;
+    pname = "skill-install-fixture";
+    program = "fixture-program";
+    installAgentSkills = false;
+  };
+
+  withoutSubtree = llib.asdfFunctions.mkProject {
+    inherit pkgs;
+    asdFile = ./fixture/skill-free-fixture.asd;
+    pname = "skill-free-fixture";
+    program = "fixture-program";
+  };
+
   installedSkill = "${fixture.package}/share/skills/skill-install-fixture/sample-skill";
 
-in pkgs.runCommand "lib-asdfFunctions-skills-test" { } ''
+in assert !(builtins.elem pkgs.installAgentSkills
+  withoutSkills.package.nativeBuildInputs);
+pkgs.runCommand "lib-asdfFunctions-skills-test" { } ''
   test -x "${fixture.package}/bin/fixture-program"
   test -f "${installedSkill}/SKILL.md"
   test -f "${installedSkill}/references/guide.md"
@@ -21,6 +38,12 @@ in pkgs.runCommand "lib-asdfFunctions-skills-test" { } ''
   test ! -e "${installedSkill}/unlisted.md"
   test ! -e "${fixture.package}/share/skills/skill-install-fixture/unlisted-skill"
   test "$(find "${fixture.package}/share/skills/skill-install-fixture" -type f | wc -l)" -eq 2
+
+  test -x "${withoutSkills.package}/bin/fixture-program"
+  test ! -e "${withoutSkills.package}/share/skills"
+
+  test -x "${withoutSubtree.package}/bin/fixture-program"
+  test ! -e "${withoutSubtree.package}/share/skills"
 
   mkdir -p "$out"
 ''
