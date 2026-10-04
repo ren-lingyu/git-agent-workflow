@@ -25,16 +25,35 @@ let
     pkgs,
     name,
     asdName,
-    operation,
+    body,
   } : pkgs.replaceVarsWith {
     src = ./asdf-script.lisp;
 
     replacements = {
       asdName = builtins.toJSON asdName;
-      inherit operation;
+      inherit body;
     };
 
     inherit name;
+  };
+
+  mkAsdfOperationScript_ = {
+    pkgs,
+    name,
+    asdName,
+    operation,
+  } : mkAsdfScript_ {
+    inherit
+      pkgs
+      name
+      asdName
+      ;
+
+    body = ''
+      (asdf:operate
+       '${operation}
+       system)
+    '';
   };
 
   mkPackage_ = {
@@ -53,11 +72,13 @@ let
         nativeBuildInputs = builtins.concatLists [
           [
             project.lisp
+            pkgs.installAgentSkills
           ]
           (packageAttrs.nativeBuildInputs or [ ])
         ];
 
         ASDF_OUTPUT_TRANSLATIONS = "/:/";
+        dontInstallAgentSkills = 1;
 
         dontConfigure = true;
         dontStrip = true;
@@ -69,6 +90,7 @@ let
             ":${project.lispRegistry}"
           }\""
           "${pkgs.lib.getExe project.lisp} --script ${project.buildScript}"
+          "${pkgs.lib.getExe project.lisp} --script ${project.skillsScript}"
           "runHook postBuild"
         ];
 
@@ -76,6 +98,14 @@ let
           "runHook preInstall"
           "mkdir -p \"$out/bin\""
           "install -m755 ${project.program} \"$out/bin/${project.program}\""
+          "while IFS= read -r -d '' skill && IFS= read -r -d '' relative && IFS= read -r -d '' source; do"
+          "  target=\"$PWD/.gaw-skill-stage/$skill/$relative\""
+          "  mkdir -p \"$(dirname \"$target\")\""
+          "  cp -p -- \"$source\" \"$target\""
+          "done < skills-manifest"
+          "for skill in \"$PWD/.gaw-skill-stage\"/*; do"
+          "  if [ -d \"$skill\" ]; then installSkill \"$skill\"; fi"
+          "done"
           "runHook postInstall"
         ];
 
@@ -173,14 +203,23 @@ in {
         lispDependencies pkgs.sbcl.pkgs
       );
 
-      buildScript = mkAsdfScript_ {
+      buildScript = mkAsdfOperationScript_ {
         inherit pkgs;
         name = "${pname_}-build.lisp";
         asdName = asdName_;
         operation = "asdf:program-op";
       };
 
-      checkScript = mkAsdfScript_ {
+      skillsScript = mkAsdfScript_ {
+        inherit pkgs;
+        name = "${pname_}-skills.lisp";
+        asdName = asdName_;
+        body = ''
+          (write-skill-manifest system "skills-manifest")
+        '';
+      };
+
+      checkScript = mkAsdfOperationScript_ {
         inherit pkgs;
         name = "${pname_}-check.lisp";
         asdName = asdName_;
