@@ -446,7 +446,8 @@ The build is managed with Nix flakes and the repository's ASDF build helpers.
 The currently supported system is =x86_64-linux=, and GAW requires Git 2.54
 or newer.
 
-Run the complete Common Lisp and Git integration test suite with:
+Run the Common Lisp and Git integration tests, together with the ASDF build
+helper fixture checks, with:
 
 #+begin_src sh
 nix flake check
@@ -489,6 +490,16 @@ Package directories are represented by ASDF modules with explicit
 order and cross-package dependencies rather than relying on incidental source
 file ordering.  The test system uses corresponding modules for tested
 packages and dispatches their runners from a top-level test entry point.
+
+The =lib.asdfFunctions.mkProject= build helper enables agent skill installation
+by default; callers can set =installAgentSkills= to =false= to omit its dependency,
+manifest generation, and installation steps.  When enabled, it uses the
+=share/skills= ASDF component subtree as the source of skill membership and
+installs only explicitly declared static files through nixpkgs'
+=installAgentSkills= helper.  A system without that subtree installs no skills.
+The current GAW system declares no bundled skill.  The fixture checks under
+=tests/lib.asdfFunctions/= cover declared-file installation, the disabled
+option, and a system without a skill subtree.
 
 * License
 GAW is distributed under the [[file:LICENSE][MIT License]].
