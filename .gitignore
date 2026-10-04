@@ -8,12 +8,12 @@
 !flake.nix
 !flake.lock
 
-!lisp/
-!lisp/**/
-!lisp/**/*.asd
-!lisp/**/*.lisp
-!lisp/**/VERSION
-!lisp/**/text/*.txt
+!asdf/
+!asdf/**/
+!asdf/**/*.asd
+!asdf/**/*.lisp
+!asdf/**/VERSION
+!asdf/**/text/*.txt
 
 !lib/
 !lib/**/
