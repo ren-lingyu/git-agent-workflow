@@ -19,6 +19,8 @@ Read the workspace declaration in `.gaw/config` and follow the existing organiza
 
 Distill work into information that could help a later agent act: the current objective and state, important decisions and reasons, difficult findings, unresolved issues, and useful handoff instructions. Respect an existing repository convention for raw evidence, but do not default to archiving every message or tool result. Do not impose a fixed set of memory files; create a new file only when the declared workspace lacks a suitable place.
 
+When substantive work predates the current GAW memory state, treat the current session as evidence to consolidate into the existing declared workspace. Extract durable state that could help a later agent resume or act better: verified findings, adopted decisions and reasons, current progress, unresolved questions, relevant project provenance if known, and the next actionable step. Correct stale workspace content when newer evidence supersedes it; do not preserve the conversation or tool transcript as memory by default. If the session adds no durable information, leave the workspace unchanged. Do not reconstruct a sequence of GAW commits from the session's past chronology.
+
 Treat remembered project facts as a useful prior, not proof of current behavior. Recheck a potentially stale claim against the current project state when it matters, then update or remove obsolete current-memory text. Keep current memory current; let GAW history preserve earlier plans, assumptions, and conclusions instead of growing an append-only progress log by default.
 
 ## Ground and checkpoint selectively
@@ -26,6 +28,8 @@ Treat remembered project facts as a useful prior, not proof of current behavior.
 Checkpoint a state that a future agent may need to restore and explain: a consequential finding, decision, phase transition, or handoff. A session boundary, small edit, or each new project commit does not by itself require a GAW commit. If no new durable information emerged, make no checkpoint.
 
 Choose additional project parents for the exact snapshots the relevant work, observation, test, or comparison was actually performed against. Zero parents are normal for planning, cleanup, or handoff unrelated to a specific code snapshot. Use one or several only when each has a real provenance role; do not attach the latest branch tip, a future goal commit, or every intermediate commit by habit. An unchanged GAW tree can still acquire a meaningful project-parent association.
+
+For work consolidated after the fact, attach a project parent only when existing evidence unambiguously identifies the exact commit against which the relevant work was performed. Apply this standard independently to every proposed parent. Current `HEAD`, nearby history, timestamps, and likely work intervals do not establish provenance; when the original snapshot cannot be determined, leave the checkpoint without a project parent rather than guessing or attaching possible commits. A later revalidation may ground the revalidated state in the snapshot actually checked, but does not establish the original session's provenance; do not revalidate merely to obtain a parent. If missing original provenance affects interpretation, record that uncertainty briefly in current memory.
 
 `git gaw commit` takes its complete candidate tree from the current index; it neither stages files nor includes unstaged or untracked changes. Before a checkpoint in the GAW worktree:
 
