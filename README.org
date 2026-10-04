@@ -11,13 +11,13 @@ context as the primary store of working state, GAW keeps selected agent state
 in Git and lets Git provide its history and reachability model.
 
 * Status
-The current release is =0.2.0=.  It adds repository lifecycle operations to
-the daily runtime introduced in 0.1.0.  A new repository can be initialized
-with =git gaw init=, an existing local GAW branch can be materialized with
-=git gaw deploy=, and registered branches can be renamed or safely deleted
-with =git gaw branch=.  =git gaw status= reports repository-wide local GAW
-state.  The =check=, edit, stage, =commit=, and =show= loop and
-local ref-transaction protection remain the normal daily interface.
+The current release is =0.3.0=.  GAW branch identity now follows validated
+branch content rather than local registration refs.  =git gaw init= creates
+history, =git gaw deploy= selects an existing valid local branch, and
+=git gaw undeploy= exits local deployment without removing history or
+worktrees.  =git gaw branch= handles selected-branch rename and safe deletion
+of an unselected valid GAW branch.  The =check=, edit, stage, =commit=, and
+=show= loop remains the daily interface.
 
 The repository protocol and user-facing interface may still change before a
 stable release.  Remote-side enforcement, automatic fetching, arbitrary
@@ -69,19 +69,19 @@ commit history, =.gaw/config=, and workspace state.  Remote transport uses
 ordinary branch history; GAW does not require =refs/gaw/*= to be pushed or
 fetched.
 
-The =refs/gaw/*= namespace is rebuildable local deployment metadata:
+The =refs/gaw/*= namespace contains one canonical local deployment ref:
 
 #+begin_src text
-refs/gaw/heads/<name> -> refs/heads/<name>
-refs/gaw/HEAD         -> refs/gaw/heads/<name>
+refs/gaw/HEAD -> refs/heads/<name>
 #+end_src
 
-The first symbolic ref records local GAW membership for validation and branch
-protection.  The second is a persisted local selector.  It is not portable
-remote state and is not authoritative for =git gaw commit=, which uses the
-current worktree's symbolic =HEAD=.  Rebuildable means that no irreplaceable
-repository information lives in this namespace; it does not authorize runtime
-commands to repair malformed metadata automatically.
+Branch identity comes from complete committed-state validation.  The selector
+only records which local valid GAW branch is deployed; it does not define GAW
+identity and is not authoritative for =git gaw commit=, which uses the current
+worktree's symbolic =HEAD=.  No irreplaceable repository information lives in
+=refs/gaw/*=, but malformed local metadata is reported rather than silently
+repaired.  Any other discoverable =refs/gaw/*= ref is unexpected.  Legacy
+=refs/gaw/heads/*= registrations from 0.2.0 are not used by the runtime.
 
 ** Workspace
 GAW manages a selected set of paths as its workspace.
@@ -152,8 +152,8 @@ fails complete committed-state validation is treated as ambiguous or corrupt,
 not ignored.
 
 The initial =(:workspace ())= blob, its trees, and the root commit are written
-before any ref becomes visible.  The source branch, its exact symbolic
-registration, and =refs/gaw/HEAD= are then created in one expected-state
+before any ref becomes visible.  The source branch and =refs/gaw/HEAD= are
+then created in one expected-state
 =update-ref --stdin= transaction.  A failed ref transaction may leave
 unreachable objects but cannot leave a partially created ref graph.  The root
 commit message is =Initialize GAW= and its author and committer are =Git Agent
@@ -172,40 +172,49 @@ complete committed-state validation.  Without it, a valid =refs/gaw/HEAD= is a
 fast path.  If the selector is missing, deploy enumerates local branches,
 uses the fixed =<branch>:.gaw/config= path only as a cheap prefilter, and then
 fully validates every matching candidate.  Zero candidates fail; multiple
-candidates require =--branch=.  Malformed existing local registration or
-selector state is corruption and is never overwritten.
+candidates require =--branch=.  A malformed or dangling selector is a
+deployment error and is never overwritten.  Discoverable refs under
+=refs/gaw/*= other than the selector, including legacy registrations, block
+deployment until explicitly resolved.
 
 Deploy does not fetch, contact remotes, or create a missing source branch.  It
-creates or validates the exact local symbolic registration and selector,
-reconciles the requested linked worktree, verifies an attached worktree with
+creates or validates the local selector, reconciles the requested linked
+worktree, verifies an attached worktree with
 =git gaw check=, and installs the canonical repository-local configured
 protection hook.  Repeating deploy against the same valid state is safe.
 
-** Registered Branch Lifecycle
-Operations that must coordinate an ordinary source branch with local GAW refs
-are exposed through:
+** Branch Lifecycle
+GAW-owned branch lifecycle operations are exposed through:
 
 #+begin_src text
 git gaw branch -m <new-name>
 git gaw branch -d <name>
 #+end_src
 
-Rename operates on the registered GAW branch checked out by the current
-worktree.  It uses native =git branch -m= so Git maintains worktree =HEAD=,
-reflogs, and branch configuration, then atomically moves the registration and
+Rename operates on the valid GAW branch checked out by the current worktree
+and selected by =refs/gaw/HEAD=.  It uses native =git branch -m= so Git
+maintains worktree =HEAD=, reflogs, and branch configuration, then updates the
 selector and verifies the final invariant.
 
-Delete accepts only a branch with an exact local registration.  It uses native
-=git branch -d=, retaining Git's checked-out-branch and safe-delete checks,
-then removes the registration and the selector when it selected that branch.
-Unregistered branches remain native Git's responsibility.  Because native
-branch operations and protocol-ref changes cannot share one transaction, both
-operations use strict preflight checks, ordered updates, and best-effort
-compensation.  Incomplete compensation is reported explicitly as a partial
-failure.
+Delete accepts only an unselected branch with valid GAW committed state.  It
+uses native =git branch -d=, retaining Git's checked-out-branch and safe-delete
+checks.  Ordinary branches remain native Git's responsibility.  Rename uses
+strict preflight checks, ordered updates, and best-effort compensation because
+the native branch operation and selector update cannot share one transaction.
+Incomplete compensation is reported explicitly as a partial failure.
+
+** Leaving Local Deployment
+=git gaw undeploy= removes the local selector and GAW-owned named-hook keys.
+It also removes discoverable exact legacy symbolic registrations of the form
+=refs/gaw/heads/<name> -> refs/heads/<name>=.  It preserves source branches,
+history, =.gaw/config=, worktrees, and their contents.  Direct, mismatched,
+malformed, unreadable, or undiscoverable legacy refs are not automatically
+removed.  Residual problems are reported as partial failure; completed cleanup
+is not rolled back, and the command can be repeated.  After resolving residuals,
+=git gaw deploy --branch <name>= can restore a local deployment.
 
 ** Creating Commits
-The command =git gaw commit= creates commits on the registered GAW branch
+The command =git gaw commit= creates commits on a valid GAW branch
 checked out by the current worktree.  It must be run at that worktree's root.
 The worktree's symbolic =HEAD= is authoritative; =refs/gaw/HEAD= does not
 select the branch for this command.
@@ -247,9 +256,9 @@ When branch protection is configured, the final ref update disables only the
 The existing suppression of traditional hooks through =core.hooksPath= is a
 separate commit policy and is not the branch-protection bypass mechanism.
 
-** Protecting Registered Branches
+** Protecting GAW State
 GAW can use Git 2.54's configured =reference-transaction= hook to prevent
-ordinary Git commands from modifying a registered GAW branch.  Protection is
+ordinary Git commands from modifying validated GAW history.  Protection is
 installed or validated by =git gaw init= and =git gaw deploy=.  Its canonical
 repository-local configuration is:
 
@@ -262,21 +271,22 @@ git config --local hook.gaw-reference-transaction.enabled true
 
 The machine-facing option is intentionally absent from command help.  During
 the =preparing= phase it checks direct =refs/heads/*= updates.  For object
-updates through a symbolic ref such as =HEAD= or a registration ref, it also
-resolves the symbolic chain to determine which branch Git will actually
-modify.  Switching a worktree's =HEAD= between branches remains allowed when
-it does not move a registered branch.  The hook rejects the complete ref
-transaction when the resulting branch has an exact =refs/gaw/heads/*=
-symbolic registration, and it also rejects ordinary transactions which
-directly create, modify, or delete any =refs/gaw/*= protocol ref.  A registration
-continues to protect its branch name when the branch itself is missing.
-Malformed transaction input, an invalid registration, or a failed
-registration query is rejected rather than treated as safe.  The =prepared=,
+updates through a symbolic ref such as =HEAD=, it resolves the symbolic chain
+to determine which branch Git will actually modify.  A pure symbolic worktree
+=HEAD= switch remains allowed.  The hook queries the branch's actual current
+tip, independent of the transaction's old-value.  It rejects movement or
+deletion when that tip is valid GAW committed state.  If the old tip contains
+the =.gaw/config= marker, its mode, type, and object ID must remain unchanged
+at the proposed new tip; inability to determine that reliably fails closed.
+First introduction of the marker is allowed, including creation of a new
+local branch from existing portable GAW history.  Ordinary transactions which
+create, modify, or delete any =refs/gaw/*= ref are also rejected.
+Malformed transaction input or failed state queries are rejected.  The =prepared=,
 =committed=, and =aborted= phases perform no work; unknown phases are protocol
 errors.
 
-An object update addressed through a symbolic registration is also rejected
-when Git would dereference it and modify the protected branch.  Valid GAW
+An object update addressed through a symbolic =HEAD= is also rejected
+when Git would dereference it and modify a protected branch.  Valid GAW
 commit and lifecycle operations perform their own validation and disable only
 this named hook for guarded ref mutations; unrelated configured hooks remain
 enabled.  Divergent or incomplete configuration is reported as a deployment
@@ -316,7 +326,7 @@ directly to the current process streams and returns Git's exit status.
 
 ** Checking a Provisioned Worktree
 The command =git gaw check= performs a read-only readiness check for an already
-provisioned GAW worktree.  It checks the local branch and registration, the
+provisioned GAW worktree.  It checks the local branch and optional selector, the
 committed config and workspace, additional project-parent tip trees, the
 complete staged candidate, and conflicting Git operation state.
 
@@ -339,19 +349,16 @@ directory, local GAW and ordinary branches, the local selector, configured
 protection hook, worktree attachments, and discovered =refs/gaw/*= refs
 (including unexpected refs).
 
-Branches with either a local registration or a =.gaw/config= tip marker receive
-full committed-state validation; the marker alone does not establish that a
-branch is valid.  Ref discovery combines Git's normal =refs/gaw/*=
-enumeration with exact probes of =refs/gaw/HEAD=, its symbolic target, and the
-registration name corresponding to each local source branch.  This detects
-damage reachable from the selector or a surviving branch, even when normal
-enumeration hides a dangling symbolic ref.  A broken ref hidden by Git's
-enumeration whose name cannot be derived from any of those entry points may
-not be reported.  Status uses Git commands for both ref backends; it does not
-inspect backend storage directly.
+Branches with a =.gaw/config= tip marker receive full committed-state
+validation; the marker alone does not establish that a branch is valid.  Ref
+discovery combines Git's normal =refs/gaw/*= enumeration with exact probes of
+=refs/gaw/HEAD=, its symbolic target, and recognizable legacy names derived
+from local branches.  A broken ref hidden by Git's enumeration whose name
+cannot be derived from those entry points may not be reported.  Status uses
+Git commands for both ref backends; it does not inspect backend storage.
 
 The default command returns zero once it has produced the report, even if the
-report identifies invalid branches, registrations, or selector state.  A fatal
+report identifies invalid branches, unexpected protocol refs, or selector state.  A fatal
 repository discovery or Git query failure is nonzero.  A repository with no
 GAW state is reportable.  Unlike =git gaw check=, status does not inspect each
 worktree's index or workspace readiness and does not repair local metadata.
@@ -361,15 +368,15 @@ worktree's index or workspace readiness and does not repair local metadata.
 stdout and stderr are forwarded unchanged, not parsed into GAW findings.  This
 is a repository-wide check: it can report unrelated ref, object, index, or
 other problems.  Diagnostic mode returns zero only if the GAW report has no
-invalid GAW branch, registration, or selector, no unreadable discovered
+invalid GAW branch or selector, no unexpected or unreadable discovered
 protocol ref or protection-hook conflict, and fsck returns zero.  Missing
-deployment metadata or hook configuration, and unknown but readable protocol
-refs, remain informational.  If the normal status report cannot be generated,
+deployment metadata or hook configuration remain informational.  If the
+normal status report cannot be generated,
 fsck is not run.
 
 ** Command Help
 GAW provides overview and command-specific help through =git gaw help= and
-=git gaw help init|deploy|branch|commit|show|check|status=.  The
+=git gaw help init|deploy|undeploy|branch|commit|show|check|status|hooks|recovery=.  The
 overview is also available as =git gaw --help= or =git gaw -h=, while each
 command accepts =--help= as its sole argument.
 
