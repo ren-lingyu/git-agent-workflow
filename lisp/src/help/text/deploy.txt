@@ -4,8 +4,8 @@ Materialize local GAW deployment metadata for an existing local branch whose
 tip is valid GAW committed state.  Without --branch, use a valid refs/gaw/HEAD
 or discover a unique valid local branch.
 
-Deployment creates or validates the exact local symbolic registration and
-refs/gaw/HEAD, reconciles an optional linked worktree, and installs the
+Deployment creates or validates refs/gaw/HEAD, reconciles an optional linked
+worktree, and installs the
 repository-local configured protection hook.  It does not fetch, access a
 remote, or create a missing source branch.
 

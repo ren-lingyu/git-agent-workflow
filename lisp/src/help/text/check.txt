@@ -4,7 +4,7 @@ Check whether an already provisioned GAW worktree is ready for the normal
 edit, stage, commit, and show loop.  The check is read-only and may run from a
 subdirectory, although git gaw commit itself must run at the worktree root.
 
-The report covers branch registration, HEAD config and workspace, associated
+The report covers the optional GAW selector, HEAD config and workspace, associated
 project parents, the staged candidate, conflicting Git operation state, and
 the optional repository-local branch-protection hook.
 It does not replace git status or git diff and does not inspect untracked or

@@ -7,17 +7,16 @@
              function))))
 
 (defparameter *source-ref-prefix* "refs/heads/")
-(defparameter *registration-ref-prefix* "refs/gaw/heads/")
 (defparameter *protocol-ref-prefix* "refs/gaw/")
+(defparameter *legacy-ref-prefix* "refs/gaw/heads/")
 (defparameter *selector-ref* "refs/gaw/HEAD")
 (defparameter *diagnostic-git-arguments*
   '("fsck" "--connectivity-only" "--no-reflogs" "--no-dangling"
     "--no-progress"))
 
 (defun status (directory)
-  (%status-runtime directory *source-ref-prefix*
-                   *registration-ref-prefix* *protocol-ref-prefix*
-                   *selector-ref*))
+  (%status-runtime directory *source-ref-prefix* *protocol-ref-prefix*
+                   *legacy-ref-prefix* *selector-ref*))
 
 (defun diagnose-status (directory)
   (%diagnose-status directory *diagnostic-git-arguments*))

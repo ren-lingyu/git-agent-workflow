@@ -16,8 +16,7 @@
                 #:deploy-result-worktree-path
                 #:deploy-result-warnings)
   (:import-from #:git-agent-workflow.refs
-                #:current-ref
-                #:registered-ref-p)
+                #:current-ref)
   (:import-from #:git-agent-workflow.hook
                 #:inspect-protection-hook
                 #:hook-configuration-status)

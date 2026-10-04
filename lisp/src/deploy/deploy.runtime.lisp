@@ -1,9 +1,9 @@
 (in-package #:git-agent-workflow.deploy)
 
 (eval-when (:load-toplevel :execute)
-  (dolist (function '(run-git inspect-ref current-ref registered-ref-p
-                      registration-refs protocol-refs select-ref run-worktree
-                      restore-selection inspect-committed-state
+  (dolist (function '(run-git inspect-ref current-ref
+                      protocol-refs select-source-ref run-worktree
+                      restore-source-selection inspect-committed-state
                       committed-state-marker-p local-branches
                       inspect-protection-hook ensure-protection-hook check
                       %signal-deploy-error %make-deploy-result
@@ -47,47 +47,34 @@
                             source-ref (%state-error-detail report)))
     report))
 
-(defun %source-from-registration (registration-ref
-                                  target-ref-prefix source-ref-prefix)
-  (unless (and (> (length registration-ref) (length target-ref-prefix))
-               (string= target-ref-prefix registration-ref
-                        :end2 (length target-ref-prefix)))
-    (%signal-deploy-error :corrupt-metadata
-                          "Invalid registration ref ~S" registration-ref))
-  (concatenate 'string source-ref-prefix
-               (subseq registration-ref (length target-ref-prefix))))
+(defun %require-clean-protocol-namespace (directory head-ref
+                                           legacy-ref-prefix source-ref-prefix)
+  (let* ((head (inspect-ref head-ref directory))
+         (candidates
+           (remove-duplicates
+            (append (protocol-refs directory)
+                    (when (and (ref-state-exists-p head)
+                               (ref-state-symbolic-p head)
+                               (uiop:string-prefix-p
+                                legacy-ref-prefix
+                                (ref-state-symbolic-target head)))
+                      (list (ref-state-symbolic-target head)))
+                    (loop for source in (local-branches directory)
+                          collect (concatenate
+                                   'string legacy-ref-prefix
+                                   (subseq source (length source-ref-prefix)))))
+            :test #'string=)))
+    (dolist (ref candidates)
+      (unless (string= ref head-ref)
+        (when (ref-state-exists-p (inspect-ref ref directory))
+          (%signal-deploy-error
+           :corrupt-metadata
+           "Unexpected or legacy GAW protocol ref ~S; run git gaw undeploy"
+           ref))))))
 
-(defun %validate-registrations (directory target-ref-prefix source-ref-prefix)
-  (dolist (registration-ref (registration-refs directory))
-    (let ((source-ref
-            (%source-from-registration registration-ref
-                                       target-ref-prefix source-ref-prefix)))
-      (handler-case
-          (progn
-            (unless (registered-ref-p source-ref directory)
-              (%signal-deploy-error :corrupt-metadata
-                                    "Registration disappeared: ~S"
-                                    registration-ref))
-            (%require-valid-state directory source-ref))
-        (deploy-error (condition) (error condition))
-        (error (condition)
-          (%signal-deploy-error :corrupt-metadata
-                                "Invalid registration ~S: ~A"
-                                registration-ref condition))))))
-
-(defun %unknown-protocol-warnings (directory head-ref target-ref-prefix)
-  (loop for ref in (protocol-refs directory)
-        unless (or (string= ref head-ref)
-                   (and (> (length ref) (length target-ref-prefix))
-                        (string= target-ref-prefix ref
-                                 :end2 (length target-ref-prefix))))
-          collect (format nil "Preserving unknown GAW protocol ref ~A" ref)))
-
-(defun %discover-source-ref (directory source-ref-prefix
-                             target-ref-prefix head-ref)
+(defun %discover-source-ref (directory head-ref)
   (let ((head-state (inspect-ref head-ref directory))
-        (warnings (%unknown-protocol-warnings
-                   directory head-ref target-ref-prefix)))
+        (warnings '()))
     (when (ref-state-exists-p head-state)
       (handler-case
           (let ((source-ref (current-ref directory)))
@@ -98,7 +85,6 @@
           (%signal-deploy-error :corrupt-metadata
                                 "Invalid refs/gaw/HEAD state: ~A"
                                 condition))))
-    (%validate-registrations directory target-ref-prefix source-ref-prefix)
     (let ((candidates '()))
       (dolist (source-ref (local-branches directory))
         (when (committed-state-marker-p directory source-ref)
@@ -199,40 +185,35 @@
              path (git-invocation-stderr invocation)))))
 
 (defun %deploy (directory branch requested-path source-ref-prefix
-                target-ref-prefix head-ref)
+                legacy-ref-prefix head-ref)
   (check-type directory pathname)
   (%deploy-git-output '("rev-parse" "--git-dir") directory
                       "locating the repository")
   (%preflight-hook directory)
+  (%require-clean-protocol-namespace directory head-ref
+                                      legacy-ref-prefix source-ref-prefix)
   (multiple-value-bind (source-ref warnings)
       (if branch
           (let ((source-ref
                   (%validate-branch-name branch directory source-ref-prefix)))
-            (%validate-registrations directory
-                                     target-ref-prefix source-ref-prefix)
             (let ((head-state (inspect-ref head-ref directory)))
               (when (ref-state-exists-p head-state)
-                (handler-case (current-ref directory)
+                (handler-case (%require-valid-state
+                               directory (current-ref directory))
                   (error (condition)
                     (%signal-deploy-error
                      :corrupt-metadata "Invalid refs/gaw/HEAD state: ~A"
                      condition)))))
             (%require-valid-state directory source-ref)
-            (handler-case (registered-ref-p source-ref directory)
-              (error (condition)
-                (%signal-deploy-error :corrupt-metadata "~A" condition)))
-            (values source-ref
-                    (%unknown-protocol-warnings
-                     directory head-ref target-ref-prefix)))
-          (%discover-source-ref directory source-ref-prefix
-                                target-ref-prefix head-ref))
+            (values source-ref nil))
+          (%discover-source-ref directory head-ref))
     (multiple-value-bind (mode worktree-path)
         (%resolve-worktree-plan directory source-ref requested-path)
       (let ((selection nil)
             (created nil))
         (handler-case
             (progn
-              (setf selection (select-ref source-ref directory))
+              (setf selection (select-source-ref source-ref directory))
               (when (eq mode :created-worktree)
                 (%create-worktree directory worktree-path source-ref
                                   source-ref-prefix)
@@ -253,7 +234,7 @@
                   (error (rollback)
                     (push (princ-to-string rollback) rollback-errors))))
               (when selection
-                (handler-case (restore-selection selection directory)
+                (handler-case (restore-source-selection selection directory)
                   (error (rollback)
                     (push (princ-to-string rollback) rollback-errors))))
               (if rollback-errors

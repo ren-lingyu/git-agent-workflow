@@ -21,14 +21,12 @@
 
 (defstruct (status-branch
             (:constructor %make-status-branch
-                (ref object-id classification registration-status
-                 committed-state))
+                (ref object-id classification committed-state))
             (:copier nil))
   (ref "" :type string :read-only t)
   (object-id nil :type (or null string) :read-only t)
   (classification :ordinary :type (member :ordinary :valid :invalid)
                   :read-only t)
-  (registration-status :missing :type keyword :read-only t)
   (committed-state nil :read-only t))
 
 (defstruct (status-report
@@ -71,7 +69,7 @@
                (status-report-branches report))
        (notany (lambda (ref)
                  (member (status-protocol-ref-status ref)
-                         '(:invalid :orphan :unreadable)))
+                         '(:invalid :unknown :unreadable)))
                (status-report-protocol-refs report))
        (not (null
              (member (status-protocol-ref-status
@@ -103,11 +101,10 @@
            (status-report-branches report))))
     (format stream "~%GAW branches (~D):~%" (length gaw-branches))
     (dolist (branch gaw-branches)
-      (format stream "  ~A ~@[~A ~]~(~A~); registration ~(~A~)~@[; ~A~]~%"
+      (format stream "  ~A ~@[~A ~]~(~A~)~@[; ~A~]~%"
               (status-branch-ref branch)
               (status-branch-object-id branch)
               (status-branch-classification branch)
-              (status-branch-registration-status branch)
               (%status-branch-detail branch))
       (dolist (worktree (status-report-worktrees report))
         (when (equal (status-branch-ref branch)

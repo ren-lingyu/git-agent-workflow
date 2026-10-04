@@ -69,6 +69,17 @@
                              directory)))
     (member (git-invocation-exit-status invocation) '(0 1 5))))
 
+(defun %remove-protection-hook (directory keys)
+  (let ((failed '()))
+    (dolist (key keys)
+      (unless (%unset-local-config key directory)
+        (push key failed)))
+    (when failed
+      (%signal-hook-configuration-error
+       :removal-failed "Cannot remove local hook keys: ~{~A~^, ~}"
+       (nreverse failed)))
+    t))
+
 (defun %ensure-protection-hook (directory
                                 event-key command-key enabled-key
                                 expected-event expected-command)
@@ -131,74 +142,89 @@
        (%resolve-symbolic-source-ref transaction-ref
                                      directory source-ref-prefix)))))
 
-(defun %registered-ref-p-for-hook (ref directory registration-query)
-  (handler-case
-      (funcall registration-query ref directory)
-    (registration-error (condition)
-      (%signal-hook-error :invalid-registration
-                          :ref ref
-                          :detail (princ-to-string condition)
-                          :cause condition))
-    (error (condition)
-      (%signal-hook-error :registration-query-failure
-                          :ref ref
-                          :detail (princ-to-string condition)
-                          :cause condition))))
-
 (defun %source-ref-for-hook (update
                              directory
                              source-ref-resolver)
   (handler-case
       (funcall source-ref-resolver update directory)
     (error (condition)
-      (%signal-hook-error :registration-query-failure
+      (%signal-hook-error :state-query-failure
                           :ref (%reference-update-ref update)
+                          :detail (princ-to-string condition)
+                          :cause condition))))
+
+(defun %zero-object-id-p (value)
+  (and (plusp (length value))
+       (every (lambda (character) (char= character #\0)) value)))
+
+(defun %protect-source-update (update source-ref directory ref-query
+                               marker-query state-query classification-query)
+  (handler-case
+      (let ((state (funcall ref-query source-ref directory))
+            (new-value (%reference-update-new-value update)))
+        (when (ref-state-exists-p state)
+          (when (ref-state-symbolic-p state)
+            (%signal-hook-error :state-query-failure :ref source-ref
+                                :detail "Source branch is symbolic"))
+          (let* ((old-oid (ref-state-object-id state))
+                 (old-marker (funcall marker-query directory old-oid)))
+            (when old-marker
+              (case (funcall classification-query
+                             (funcall state-query directory old-oid))
+                (:valid
+                 (unless (string= old-oid new-value)
+                   (%signal-hook-error :protected-ref :ref source-ref)))
+                (:indeterminate
+                 (%signal-hook-error :state-query-failure :ref source-ref
+                                     :detail "Old committed state is indeterminate"))))
+            (when (and old-marker (not (string= old-oid new-value)))
+              (let ((new-marker
+                      (unless (or (%zero-object-id-p new-value)
+                                  (%symbolic-transaction-value-p new-value))
+                        (funcall marker-query directory new-value))))
+                (unless (equal old-marker new-marker)
+                  (%signal-hook-error :protected-marker :ref source-ref)))))))
+    (hook-error (condition) (error condition))
+    (error (condition)
+      (%signal-hook-error :state-query-failure :ref source-ref
                           :detail (princ-to-string condition)
                           :cause condition))))
 
 (defun %preparing-reference-transaction (directory
                                          input-stream
                                          source-ref-resolver
-                                         registration-query
+                                         ref-query marker-query
+                                         state-query classification-query
                                          protocol-ref-prefix)
-  (let ((seen (make-hash-table :test #'equal))
-        (refs '()))
-    (loop for line = (read-line input-stream nil nil)
-          while line
-          for update = (%parse-reference-transaction-line line)
-          for transaction-ref = (%reference-update-ref update)
-          do (when (%ref-under-prefix-p transaction-ref
-                                        protocol-ref-prefix)
-               (%signal-hook-error :protected-protocol-ref
-                                   :ref transaction-ref))
-             (let ((source-ref
-                     (%source-ref-for-hook update
-                                           directory
-                                           source-ref-resolver)))
-               (when (and source-ref
-                          (not (gethash source-ref seen)))
-                 (setf (gethash source-ref seen) t)
-                 (push source-ref refs))))
-    (dolist (ref (nreverse refs))
-      (when (%registered-ref-p-for-hook ref
-                                          directory
-                                          registration-query)
-        (%signal-hook-error :protected-ref
-                            :ref ref)))
-    t))
+  (loop for line = (read-line input-stream nil nil)
+        while line
+        for update = (%parse-reference-transaction-line line)
+        for transaction-ref = (%reference-update-ref update)
+        do (when (%ref-under-prefix-p transaction-ref protocol-ref-prefix)
+             (%signal-hook-error :protected-protocol-ref
+                                 :ref transaction-ref))
+           (let ((source-ref (%source-ref-for-hook
+                              update directory source-ref-resolver)))
+             (when source-ref
+               (%protect-source-update update source-ref directory
+                                       ref-query marker-query state-query
+                                       classification-query))))
+  t)
 
 (defun %reference-transaction (phase
                                directory
                                input-stream
                                source-ref-resolver
-                               registration-query
+                               ref-query marker-query
+                               state-query classification-query
                                protocol-ref-prefix)
   (case (%reference-transaction-phase phase)
     (:preparing
      (%preparing-reference-transaction directory
                                        input-stream
                                        source-ref-resolver
-                                       registration-query
+                                       ref-query marker-query
+                                       state-query classification-query
                                        protocol-ref-prefix))
     ((:prepared :committed :aborted)
      t)))

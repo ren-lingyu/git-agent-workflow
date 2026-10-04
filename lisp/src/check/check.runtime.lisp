@@ -21,17 +21,18 @@
                   (workspace-entry-path entry)))
           (config-workspace config)))
 
-(defun %check-registration (source-ref directory)
-  (let* ((registration-ref (make-ref source-ref))
-         (state (inspect-ref registration-ref directory)))
-    (cond
-      ((not (ref-state-exists-p state))
-       (values nil "The current branch is not registered with GAW"))
-      ((not (and (ref-state-symbolic-p state)
-                 (string= (ref-state-symbolic-target state) source-ref)))
-       (values nil "The current branch has an invalid GAW registration"))
-      (t
-       (values t "The current branch registration is valid")))))
+(defun %check-selector (directory selector-ref)
+  (handler-case
+      (if (not (ref-state-exists-p (inspect-ref selector-ref directory)))
+          (values :warning "GAW selector is absent; repository is not deployed")
+          (let* ((source-ref (current-ref directory))
+                 (report (inspect-committed-state directory source-ref)))
+            (if (committed-state-report-ok-p report)
+                (values :ok (format nil "GAW selector chooses ~A" source-ref))
+                (values :error
+                        "GAW selector points to a non-valid GAW branch"))))
+    (error (condition)
+      (values :error (format nil "Invalid GAW selector: ~A" condition)))))
 
 (defun %index-config-entry (entries config-path)
   (entry-at-path (string-to-octets config-path :encoding :utf-8) entries))
@@ -61,7 +62,7 @@
       (values nil (or (workspace-error-detail condition)
                       (format nil "~A" condition))))))
 
-(defun %check-runtime (directory config-path)
+(defun %check-runtime (directory config-path selector-ref)
   (let ((findings '())
         (root nil)
         (source-ref nil))
@@ -78,7 +79,7 @@
                   (or (workspace-error-detail condition)
                       "The directory is not a Git worktree"))))
       (unless root
-        (dolist (name '(:branch :registration :head :head-config
+        (dolist (name '(:branch :selector :head :head-config
                         :head-workspace :project-parents :index
                         :operation-state :protection-hook))
           (skip name "Skipped because no Git worktree is available"))
@@ -100,11 +101,9 @@
                   (or (workspace-error-detail condition)
                       "HEAD is not a local branch"))))
 
-      (if source-ref
-          (multiple-value-bind (ok detail)
-              (%check-registration source-ref root)
-            (record :registration (if ok :ok :error) detail))
-          (skip :registration "Skipped because no local branch is available"))
+      (multiple-value-bind (status detail)
+          (%check-selector root selector-ref)
+        (record :selector status detail))
 
       (if source-ref
           (dolist (finding

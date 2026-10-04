@@ -1,0 +1,14 @@
+GAW recovery
+
+Use git gaw status to inspect local branches, the selector, hook configuration,
+worktrees, and unexpected protocol refs. Use git gaw status --diagnose for
+Git's additional repository-wide fsck output. git gaw check inspects the
+current worktree's committed and staged state.
+
+git gaw undeploy exits local deployment state without changing branch history,
+.gaw/config, or worktree contents. It safely removes exact legacy registrations
+but preserves unknown or damaged refs for explicit review. After resolving
+residuals, git gaw deploy --branch <name> can select an existing valid local
+GAW branch. No GAW command performs implicit network operations or repairs
+arbitrary history or marker content. Manual repair may require explicitly
+disabling the GAW named hook; see git gaw help hooks.

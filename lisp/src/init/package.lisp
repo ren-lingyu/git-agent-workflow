@@ -11,8 +11,8 @@
                 #:ref-state-exists-p
                 #:protocol-refs)
   (:import-from #:git-agent-workflow.mutation
-                #:initialize-ref-graph
-                #:remove-initial-ref-graph)
+                #:initialize-source-and-selector
+                #:remove-initial-source-and-selector)
   (:import-from #:git-agent-workflow.state
                 #:local-branches
                 #:committed-state-marker-p

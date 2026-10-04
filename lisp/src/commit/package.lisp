@@ -6,12 +6,9 @@
                 #:git-invocation-stdout
                 #:git-invocation-stderr
                 #:git-invocation-exit-status)
-  (:import-from #:git-agent-workflow.refs
-                #:make-ref
-                #:inspect-ref
-                #:ref-state-exists-p
-                #:ref-state-symbolic-p
-                #:ref-state-symbolic-target)
+  (:import-from #:git-agent-workflow.state
+                #:inspect-committed-state
+                #:committed-state-report-ok-p)
   (:import-from #:git-agent-workflow.mutation
                 #:run-source-ref-update)
   (:import-from #:git-agent-workflow.config

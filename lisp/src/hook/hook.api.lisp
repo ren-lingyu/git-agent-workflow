@@ -6,6 +6,7 @@
            '%reference-transaction))
   (dolist (function '(%inspect-protection-hook
                       %ensure-protection-hook
+                      %remove-protection-hook
                       %source-ref-for-transaction-ref))
     (unless (fboundp function)
       (error "Required hook configuration dependency is unavailable: ~S"
@@ -52,6 +53,12 @@
                            *hook-event*
                            *hook-command*))
 
+(defun remove-protection-hook (directory)
+  (%remove-protection-hook directory
+                           (list *hook-event-key*
+                                 *hook-command-key*
+                                 *hook-enabled-key*)))
+
 (defun reference-transaction (phase directory input-stream)
   (let ((source-ref-prefix *source-ref-prefix*))
     (handler-case
@@ -60,7 +67,10 @@
          (lambda (update hook-directory)
            (%source-ref-for-transaction-ref update hook-directory
                                             source-ref-prefix))
-         #'registered-ref-p
+         #'inspect-ref
+         #'marker-entry
+         #'inspect-committed-state
+         #'committed-state-classification
          *protocol-ref-prefix*)
       (hook-error (condition)
         (error condition))

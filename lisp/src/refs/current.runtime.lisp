@@ -1,37 +1,17 @@
 (in-package #:git-agent-workflow.refs)
 
 (eval-when (:load-toplevel :execute)
-  (dolist (function '(inspect-ref
-                      %current-registration-ref
-                      %current-source-ref
-                      %ensure-current-source-exists))
+  (dolist (function '(inspect-ref %current-source-target))
     (unless (fboundp function)
-      (error "Required current ref dependency is unavailable: ~S"
-             function))))
+      (error "Required current ref dependency is unavailable: ~S" function))))
 
-(defun %current-ref (directory
-                     display-name
-                     head-ref
-                     source-ref-prefix
-                     target-ref-prefix)
-  (let* ((head-state (inspect-ref head-ref
-                                  directory))
-         (registration-ref
-           (%current-registration-ref head-state
-                                      display-name
-                                      head-ref
-                                      target-ref-prefix))
-         (registration-state
-           (inspect-ref registration-ref
-                        directory))
-         (source-ref
-           (%current-source-ref registration-state
-                                display-name
-                                registration-ref
-                                source-ref-prefix))
-         (source-state (inspect-ref source-ref
-                                    directory)))
-    (%ensure-current-source-exists source-state
-                                   display-name
-                                   registration-ref
-                                   source-ref)))
+(defun %current-ref (directory display-name head-ref source-prefix)
+  (let* ((head (inspect-ref head-ref directory))
+         (source-ref (%current-source-target head display-name head-ref
+                                             source-prefix))
+         (source (inspect-ref source-ref directory)))
+    (unless (and (ref-state-exists-p source)
+                 (not (ref-state-symbolic-p source)))
+      (error 'current-ref-error :display-name display-name
+             :reason :missing-source :ref source-ref :target source-ref))
+    source-ref))

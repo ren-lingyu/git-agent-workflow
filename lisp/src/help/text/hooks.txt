@@ -1,0 +1,11 @@
+GAW hook protection
+
+The repository-local gaw-reference-transaction named hook guards refs/gaw/*
+and source branches whose current tip is valid GAW state or already contains
+a .gaw/config marker. It is a local guard against mistakes, not an
+authorization boundary. A first appearance of the marker is not blocked.
+
+GAW lifecycle operations selectively disable this named hook for validated
+ref updates. For deliberate manual recovery, a user may explicitly run a
+native Git command with -c hook.gaw-reference-transaction.enabled=false.
+That bypass does not validate GAW invariants; inspect the result afterward.

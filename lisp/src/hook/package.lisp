@@ -6,12 +6,15 @@
                 #:git-invocation-stderr
                 #:git-invocation-exit-status)
   (:import-from #:git-agent-workflow.refs
-                #:registered-ref-p
-                #:registration-error
                 #:inspect-ref
                 #:ref-state-exists-p
                 #:ref-state-symbolic-p
-                #:ref-state-symbolic-target)
+                #:ref-state-symbolic-target
+                #:ref-state-object-id)
+  (:import-from #:git-agent-workflow.state
+                #:inspect-committed-state
+                #:committed-state-classification
+                #:marker-entry)
   (:export #:reference-transaction
            #:hook-error
            #:hook-error-reason
@@ -26,4 +29,5 @@
            #:hook-configuration-error-reason
            #:inspect-protection-hook
            #:ensure-protection-hook
+           #:remove-protection-hook
            #:hook-disable-options))

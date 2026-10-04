@@ -6,12 +6,6 @@
                       git-invocation-stderr
                       git-invocation-exit-status
                       %make-ref-state
-                      %make-ref
-                      %registration-state-registered-p
-                      %ref-state-dangling-p
-                      %ensure-registration-available
-                      %validate-target-ref
-                      %ensure-registration-removable
                       %transaction-command-octets
                       %symref-create-command
                       %symref-update-command
@@ -53,202 +47,6 @@
       (if (zerop (length output))
           '()
           (uiop:split-string output :separator '(#\Newline))))))
-
-(defun %select-ref (source-ref directory source-ref-prefix
-                    target-ref-prefix head-ref git-options)
-  (unless (%ref-under-prefix-p source-ref source-ref-prefix)
-    (error "Not a local source branch ref: ~S" source-ref))
-  (let* ((source-state (inspect-ref source-ref directory))
-         (registration-ref
-           (%make-ref source-ref source-ref-prefix target-ref-prefix))
-         (registration-state (inspect-ref registration-ref directory))
-         (head-state (inspect-ref head-ref directory)))
-    (unless (and (ref-state-exists-p source-state)
-                 (not (ref-state-symbolic-p source-state)))
-      (error "GAW source branch is missing or symbolic: ~S" source-ref))
-    (%registration-state-registered-p registration-state source-ref)
-    (when (and (ref-state-exists-p head-state)
-               (not (ref-state-symbolic-p head-state)))
-      (error 'registration-error
-             :reason :direct-registration
-             :ref head-ref))
-    (when (and (ref-state-exists-p head-state)
-               (not (%ref-under-prefix-p
-                     (ref-state-symbolic-target head-state)
-                     target-ref-prefix)))
-      (error 'registration-error
-             :reason :target-mismatch
-             :ref head-ref
-             :target (ref-state-symbolic-target head-state)))
-    (let ((commands '()))
-      (unless (ref-state-exists-p registration-state)
-        (push (%symref-create-command registration-ref source-ref) commands))
-      (cond
-        ((not (ref-state-exists-p head-state))
-         (push (%symref-create-command head-ref registration-ref) commands))
-        ((not (string= (ref-state-symbolic-target head-state)
-                       registration-ref))
-         (push (%symref-update-command
-                head-ref registration-ref :ref
-                (ref-state-symbolic-target head-state))
-               commands)))
-      (when commands
-        (apply-ref-transaction (nreverse commands)
-                               directory
-                               :reflog-message "git-gaw select"
-                               :git-options git-options))
-      (%make-selection-change
-       source-ref registration-ref
-       (not (ref-state-exists-p registration-state))
-       head-ref
-       (and (ref-state-exists-p head-state)
-            (ref-state-symbolic-target head-state))
-       registration-ref))))
-
-(defun %restore-selection (change directory git-options)
-  (check-type change selection-change)
-  (let ((commands '()))
-    (if (selection-change-old-head-target change)
-        (unless (string=
-                 (selection-change-old-head-target change)
-                 (selection-change-new-head-target change))
-          (push (%symref-update-command
-                 (selection-change-head-ref change)
-                 (selection-change-old-head-target change)
-                 :ref
-                 (selection-change-new-head-target change))
-                commands))
-        (push (%symref-delete-command
-               (selection-change-head-ref change)
-               (selection-change-new-head-target change))
-              commands))
-    (when (selection-change-registration-created-p change)
-      (push (%symref-delete-command
-             (selection-change-registration-ref change)
-             (selection-change-source-ref change))
-            commands))
-    (when commands
-      (apply-ref-transaction (nreverse commands)
-                             directory
-                             :reflog-message "git-gaw deploy rollback"
-                             :git-options git-options))
-    t))
-
-(defun %initialize-ref-graph (source-ref object-id directory
-                              source-ref-prefix target-ref-prefix head-ref
-                              git-options)
-  (unless (%ref-under-prefix-p source-ref source-ref-prefix)
-    (error "Not a local source branch ref: ~S" source-ref))
-  (let ((registration-ref
-          (%make-ref source-ref source-ref-prefix target-ref-prefix)))
-    (dolist (ref (list source-ref registration-ref head-ref))
-      (when (ref-state-exists-p (inspect-ref ref directory))
-        (error "Cannot initialize an existing ref: ~S" ref)))
-    (apply-ref-transaction
-     (list (%create-command source-ref object-id)
-           (%symref-create-command registration-ref source-ref)
-           (%symref-create-command head-ref registration-ref))
-     directory
-     :reflog-message "git-gaw init"
-     :git-options git-options)
-    source-ref))
-
-(defun %remove-initial-ref-graph (source-ref object-id directory
-                                  source-ref-prefix target-ref-prefix head-ref
-                                  git-options)
-  (let ((registration-ref
-          (%make-ref source-ref source-ref-prefix target-ref-prefix)))
-    (apply-ref-transaction
-     (list (%symref-delete-command head-ref registration-ref)
-           (%symref-delete-command registration-ref source-ref)
-           (%delete-command source-ref object-id))
-     directory
-     :reflog-message "git-gaw init rollback"
-     :git-options git-options)
-    t))
-
-(defun %rename-ref-registration (old-source-ref new-source-ref directory
-                                 source-ref-prefix target-ref-prefix head-ref
-                                 git-options)
-  (let* ((old-registration
-           (%make-ref old-source-ref source-ref-prefix target-ref-prefix))
-         (new-registration
-           (%make-ref new-source-ref source-ref-prefix target-ref-prefix))
-         (old-state (inspect-ref old-registration directory))
-         (new-state (inspect-ref new-registration directory))
-         (head-state (inspect-ref head-ref directory)))
-    (unless (%registration-state-registered-p old-state old-source-ref)
-      (error "Registration does not exist: ~S" old-registration))
-    (when (ref-state-exists-p new-state)
-      (error "Destination registration already exists: ~S" new-registration))
-    (unless (and (ref-state-exists-p head-state)
-                 (ref-state-symbolic-p head-state)
-                 (string= old-registration
-                          (ref-state-symbolic-target head-state)))
-      (error "refs/gaw/HEAD does not select ~S" old-registration))
-    (apply-ref-transaction
-     (list (%symref-delete-command old-registration old-source-ref)
-           (%symref-create-command new-registration new-source-ref)
-           (%symref-update-command head-ref new-registration
-                                   :ref old-registration))
-     directory
-     :reflog-message "git-gaw branch rename"
-     :git-options git-options)
-    new-registration))
-
-(defun %remove-ref-registration (source-ref directory
-                                 source-ref-prefix target-ref-prefix head-ref
-                                 git-options)
-  (let* ((registration-ref
-           (%make-ref source-ref source-ref-prefix target-ref-prefix))
-         (registration-state (inspect-ref registration-ref directory))
-         (head-state (inspect-ref head-ref directory)))
-    (unless (%registration-state-registered-p registration-state source-ref)
-      (error "Registration does not exist: ~S" registration-ref))
-    (when (and (ref-state-exists-p head-state)
-               (not (ref-state-symbolic-p head-state)))
-      (error "refs/gaw/HEAD is not symbolic"))
-    (let ((selected-p
-            (and (ref-state-exists-p head-state)
-                 (string= registration-ref
-                          (ref-state-symbolic-target head-state))))
-          (commands
-            (list (%symref-delete-command registration-ref source-ref))))
-      (when selected-p
-        (push (%symref-delete-command head-ref registration-ref) commands))
-      (apply-ref-transaction (nreverse commands) directory
-                             :reflog-message "git-gaw branch delete"
-                             :git-options git-options)
-      (%make-registration-removal
-       source-ref registration-ref head-ref selected-p))))
-
-(defun %restore-ref-registration (removal directory git-options)
-  (check-type removal registration-removal)
-  (let ((commands
-          (list (%symref-create-command
-                 (registration-removal-registration-ref removal)
-                 (registration-removal-source-ref removal)))))
-    (when (registration-removal-selected-p removal)
-      (push (%symref-create-command
-             (registration-removal-head-ref removal)
-             (registration-removal-registration-ref removal))
-            commands))
-    (apply-ref-transaction (nreverse commands) directory
-                           :reflog-message "git-gaw branch delete rollback"
-                           :git-options git-options)
-    t))
-
-(defun %registered-ref-p (source-ref
-                          directory
-                          source-ref-prefix
-                          target-ref-prefix)
-  (let ((registration-ref
-          (%make-ref source-ref
-                     source-ref-prefix
-                     target-ref-prefix)))
-    (%registration-state-registered-p
-     (inspect-ref registration-ref directory)
-     source-ref)))
 
 (defun %ref-exists-p (checked-ref directory)
   (let ((invocation (run-git (list "show-ref"
@@ -311,61 +109,108 @@
                                 directory)))
     (and (ref-state-exists-p ref-state)
          (ref-state-symbolic-p ref-state)
-         (%ref-state-dangling-p
-          ref-state
-          (inspect-ref (ref-state-symbolic-target ref-state)
-                       directory)))))
+         (not (ref-state-exists-p
+               (inspect-ref (ref-state-symbolic-target ref-state)
+                            directory))))))
 
-(defun %register-ref (source-ref
-                      directory
-                      overwrite
-                      display-name
-                      source-ref-prefix
-                      target-ref-prefix
-                      git-options)
-  (let* ((target-ref (%make-ref source-ref
-                                source-ref-prefix
-                                target-ref-prefix))
-         (target-state (inspect-ref target-ref
-                                    directory)))
-    (%ensure-registration-available target-state
-                                    overwrite
-                                    display-name
-                                    target-ref)
-    (apply-ref-transaction
-     (list (cond
-             ((not (ref-state-exists-p target-state))
-              (%symref-create-command target-ref source-ref))
-             ((ref-state-symbolic-p target-state)
-              (%symref-update-command
-               target-ref source-ref :ref
-               (ref-state-symbolic-target target-state)))
-             (t
-              (%symref-update-command
-               target-ref source-ref :oid
-               (ref-state-object-id target-state)))))
-     directory
-     :reflog-message "git-gaw register"
-     :git-options git-options)
-    target-ref))
+(defun %select-source-ref (source-ref directory source-prefix head-ref
+                           git-options)
+  (unless (%ref-under-prefix-p source-ref source-prefix)
+    (error "Not a local source branch ref: ~S" source-ref))
+  (let ((source (inspect-ref source-ref directory))
+        (head (inspect-ref head-ref directory)))
+    (unless (and (ref-state-exists-p source)
+                 (not (ref-state-symbolic-p source)))
+      (error "GAW source branch is missing or symbolic: ~S" source-ref))
+    (when (and (ref-state-exists-p head)
+               (not (ref-state-symbolic-p head)))
+      (error "GAW selector is not symbolic: ~S" head-ref))
+    (when (and (ref-state-exists-p head)
+               (not (%ref-under-prefix-p
+                     (ref-state-symbolic-target head) source-prefix)))
+      (error "GAW selector has an invalid target: ~S" head-ref))
+    (let ((old (and (ref-state-exists-p head)
+                    (ref-state-symbolic-target head))))
+      (unless (equal old source-ref)
+        (apply-ref-transaction
+         (list (if old
+                   (%symref-update-command head-ref source-ref :ref old)
+                   (%symref-create-command head-ref source-ref)))
+         directory :reflog-message "git-gaw select"
+                   :git-options git-options))
+      (%make-selector-change head-ref old source-ref))))
 
-(defun %unregister-ref (target-ref
-                        directory
-                        display-name
-                        target-ref-prefix
-                        git-options)
-  (%validate-target-ref target-ref
-                        target-ref-prefix)
-  (let ((target-state (inspect-ref target-ref
-                                   directory)))
-    (%ensure-registration-removable target-state
-                                    display-name
-                                    target-ref)
+(defun %restore-source-selection (change directory git-options)
+  (check-type change selector-change)
+  (unless (equal (selector-change-old-target change)
+                 (selector-change-new-target change))
     (apply-ref-transaction
-     (list (%symref-delete-command
-            target-ref
-            (ref-state-symbolic-target target-state)))
-     directory
-     :reflog-message "git-gaw unregister"
-     :git-options git-options)
-    target-ref))
+     (list (if (selector-change-old-target change)
+               (%symref-update-command
+                (selector-change-head-ref change)
+                (selector-change-old-target change)
+                :ref (selector-change-new-target change))
+               (%symref-delete-command
+                (selector-change-head-ref change)
+                (selector-change-new-target change))))
+     directory :reflog-message "git-gaw deploy rollback"
+               :git-options git-options))
+  t)
+
+(defun %initialize-source-and-selector (source-ref object-id directory
+                                        source-prefix head-ref git-options)
+  (unless (%ref-under-prefix-p source-ref source-prefix)
+    (error "Not a local source branch ref: ~S" source-ref))
+  (dolist (ref (list source-ref head-ref))
+    (when (ref-state-exists-p (inspect-ref ref directory))
+      (error "Cannot initialize an existing ref: ~S" ref)))
+  (apply-ref-transaction
+   (list (%create-command source-ref object-id)
+         (%symref-create-command head-ref source-ref))
+   directory :reflog-message "git-gaw init" :git-options git-options)
+  source-ref)
+
+(defun %remove-initial-source-and-selector (source-ref object-id directory
+                                            head-ref git-options)
+  (apply-ref-transaction
+   (list (%symref-delete-command head-ref source-ref)
+         (%delete-command source-ref object-id))
+   directory :reflog-message "git-gaw init rollback"
+             :git-options git-options)
+  t)
+
+(defun %rename-selected-source (old-source-ref new-source-ref directory
+                                head-ref git-options)
+  (let ((head (inspect-ref head-ref directory)))
+    (unless (and (ref-state-exists-p head)
+                 (ref-state-symbolic-p head)
+                 (string= old-source-ref
+                          (ref-state-symbolic-target head)))
+      (error "GAW selector does not select ~S" old-source-ref))
+    (apply-ref-transaction
+     (list (%symref-update-command head-ref new-source-ref
+                                   :ref old-source-ref))
+     directory :reflog-message "git-gaw branch rename"
+               :git-options git-options)
+    new-source-ref))
+
+(defun %delete-selector (directory head-ref git-options)
+  (let ((state (inspect-ref head-ref directory)))
+    (when (ref-state-exists-p state)
+      (apply-ref-transaction
+       (list (if (ref-state-symbolic-p state)
+                 (%symref-delete-command
+                  head-ref (ref-state-symbolic-target state))
+                 (concatenate 'string
+                              (format nil "option no-deref~C" #\Null)
+                              (%delete-command head-ref
+                                               (ref-state-object-id state)))))
+       directory :reflog-message "git-gaw undeploy"
+                 :git-options git-options)))
+  t)
+
+(defun %delete-symbolic-ref (ref target directory git-options)
+  (apply-ref-transaction
+   (list (%symref-delete-command ref target)) directory
+   :reflog-message "git-gaw undeploy legacy registration"
+   :git-options git-options))

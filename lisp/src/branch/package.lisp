@@ -6,17 +6,13 @@
                 #:git-invocation-stderr
                 #:git-invocation-exit-status)
   (:import-from #:git-agent-workflow.refs
-                #:make-ref
                 #:inspect-ref
                 #:ref-state-exists-p
                 #:ref-state-symbolic-p
                 #:ref-state-object-id
-                #:registered-ref-p
                 #:current-ref)
   (:import-from #:git-agent-workflow.mutation
-                #:rename-ref-registration
-                #:remove-ref-registration
-                #:restore-ref-registration
+                #:rename-selected-source
                 #:run-branch)
   (:import-from #:git-agent-workflow.workspace
                 #:worktree-root

@@ -82,6 +82,7 @@
                                            "refs"
                                            "mutation"
                                            "config"
+                                           "state"
                                            "workspace")
                               :components ((:file "package")
                                            (:file "commit.core"
@@ -141,8 +142,11 @@
                                              (:static-file "check.txt")
                                              (:static-file "status.txt")
                                              (:static-file "deploy.txt")
+                                             (:static-file "undeploy.txt")
                                              (:static-file "init.txt")
-                                             (:static-file "branch.txt")))
+                                             (:static-file "branch.txt")
+                                             (:static-file "hooks.txt")
+                                             (:static-file "recovery.txt")))
                                            (:file "help.core"
                                             :depends-on ("package" "text"))
                                            (:file "help.api"
@@ -151,7 +155,8 @@
                               :pathname "hook/"
                               :depends-on ("package"
                                            "git"
-                                           "refs")
+                                           "refs"
+                                           "state")
                               :components ((:file "package")
                                            (:file "hook.core"
                                             :depends-on ("package"))
@@ -189,6 +194,17 @@
                                             :depends-on ("deploy.core"))
                                            (:file "deploy.api"
                                             :depends-on ("deploy.runtime"))))
+                             (:module "undeploy"
+                              :pathname "undeploy/"
+                              :depends-on ("package" "git" "refs" "state"
+                                           "mutation" "hook")
+                              :components ((:file "package")
+                                           (:file "undeploy.core"
+                                            :depends-on ("package"))
+                                           (:file "undeploy.runtime"
+                                            :depends-on ("undeploy.core"))
+                                           (:file "undeploy.api"
+                                            :depends-on ("undeploy.runtime"))))
                              (:module "init"
                               :pathname "init/"
                               :depends-on ("package"
@@ -228,6 +244,7 @@
                                            "check"
                                            "status"
                                            "deploy"
+                                           "undeploy"
                                            "init"
                                            "branch"
                                            "help"
@@ -314,6 +331,12 @@
                               :components ((:file "package")
                                            (:file "deploy"
                                             :depends-on ("package"))))
+                             (:module "undeploy"
+                              :pathname "undeploy/"
+                              :depends-on ("package" "support")
+                              :components ((:file "package")
+                                           (:file "undeploy"
+                                            :depends-on ("package"))))
                              (:module "init"
                               :pathname "init/"
                               :depends-on ("package"
@@ -386,6 +409,7 @@
                                            "workspace"
                                            "state"
                                            "deploy"
+                                           "undeploy"
                                            "init"
                                            "branch"
                                            "show"

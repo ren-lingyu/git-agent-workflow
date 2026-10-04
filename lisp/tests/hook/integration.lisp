@@ -90,7 +90,7 @@
                    "second")
   (%repository-git directory
                    "symbolic-ref"
-                   "refs/gaw/heads/gaw"
+                   "refs/gaw/HEAD"
                    "refs/heads/gaw")
   (%repository-git directory
                    "config"
@@ -112,17 +112,14 @@
   (%repository-git directory
                    "branch"
                    branch
-                   "HEAD")
-  (%repository-git directory
-                   "-c"
-                   "hook.gaw-reference-transaction.enabled=false"
-                   "symbolic-ref"
-                   (format nil
-                           "refs/gaw/heads/~A"
-                           branch)
-                   (format nil
-                           "refs/heads/~A"
-                           branch)))
+                   "HEAD"))
+
+(defun %ordinary-commit (directory message)
+  (let ((tree (%repository-git directory "mktree")))
+    (%repository-git directory
+                     "-c" "user.name=GAW Test"
+                     "-c" "user.email=gaw-test@example.invalid"
+                     "commit-tree" tree "-m" message)))
 
 (defun %assert-ref-unchanged (directory ref expected)
   (assert (string= expected
@@ -244,18 +241,11 @@
                              "refs/heads/free"
                              free-before))))
 
-(defun %test-protection-allows-unregistered-and-rejects-gaw-refs ()
+(defun %test-protection-allows-ordinary-and-rejects-gaw-refs ()
   (%with-protected-repository (directory)
-    (%repository-git directory
-                     "branch"
-                     "free"
-                     "HEAD")
-    (let ((before (%repository-git directory
-                                   "rev-parse"
-                                   "refs/heads/free"))
-          (target (%repository-git directory
-                                   "rev-parse"
-                                   "HEAD^")))
+    (let* ((before (%ordinary-commit directory "ordinary one"))
+           (target (%ordinary-commit directory "ordinary two")))
+      (%repository-git directory "update-ref" "refs/heads/free" before)
       (%repository-git directory
                        "update-ref"
                        "refs/heads/free"
@@ -292,14 +282,14 @@
     (assert (not (zerop
                   (%repository-git-status directory
                                           "symbolic-ref"
-                                          "refs/gaw/heads/gaw"
+                                          "refs/gaw/HEAD"
                                           "refs/heads/other"))))
     (assert (string= "refs/heads/gaw"
                      (%repository-git directory
                                       "symbolic-ref"
-                                      "refs/gaw/heads/gaw")))))
+                                      "refs/gaw/HEAD")))))
 
-(defun %test-ref-primitives-bypass-only-protection-hook ()
+(defun %test-selector-bypass-preserves-observer-hook ()
   (%with-protected-repository (directory)
     (%repository-git directory "branch" "new" "HEAD")
     (%repository-git directory
@@ -310,20 +300,16 @@
                      "config" "--local"
                      "hook.gaw-test-observer.command"
                      "touch refs-observer-ran")
-    (register-ref "refs/heads/new" directory)
+    (%repository-git directory "-c"
+                     "hook.gaw-reference-transaction.enabled=false"
+                     "symbolic-ref" "refs/gaw/HEAD" "refs/heads/new")
     (assert (string= "refs/heads/new"
                      (%repository-git directory
                                       "symbolic-ref"
-                                      "refs/gaw/heads/new")))
-    (assert (probe-file (merge-pathnames "refs-observer-ran" directory)))
-    (unregister-ref "refs/gaw/heads/new" directory)
-    (assert (= 2
-               (%repository-git-status directory
-                                       "show-ref"
-                                       "--exists"
-                                       "refs/gaw/heads/new")))))
+                                      "refs/gaw/HEAD")))
+    (assert (probe-file (merge-pathnames "refs-observer-ran" directory)))))
 
-(defun %test-protection-rejects-dereferenced-registration-update ()
+(defun %test-protection-rejects-dereferenced-selector-update ()
   (%with-protected-repository (directory)
     (let ((before (%repository-git directory
                                    "rev-parse"
@@ -335,12 +321,39 @@
                     (%repository-git-status
                      directory
                      "update-ref"
-                     "refs/gaw/heads/gaw"
+                     "refs/gaw/HEAD"
                      target
                      before))))
       (%assert-ref-unchanged directory
                              "refs/heads/gaw"
                              before))))
+
+(defun %test-invalid-marker-branch-retains-marker-ownership ()
+  (%with-protected-repository (directory)
+    (%write-text directory ".gaw/config" "invalid config")
+    (%repository-git directory "add" "--" ".gaw/config")
+    (let* ((tree (%repository-git directory "write-tree"))
+           (invalid (%repository-git directory "commit-tree" tree
+                                     "-m" "invalid marker")))
+      (%repository-git directory "update-ref" "refs/heads/invalid" invalid)
+      (%write-text directory "AGENTS.md" "other workspace content")
+      (%repository-git directory "add" "--" "AGENTS.md")
+      (let* ((same-marker-tree (%repository-git directory "write-tree"))
+             (same-marker (%repository-git directory "commit-tree"
+                                           same-marker-tree "-m" "same marker")))
+        (%repository-git directory "update-ref" "refs/heads/invalid"
+                         same-marker invalid)
+        (%write-text directory ".gaw/config" "different invalid config")
+        (%repository-git directory "add" "--" ".gaw/config")
+        (let* ((changed-tree (%repository-git directory "write-tree"))
+               (changed (%repository-git directory "commit-tree"
+                                         changed-tree "-m" "changed marker")))
+          (assert (not (zerop
+                        (%repository-git-status
+                         directory "update-ref" "refs/heads/invalid"
+                         changed same-marker))))
+          (%assert-ref-unchanged directory "refs/heads/invalid"
+                                 same-marker))))))
 
 (defun %test-gaw-commit-bypasses-only-protection-hook ()
   (%with-protected-repository (directory)
@@ -419,10 +432,11 @@
   (%test-protection-rejects-reset-and-update-ref)
   (%test-protection-rejects-branch-changes)
   (%test-protection-rejects-mixed-transaction)
-  (%test-protection-allows-unregistered-and-rejects-gaw-refs)
+  (%test-protection-allows-ordinary-and-rejects-gaw-refs)
   (%test-protection-allows-head-switch-and-rejects-protocol-symref)
-  (%test-ref-primitives-bypass-only-protection-hook)
-  (%test-protection-rejects-dereferenced-registration-update)
+  (%test-selector-bypass-preserves-observer-hook)
+  (%test-protection-rejects-dereferenced-selector-update)
+  (%test-invalid-marker-branch-retains-marker-ownership)
   (%test-gaw-commit-bypasses-only-protection-hook)
   (%test-machine-option-rejects-unknown-phase)
   (%test-protection-hook-configuration-management)

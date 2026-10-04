@@ -2,11 +2,13 @@
 
 (defstruct (committed-state-finding
             (:constructor %make-committed-state-finding
-                (name status detail))
+                (name status detail &optional (certainty :determinate)))
             (:copier nil))
   (name nil :type keyword :read-only t)
   (status nil :type (member :ok :error :skipped) :read-only t)
-  (detail "" :type string :read-only t))
+  (detail "" :type string :read-only t)
+  (certainty :determinate :type (member :determinate :indeterminate)
+             :read-only t))
 
 (defstruct (committed-state-report
             (:constructor %make-committed-state-report
@@ -24,6 +26,14 @@
   (not (find :error
              (committed-state-report-findings report)
              :key #'committed-state-finding-status)))
+
+(defun committed-state-classification (report)
+  (check-type report committed-state-report)
+  (cond ((committed-state-report-ok-p report) :valid)
+        ((find :indeterminate (committed-state-report-findings report)
+               :key #'committed-state-finding-certainty)
+         :indeterminate)
+        (t :invalid)))
 
 (defun committed-state-finding (report name)
   (check-type report committed-state-report)

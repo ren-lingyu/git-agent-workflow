@@ -33,7 +33,8 @@
       (assert (string= "gaw" (deploy-result-branch result)))
       (assert (null (deploy-result-worktree-path result))))
     (assert (string= "refs/heads/gaw" (current-ref directory)))
-    (assert (registered-ref-p "refs/heads/gaw" directory))
+    (assert (string= "" (%deploy-git directory "for-each-ref"
+                                   "--format=%(refname)" "refs/gaw/heads/")))
     (assert (eq :canonical
                 (hook-configuration-status
                  (inspect-protection-hook directory))))
@@ -67,14 +68,14 @@
     (assert (eq :ambiguous-branch
                 (%deploy-error-reason (lambda () (deploy directory)))))))
 
-(defun %test-malformed-registration-blocks-discovery ()
+(defun %test-legacy-ref-blocks-discovery ()
   (with-test-repository (directory)
     (let ((commit (%make-gaw-branch directory "gaw")))
       (%deploy-git directory "update-ref" "refs/gaw/heads/gaw" commit))
     (assert (eq :corrupt-metadata
                 (%deploy-error-reason (lambda () (deploy directory)))))))
 
-(defun %test-explicit-branch-does-not-repair-registration ()
+(defun %test-explicit-branch-does-not-repair-legacy-ref ()
   (with-test-repository (directory)
     (let ((commit (%make-gaw-branch directory "gaw")))
       (%deploy-git directory "update-ref" "refs/gaw/heads/gaw" commit))
@@ -154,8 +155,8 @@
   (%test-valid-head-is-a-fast-path)
   (%test-automatic-discovery-and-invalid-marker-warning)
   (%test-ambiguous-and-missing-discovery)
-  (%test-malformed-registration-blocks-discovery)
-  (%test-explicit-branch-does-not-repair-registration)
+  (%test-legacy-ref-blocks-discovery)
+  (%test-explicit-branch-does-not-repair-legacy-ref)
   (%test-remote-tracking-branch-is-not-a-candidate)
   (%test-explicit-worktree-deploy)
   (%test-worktree-deploy-compensates-after-check-failure)

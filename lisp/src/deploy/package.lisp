@@ -9,13 +9,12 @@
                 #:inspect-ref
                 #:ref-state-exists-p
                 #:ref-state-symbolic-p
+                #:ref-state-symbolic-target
                 #:current-ref
-                #:registered-ref-p
-                #:registration-refs
                 #:protocol-refs)
   (:import-from #:git-agent-workflow.mutation
-                #:select-ref
-                #:restore-selection
+                #:select-source-ref
+                #:restore-source-selection
                 #:run-worktree)
   (:import-from #:git-agent-workflow.workspace
                 #:list-worktrees

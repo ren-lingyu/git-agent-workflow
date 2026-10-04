@@ -46,7 +46,8 @@
                        (nth-value 0 (%dispatch-output '("--help") directory))))
       (assert (string= overview
                        (nth-value 0 (%dispatch-output '("-h") directory)))))
-    (dolist (command '("commit" "show" "check" "status" "deploy" "init" "branch"))
+    (dolist (command '("commit" "show" "check" "status" "deploy"
+                       "undeploy" "init" "branch"))
       (let ((topic (nth-value 0
                              (%dispatch-output (list "help" command)
                                                directory)))
@@ -54,6 +55,10 @@
                               (%dispatch-output (list command "--help")
                                                 directory))))
         (assert (string= topic option))))
+    (dolist (topic '("hooks" "recovery"))
+      (assert (plusp (length (nth-value 0
+                             (%dispatch-output (list "help" topic)
+                                               directory))))))
     (assert (handler-case
                 (progn
                   (%dispatch-output '("help" "config") directory)
@@ -123,6 +128,20 @@
                        nil)
               (error () t)))))
 
+(defun %test-undeploy-dispatch ()
+  (with-test-repository (directory)
+    (git-agent-workflow.init:initialize directory :branch "gaw")
+    (multiple-value-bind (output status)
+        (%dispatch-output '("undeploy") directory)
+      (assert (zerop status))
+      (assert (search "GAW selector: removed" output)))
+    (assert (zerop (nth-value 1
+                    (%dispatch-output '("undeploy") directory))))
+    (assert (handler-case
+                (progn (%dispatch-output '("undeploy" "extra") directory)
+                       nil)
+              (error () t)))))
+
 (defun %test-status-diagnostic-exit-combination ()
   (with-test-repository (directory)
     (let* ((diagnose-symbol 'git-agent-workflow.status:diagnose-status)
@@ -158,7 +177,7 @@
                                              directory))))
              (call-git (list "-C" (namestring directory)
                              "symbolic-ref" "refs/gaw/HEAD"
-                             "refs/gaw/heads/missing"))
+                             "refs/heads/missing"))
              (setf diagnostic-status 0 reported nil)
              (assert (zerop (nth-value 1
                              (%dispatch-output '("status") directory))))
@@ -279,6 +298,7 @@
   (%test-show-help-interception-is-exact)
   (%test-check-dispatch)
   (%test-status-dispatch)
+  (%test-undeploy-dispatch)
   (%test-status-diagnostic-exit-combination)
   (%test-version-dispatch)
   (%test-reference-transaction-machine-option)

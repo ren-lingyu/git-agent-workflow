@@ -16,6 +16,7 @@
                 #:validate-workspace
                 #:find-project-path-conflict
                 #:workspace-error
+                #:workspace-error-reason
                 #:workspace-error-detail)
   (:export #:inspect-committed-state
            #:committed-state-marker-p
@@ -29,8 +30,11 @@
            #:committed-state-report-workspace
            #:committed-state-report-findings
            #:committed-state-report-ok-p
+           #:committed-state-classification
+           #:marker-entry
            #:committed-state-finding
            #:committed-state-finding-p
            #:committed-state-finding-name
            #:committed-state-finding-status
+           #:committed-state-finding-certainty
            #:committed-state-finding-detail))

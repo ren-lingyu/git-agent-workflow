@@ -64,7 +64,7 @@
                      "refs/heads/gaw")
     (%repository-git directory
                      "symbolic-ref"
-                     "refs/gaw/heads/gaw"
+                     "refs/gaw/HEAD"
                      "refs/heads/gaw")
     commit))
 
@@ -356,26 +356,24 @@
      (%repository-git directory
                       "symbolic-ref"
                       "refs/gaw/HEAD"
-                      "refs/gaw/heads/other")
+                      "refs/heads/other")
      (assert (stringp
               (commit directory
                       (%message "worktree head")
                       :allow-empty t))))))
 
-(defun %test-commit-requires-registration ()
+(defun %test-commit-without-selector ()
   (%with-gaw-repository
    (lambda (directory initial)
      (declare (ignore initial))
      (%repository-git directory
                       "symbolic-ref"
                       "--delete"
-                      "refs/gaw/heads/gaw")
-     (%assert-commit-error
-      :unregistered-branch
-      (lambda ()
-        (commit directory
-                (%message "unregistered")
-                :allow-empty t))))))
+                      "refs/gaw/HEAD")
+     (assert (stringp
+              (commit directory
+                      (%message "undeployed")
+                      :allow-empty t))))))
 
 (defun %test-commit-rejects-operation-state ()
   (%with-gaw-repository
@@ -446,7 +444,7 @@
   (%test-commit-rejects-invalid-worktree-and-tree)
   (%test-commit-rejects-gitlink-inside-workspace-directory)
   (%test-commit-ignores-shared-gaw-head)
-  (%test-commit-requires-registration)
+  (%test-commit-without-selector)
   (%test-commit-rejects-operation-state)
   (%test-commit-disables-only-gaw-configured-hook)
   (%test-public-package-boundary)

@@ -6,9 +6,10 @@
       (error "Required branch API dependency is unavailable: ~S" function))))
 
 (defparameter *source-ref-prefix* "refs/heads/")
+(defparameter *selector-ref* "refs/gaw/HEAD")
 
 (defun rename-branch (directory new-name)
   (%rename-branch directory new-name *source-ref-prefix*))
 
 (defun delete-branch (directory name)
-  (%delete-branch directory name *source-ref-prefix*))
+  (%delete-branch directory name *source-ref-prefix* *selector-ref*))

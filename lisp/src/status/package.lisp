@@ -50,7 +50,6 @@
            #:status-branch-ref
            #:status-branch-object-id
            #:status-branch-classification
-           #:status-branch-registration-status
            #:status-branch-committed-state
            #:status-protocol-ref
            #:status-protocol-ref-p

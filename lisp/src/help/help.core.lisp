@@ -44,8 +44,11 @@
 (%define-help-text *check-help* "src/help/text/check.txt")
 (%define-help-text *status-help* "src/help/text/status.txt")
 (%define-help-text *deploy-help* "src/help/text/deploy.txt")
+(%define-help-text *undeploy-help* "src/help/text/undeploy.txt")
 (%define-help-text *init-help* "src/help/text/init.txt")
 (%define-help-text *branch-help* "src/help/text/branch.txt")
+(%define-help-text *hooks-help* "src/help/text/hooks.txt")
+(%define-help-text *recovery-help* "src/help/text/recovery.txt")
 
 (defun %help-text (topic)
   (case topic
@@ -55,7 +58,10 @@
     (:check *check-help*)
     (:status *status-help*)
     (:deploy *deploy-help*)
+    (:undeploy *undeploy-help*)
     (:init *init-help*)
     (:branch *branch-help*)
+    (:hooks *hooks-help*)
+    (:recovery *recovery-help*)
     (otherwise
      (error 'help-error :reason :unknown-topic :topic topic))))

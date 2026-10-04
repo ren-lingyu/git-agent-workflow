@@ -5,8 +5,7 @@
     (error "Required current ref runtime function is unavailable: ~S"
            '%current-ref))
   (dolist (variable '(*display-name*
-                      *source-ref-prefix*
-                      *target-ref-prefix*))
+                      *source-ref-prefix*))
     (unless (boundp variable)
       (error "Required refs variable is unavailable: ~S"
              variable))))
@@ -15,5 +14,4 @@
   (%current-ref directory
                 *display-name*
                 *head-ref*
-                *source-ref-prefix*
-                *target-ref-prefix*))
+                *source-ref-prefix*))

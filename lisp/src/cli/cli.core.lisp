@@ -107,13 +107,16 @@
     ((string= name "check") :check)
     ((string= name "status") :status)
     ((string= name "deploy") :deploy)
+    ((string= name "undeploy") :undeploy)
+    ((string= name "hooks") :hooks)
+    ((string= name "recovery") :recovery)
     ((string= name "init") :init)
     ((string= name "branch") :branch)
     (t (%cli-error "Unknown help topic: ~A" name))))
 
 (defun %usage-error ()
   (%cli-error
-   "Usage:~%  git gaw init --branch <name> [--worktree-path <path>]~%  git gaw deploy [--branch <name>] [--worktree-path <path>]~%  git gaw branch -m <new-name> | -d <name>~%  git gaw commit [options] [--] [project-commit...]~%  git gaw show [options] [object...] [-- path...]~%  git gaw check~%  git gaw status [--diagnose]~%  git gaw help [init|deploy|branch|commit|show|check|status]"))
+   "Usage:~%  git gaw init --branch <name> [--worktree-path <path>]~%  git gaw deploy [--branch <name>] [--worktree-path <path>]~%  git gaw undeploy~%  git gaw branch -m <new-name> | -d <name>~%  git gaw commit [options] [--] [project-commit...]~%  git gaw show [options] [object...] [-- path...]~%  git gaw check~%  git gaw status [--diagnose]~%  git gaw help [init|deploy|undeploy|branch|commit|show|check|status|hooks|recovery]"))
 
 (defun %sole-help-option-p (arguments)
   (and arguments

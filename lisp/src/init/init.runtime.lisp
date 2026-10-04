@@ -1,8 +1,9 @@
 (in-package #:git-agent-workflow.init)
 
 (eval-when (:load-toplevel :execute)
-  (dolist (function '(run-git inspect-ref protocol-refs initialize-ref-graph
-                      remove-initial-ref-graph local-branches
+  (dolist (function '(run-git inspect-ref protocol-refs
+                      initialize-source-and-selector
+                      remove-initial-source-and-selector local-branches
                       committed-state-marker-p inspect-committed-state
                       inspect-protection-hook deploy %signal-init-error
                       %make-init-result))
@@ -119,7 +120,7 @@
              (inspect-committed-state directory commit-oid))
       (%signal-init-error :invalid-initial-state
                           "The generated initial commit failed validation"))
-    (initialize-ref-graph source-ref commit-oid directory)
+    (initialize-source-and-selector source-ref commit-oid directory)
     (handler-case
         (let ((deploy-result
                 (deploy directory :branch branch
@@ -129,7 +130,8 @@
           (%make-init-result source-ref branch commit-oid deploy-result))
       (error (condition)
         (handler-case
-            (remove-initial-ref-graph source-ref commit-oid directory)
+            (remove-initial-source-and-selector
+             source-ref commit-oid directory)
           (error (rollback)
             (%signal-init-error
              :partial-failure

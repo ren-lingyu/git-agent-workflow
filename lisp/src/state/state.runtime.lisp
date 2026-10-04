@@ -24,18 +24,27 @@
     (and (zerop (git-invocation-exit-status invocation))
          (git-invocation-stdout invocation))))
 
-(defun %committed-state-marker-p (directory source-ref config-path)
+(defun %marker-entry (directory revision config-path)
   (let ((invocation
-          (run-git (list "cat-file" "-e"
-                         (format nil "~A:~A" source-ref config-path))
+          (run-git (list "ls-tree" "-z" "--full-tree"
+                         revision "--" config-path)
                    directory)))
-    (case (git-invocation-exit-status invocation)
-      (0 t)
-      ((1 128) nil)
-      (otherwise
-       (error "Git failed while probing ~A on ~A: ~A"
-              config-path source-ref
-              (git-invocation-stderr invocation))))))
+    (unless (zerop (git-invocation-exit-status invocation))
+      (error "Git failed while probing ~A on ~A: ~A"
+             config-path revision (git-invocation-stderr invocation)))
+    (let ((output (git-invocation-stdout invocation)))
+      (unless (zerop (length output))
+        (let ((tab (position #\Tab output))
+              (nul (position #\Null output)))
+          (unless (and tab nul
+                       (= nul (1- (length output)))
+                       (string= config-path output
+                                :start2 (1+ tab) :end2 nul))
+            (error "Git returned malformed marker entry for ~A" config-path))
+          (subseq output 0 tab))))))
+
+(defun %committed-state-marker-p (directory source-ref config-path)
+  (not (null (%marker-entry directory source-ref config-path))))
 
 (defun %local-branches (directory source-ref-prefix)
   (let ((invocation
@@ -91,8 +100,8 @@
         (tree-oid nil)
         (config nil)
         (workspace nil))
-    (labels ((record (name status detail)
-               (push (%make-committed-state-finding name status detail)
+    (labels ((record (name status detail &optional (certainty :determinate))
+               (push (%make-committed-state-finding name status detail certainty)
                      findings))
              (skip (name detail)
                (record name :skipped detail))
@@ -105,12 +114,14 @@
         (error (condition)
           (record :head :error
                   (format nil "Cannot resolve the GAW branch tip: ~A"
-                          condition))))
+                          condition)
+                  :indeterminate)))
       (cond
         ((null commit-oid)
          (unless (find :head findings
                        :key #'committed-state-finding-name)
-           (record :head :error "The current GAW branch is unborn"))
+           (record :head :error "The current GAW branch is unborn"
+                   :indeterminate))
          (dolist (name '(:head-config :head-workspace :project-parents))
            (skip name "Skipped because HEAD does not resolve to a commit"))
          (return-from %inspect-committed-state (finish)))
@@ -126,7 +137,8 @@
                   (format nil "Invalid HEAD config: ~A" condition)))
         (error (condition)
           (record :head-config :error
-                  (format nil "Cannot inspect HEAD config: ~A" condition))))
+                  (format nil "Cannot inspect HEAD config: ~A" condition)
+                  :indeterminate)))
       (unless config
         (skip :head-workspace "Skipped because HEAD config is unavailable")
         (skip :project-parents "Skipped because HEAD config is unavailable")
@@ -142,11 +154,15 @@
         (workspace-error (condition)
           (record :head-workspace :error
                   (or (workspace-error-detail condition)
-                      (format nil "~A" condition))))
+                      (format nil "~A" condition))
+                  (if (eq :invalid-workspace
+                          (workspace-error-reason condition))
+                      :determinate :indeterminate)))
         (error (condition)
           (record :head-workspace :error
                   (format nil "Cannot validate the HEAD workspace: ~A"
-                          condition))))
+                          condition)
+                  :indeterminate)))
 
       (handler-case
           (multiple-value-bind (ok detail)
@@ -155,5 +171,6 @@
         (error (condition)
           (record :project-parents :error
                   (format nil "Cannot validate project parents: ~A"
-                          condition))))
+                          condition)
+                  :indeterminate)))
       (finish))))

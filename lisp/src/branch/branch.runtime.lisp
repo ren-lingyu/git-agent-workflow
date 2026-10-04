@@ -1,9 +1,8 @@
 (in-package #:git-agent-workflow.branch)
 
 (eval-when (:load-toplevel :execute)
-  (dolist (function '(run-git make-ref inspect-ref registered-ref-p current-ref
-                      run-branch rename-ref-registration remove-ref-registration
-                      restore-ref-registration worktree-root
+  (dolist (function '(run-git inspect-ref current-ref
+                      run-branch rename-selected-source worktree-root
                       current-local-head-ref inspect-committed-state
                       %signal-branch-error %make-branch-result))
     (unless (fboundp function)
@@ -59,19 +58,12 @@
                             "The worktree branch is not refs/gaw/HEAD"))
     (%require-direct-source old-source-ref root)
     (%require-valid-branch-state old-source-ref root)
-    (unless (registered-ref-p old-source-ref root)
-      (%signal-branch-error :unregistered
-                            "Branch is not registered: ~S" old-source-ref))
     (when (ref-state-exists-p (inspect-ref new-source-ref root))
       (%signal-branch-error :destination-exists
                             "Destination branch exists: ~S" new-source-ref))
-    (when (ref-state-exists-p (inspect-ref (make-ref new-source-ref) root))
-      (%signal-branch-error :destination-exists
-                            "Destination registration exists: ~S"
-                            (make-ref new-source-ref)))
     (%native-branch (list "-m" new-name) root "renaming the branch")
     (handler-case
-        (rename-ref-registration old-source-ref new-source-ref root)
+        (rename-selected-source old-source-ref new-source-ref root)
       (error (condition)
         (handler-case
             (%try-native-rename-back old-name root)
@@ -89,13 +81,11 @@
             (error "Worktree HEAD was not renamed"))
           (unless (string= new-source-ref (current-ref root))
             (error "refs/gaw/HEAD was not renamed"))
-          (unless (registered-ref-p new-source-ref root)
-            (error "New registration is missing"))
           (%require-valid-branch-state new-source-ref root))
       (error (condition)
         (let ((rollback-errors '()))
           (handler-case
-              (rename-ref-registration new-source-ref old-source-ref root)
+              (rename-selected-source new-source-ref old-source-ref root)
             (error (rollback) (push (princ-to-string rollback) rollback-errors)))
           (handler-case (%try-native-rename-back old-name root)
             (error (rollback) (push (princ-to-string rollback) rollback-errors)))
@@ -105,38 +95,19 @@
            condition (and rollback-errors (nreverse rollback-errors))))))
     (%make-branch-result :rename old-source-ref new-source-ref)))
 
-(defun %restore-deleted-source (name object-id directory)
-  (let ((invocation
-          (run-branch (list name object-id) directory)))
-    (unless (zerop (git-invocation-exit-status invocation))
-      (error "Cannot recreate deleted branch: ~A"
-             (git-invocation-stderr invocation)))))
-
-(defun %delete-branch (directory name source-ref-prefix)
+(defun %delete-branch (directory name source-ref-prefix selector-ref)
   (let* ((source-ref (%branch-name name directory source-ref-prefix))
-         (source-state (%require-direct-source source-ref directory))
-         (object-id (ref-state-object-id source-state)))
+         (selector-state (inspect-ref selector-ref directory)))
+    (%require-direct-source source-ref directory)
     (%require-valid-branch-state source-ref directory)
-    (handler-case
-        (unless (registered-ref-p source-ref directory)
-          (%signal-branch-error :unregistered
-                                "Branch is not registered: ~S" source-ref))
-      (branch-error (condition) (error condition))
-      (error (condition)
-        (%signal-branch-error :invalid-registration "~A" condition)))
+    (when (ref-state-exists-p selector-state)
+      (let ((selected
+              (handler-case (current-ref directory)
+                (error (condition)
+                  (%signal-branch-error :invalid-selector "~A" condition)))))
+        (%require-valid-branch-state selected directory)
+        (when (string= source-ref selected)
+          (%signal-branch-error :selected-branch
+                                "Undeploy or select another branch before deletion"))))
     (%native-branch (list "-d" name) directory "deleting the branch")
-    (handler-case
-        (remove-ref-registration source-ref directory)
-      (error (condition)
-        (handler-case
-            (%restore-deleted-source name object-id directory)
-          (error (rollback)
-            (%signal-branch-error
-             :partial-failure
-             "Protocol deletion failed (~A); branch recreation failed: ~A"
-             condition rollback)))
-        (%signal-branch-error
-         :partial-failure
-         "Protocol deletion failed (~A); the branch ref was recreated, but native deletion metadata may have changed"
-         condition)))
     (%make-branch-result :delete source-ref nil)))

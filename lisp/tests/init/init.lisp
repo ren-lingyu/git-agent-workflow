@@ -14,7 +14,9 @@
       (assert (string= commit
                        (%init-git directory "rev-parse" "refs/heads/gaw")))
       (assert (string= "refs/heads/gaw" (current-ref directory)))
-      (assert (registered-ref-p "refs/heads/gaw" directory))
+      (assert (string= "" (%init-git directory "for-each-ref"
+                                   "--format=%(refname)"
+                                   "refs/gaw/heads/")))
       (assert (string= "Git Agent Workflow <gaw@invalid>"
                        (%init-git directory "show" "-s"
                                   "--format=%an <%ae>" commit)))

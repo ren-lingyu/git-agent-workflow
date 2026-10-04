@@ -21,6 +21,13 @@
                 #:deploy-result-mode
                 #:deploy-result-worktree-path
                 #:deploy-result-warnings)
+  (:import-from #:git-agent-workflow.undeploy
+                #:undeploy
+                #:undeploy-result-ok-p
+                #:undeploy-result-removed-selector-p
+                #:undeploy-result-removed-legacy-refs
+                #:undeploy-result-hook-cleared-p
+                #:undeploy-result-residuals)
   (:import-from #:git-agent-workflow.init
                 #:initialize
                 #:init-result-branch

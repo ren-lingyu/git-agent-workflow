@@ -4,15 +4,13 @@
                 #:run-git)
   (:import-from #:git-agent-workflow.hook
                 #:hook-disable-options)
-  (:export #:register-ref
-           #:unregister-ref
-           #:select-ref
-           #:restore-selection
-           #:initialize-ref-graph
-           #:remove-initial-ref-graph
-           #:rename-ref-registration
-           #:remove-ref-registration
-           #:restore-ref-registration
+  (:export #:select-source-ref
+           #:restore-source-selection
+           #:initialize-source-and-selector
+           #:remove-initial-source-and-selector
+           #:rename-selected-source
+           #:delete-selector
+           #:delete-symbolic-ref
            #:run-branch
            #:run-worktree
            #:run-source-ref-update))

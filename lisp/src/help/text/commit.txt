@@ -2,7 +2,7 @@ usage: git gaw commit [--allow-empty] [--allow-empty-message]
                       (-m <message> | -F <file>)...
                       [--] [project-commit...]
 
-Create a commit on the registered GAW branch from the complete current index.
+Create a commit on a valid GAW branch from the complete current index.
 Unstaged and untracked files are not included.  The command must run at the
 GAW worktree root.
 

@@ -30,7 +30,7 @@
          (commit (%git directory "commit-tree" tree "-m" "initial")))
     (%git directory "update-ref" "refs/heads/gaw" commit)
     (%git directory "symbolic-ref" "HEAD" "refs/heads/gaw")
-    (%git directory "symbolic-ref" "refs/gaw/heads/gaw" "refs/heads/gaw")
+    (%git directory "symbolic-ref" "refs/gaw/HEAD" "refs/heads/gaw")
     commit))
 
 (defun %finding (report name)
@@ -103,49 +103,49 @@
    (lambda (directory)
      (%write directory "outside" "outside")
      (%git directory "add" "--" "outside")
-     (%git directory "symbolic-ref" "--delete" "refs/gaw/heads/gaw")
+     (%git directory "symbolic-ref" "refs/gaw/HEAD" "refs/heads/missing")
      (%write directory ".git/MERGE_HEAD" "state")
      (let ((report (check directory)))
        (assert (not (check-report-ok-p report)))
-       (assert (eq :error (%finding-status report :registration)))
+       (assert (eq :error (%finding-status report :selector)))
        (assert (eq :error (%finding-status report :index)))
        (assert (eq :error (%finding-status report :operation-state)))
        (assert (search "not ready"
                        (with-output-to-string (stream)
                          (write-check-report report stream))))))))
 
-(defun %test-head-and-registration-failures ()
+(defun %test-head-and-selector-failures ()
   (%with-repository
    (lambda (directory)
      (%git directory "checkout" "--quiet" "--detach" "HEAD")
      (let ((report (check directory)))
        (assert (not (check-report-ok-p report)))
        (assert (eq :error (%finding-status report :branch)))
-       (assert (eq :skipped (%finding-status report :registration)))
+       (assert (eq :ok (%finding-status report :selector)))
        (assert (eq :skipped (%finding-status report :head))))))
   (with-test-repository (directory)
     (%git directory "symbolic-ref" "HEAD" "refs/heads/gaw")
     (%git directory
           "symbolic-ref"
-          "refs/gaw/heads/gaw"
+          "refs/gaw/HEAD"
           "refs/heads/gaw")
     (let ((report (check directory)))
       (assert (not (check-report-ok-p report)))
       (assert (eq :ok (%finding-status report :branch)))
-      (assert (eq :ok (%finding-status report :registration)))
+      (assert (eq :error (%finding-status report :selector)))
       (assert (eq :error (%finding-status report :head)))
       (assert (eq :skipped (%finding-status report :head-config)))))
   (%with-repository
    (lambda (directory)
      (%git directory
            "symbolic-ref"
-           "refs/gaw/heads/gaw"
+           "refs/gaw/HEAD"
            "refs/heads/other")
      (let ((report (check directory)))
        (assert (not (check-report-ok-p report)))
-       (assert (eq :error (%finding-status report :registration)))
-       (assert (search "invalid"
-                       (%finding-detail report :registration)))))))
+       (assert (eq :error (%finding-status report :selector)))
+       (assert (search "Invalid"
+                       (%finding-detail report :selector)))))))
 
 (defun %test-staged-config-variants ()
   (%with-repository
@@ -284,7 +284,7 @@
   (%test-healthy-and-nested-check)
   (%test-protection-hook-finding)
   (%test-index-failure-and-aggregation)
-  (%test-head-and-registration-failures)
+  (%test-head-and-selector-failures)
   (%test-staged-config-variants)
   (%test-staged-index-shape-failures)
   (%test-empty-workspace-is-valid)

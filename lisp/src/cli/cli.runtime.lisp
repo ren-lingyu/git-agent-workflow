@@ -121,6 +121,22 @@
                 (if (zerop diagnostic-status) 1 diagnostic-status))))
         0)))
 
+(defun %run-undeploy (arguments directory stream)
+  (when arguments
+    (%cli-error "git gaw undeploy does not accept arguments"))
+  (let ((result (undeploy directory)))
+    (format stream "GAW selector: ~A~%"
+            (if (undeploy-result-removed-selector-p result)
+                "removed" "absent or retained"))
+    (format stream "GAW hook config: ~A~%"
+            (if (undeploy-result-hook-cleared-p result)
+                "removed" "not fully removed"))
+    (dolist (ref (undeploy-result-removed-legacy-refs result))
+      (format stream "Removed legacy ref: ~A~%" ref))
+    (dolist (detail (undeploy-result-residuals result))
+      (format stream "Residual: ~A~%" detail))
+    (if (undeploy-result-ok-p result) 0 1)))
+
 (defun %run-init (arguments directory stream)
   (multiple-value-bind (branch worktree-path)
       (%parse-deploy-arguments arguments)
@@ -235,6 +251,10 @@
      (if (%sole-help-option-p (rest arguments))
          (progn (print-help :deploy output-stream) 0)
          (%run-deploy (rest arguments) directory output-stream)))
+    ((and arguments (string= (first arguments) "undeploy"))
+     (if (%sole-help-option-p (rest arguments))
+         (progn (print-help :undeploy output-stream) 0)
+         (%run-undeploy (rest arguments) directory output-stream)))
     ((and arguments (string= (first arguments) "init"))
      (if (%sole-help-option-p (rest arguments))
          (progn (print-help :init output-stream) 0)

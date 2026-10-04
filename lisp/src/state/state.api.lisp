@@ -3,6 +3,7 @@
 (eval-when (:load-toplevel :execute)
   (dolist (function '(%inspect-committed-state
                       %committed-state-marker-p
+                      %marker-entry
                       %local-branches))
     (unless (fboundp function)
       (error "Required state API dependency is unavailable: ~S"
@@ -17,6 +18,9 @@
 
 (defun committed-state-marker-p (directory source-ref)
   (%committed-state-marker-p directory source-ref *config-path*))
+
+(defun marker-entry (directory revision)
+  (%marker-entry directory revision *config-path*))
 
 (defun local-branches (directory)
   (%local-branches directory *source-ref-prefix*))

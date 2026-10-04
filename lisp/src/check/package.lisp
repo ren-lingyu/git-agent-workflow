@@ -8,11 +8,9 @@
                 #:git-invocation-stderr
                 #:git-invocation-exit-status)
   (:import-from #:git-agent-workflow.refs
-                #:make-ref
+                #:current-ref
                 #:inspect-ref
-                #:ref-state-exists-p
-                #:ref-state-symbolic-p
-                #:ref-state-symbolic-target)
+                #:ref-state-exists-p)
   (:import-from #:git-agent-workflow.config
                 #:read-config-blob
                 #:config-workspace
@@ -35,6 +33,7 @@
                 #:workspace-error-detail)
   (:import-from #:git-agent-workflow.state
                 #:inspect-committed-state
+                #:committed-state-report-ok-p
                 #:committed-state-report-findings
                 #:committed-state-finding-name
                 #:committed-state-finding-status

@@ -1,41 +1,35 @@
 (in-package #:git-agent-workflow.mutation)
 
-(defun %register-ref (source-ref directory overwrite git-options)
-  (git-agent-workflow.refs:register-ref
-   source-ref directory :overwrite overwrite :git-options git-options))
-
-(defun %unregister-ref (target-ref directory git-options)
-  (git-agent-workflow.refs:unregister-ref
-   target-ref directory :git-options git-options))
-
-(defun %select-ref (source-ref directory git-options)
-  (git-agent-workflow.refs:select-ref
+(defun %select-source-ref (source-ref directory git-options)
+  (git-agent-workflow.refs:select-source-ref
    source-ref directory :git-options git-options))
 
-(defun %restore-selection (change directory git-options)
-  (git-agent-workflow.refs:restore-selection
+(defun %restore-source-selection (change directory git-options)
+  (git-agent-workflow.refs:restore-source-selection
    change directory :git-options git-options))
 
-(defun %initialize-ref-graph (source-ref object-id directory git-options)
-  (git-agent-workflow.refs:initialize-ref-graph
+(defun %initialize-source-and-selector (source-ref object-id directory
+                                        git-options)
+  (git-agent-workflow.refs:initialize-source-and-selector
    source-ref object-id directory :git-options git-options))
 
-(defun %remove-initial-ref-graph (source-ref object-id directory git-options)
-  (git-agent-workflow.refs:remove-initial-ref-graph
+(defun %remove-initial-source-and-selector (source-ref object-id directory
+                                            git-options)
+  (git-agent-workflow.refs:remove-initial-source-and-selector
    source-ref object-id directory :git-options git-options))
 
-(defun %rename-ref-registration (old-source-ref new-source-ref
-                                  directory git-options)
-  (git-agent-workflow.refs:rename-ref-registration
+(defun %rename-selected-source (old-source-ref new-source-ref directory
+                                git-options)
+  (git-agent-workflow.refs:rename-selected-source
    old-source-ref new-source-ref directory :git-options git-options))
 
-(defun %remove-ref-registration (source-ref directory git-options)
-  (git-agent-workflow.refs:remove-ref-registration
-   source-ref directory :git-options git-options))
+(defun %delete-selector (directory git-options)
+  (git-agent-workflow.refs:delete-selector
+   directory :git-options git-options))
 
-(defun %restore-ref-registration (removal directory git-options)
-  (git-agent-workflow.refs:restore-ref-registration
-   removal directory :git-options git-options))
+(defun %delete-symbolic-ref (ref target directory git-options)
+  (git-agent-workflow.refs:delete-symbolic-ref
+   ref target directory :git-options git-options))
 
 (defun %run-branch (arguments directory git-options)
   (run-git (%protected-command-arguments git-options "branch" arguments)

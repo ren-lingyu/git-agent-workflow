@@ -1,0 +1,10 @@
+usage: git gaw undeploy
+
+Remove local GAW deployment state without changing ordinary branches, history,
+.gaw/config, or existing worktrees and their contents. The command removes
+refs/gaw/HEAD when safely inspectable, the GAW named hook's repository-local
+configuration, and discoverable exact v0.2 symbolic registrations.
+
+Unsafe or unreadable protocol refs are preserved and reported. Such residuals
+make the command return nonzero even when other cleanup succeeded. After
+explicitly resolving residuals, undeploy may be run again.

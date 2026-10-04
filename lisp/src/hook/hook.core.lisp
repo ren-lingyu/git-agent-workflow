@@ -24,19 +24,19 @@
                         (hook-error-detail condition)))
                (:protected-ref
                 (format stream
-                        "Refusing to modify registered GAW branch: ~A"
+                        "Refusing to modify valid GAW branch: ~A"
+                        (hook-error-ref condition)))
+               (:protected-marker
+                (format stream
+                        "Refusing to change .gaw/config marker on: ~A"
                         (hook-error-ref condition)))
                (:protected-protocol-ref
                 (format stream
                         "Refusing to modify GAW protocol ref: ~A"
                         (hook-error-ref condition)))
-               (:invalid-registration
+               (:state-query-failure
                 (format stream
-                        "Cannot protect GAW branch because its registration is invalid: ~A"
-                        (hook-error-ref condition)))
-               (:registration-query-failure
-                (format stream
-                        "Failed to inspect GAW branch registration for ~A: ~A"
+                        "Cannot determine GAW branch state for ~A: ~A"
                         (hook-error-ref condition)
                         (hook-error-detail condition)))
                (:runtime-failure

@@ -5,30 +5,19 @@
                 #:git-invocation-stdout
                 #:git-invocation-stderr
                 #:git-invocation-exit-status)
-  (:export #:make-ref
-           #:apply-ref-transaction
-           #:registration-refs
+  (:export #:apply-ref-transaction
+           #:select-source-ref
+           #:restore-source-selection
+           #:initialize-source-and-selector
+           #:remove-initial-source-and-selector
+           #:rename-selected-source
+           #:delete-selector
+           #:delete-symbolic-ref
+           #:selector-change
+           #:selector-change-p
            #:protocol-refs
-           #:select-ref
-           #:restore-selection
-           #:initialize-ref-graph
-           #:remove-initial-ref-graph
-           #:rename-ref-registration
-           #:remove-ref-registration
-           #:restore-ref-registration
-           #:registration-removal
-           #:registration-removal-p
-           #:selection-change
-           #:selection-change-p
-           #:registered-ref-p
-           #:registration-error
-           #:registration-error-reason
-           #:registration-error-ref
-           #:registration-error-target
            #:inspect-ref
            #:ref-dangling-p
-           #:register-ref
-           #:unregister-ref
            #:current-ref
            #:current-ref-error
            #:current-ref-error-reason

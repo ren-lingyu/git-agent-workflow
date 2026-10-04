@@ -15,9 +15,4 @@
                 #:hook-configuration-error-reason
                 #:inspect-protection-hook
                 #:ensure-protection-hook)
-  (:import-from #:git-agent-workflow.refs
-                #:registration-error)
-  (:import-from #:git-agent-workflow.mutation
-                #:register-ref
-                #:unregister-ref)
   (:export #:run-tests))

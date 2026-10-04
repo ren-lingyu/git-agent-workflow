@@ -52,18 +52,11 @@
   (%call-with-workspace-error-as-commit-error
    (lambda () (current-local-head-ref directory))))
 
-(defun %ensure-registered-source-ref (source-ref directory)
-  (let* ((registration-ref (make-ref source-ref))
-         (state (inspect-ref registration-ref directory)))
-    (unless (ref-state-exists-p state)
-      (%signal-commit-error :unregistered-branch
-                            "The current branch is not registered with GAW"))
-    (unless (and (ref-state-symbolic-p state)
-                 (string= (ref-state-symbolic-target state)
-                          source-ref))
-      (%signal-commit-error :invalid-registration
-                            "The current branch has an invalid GAW registration"))
-    registration-ref))
+(defun %ensure-valid-source-ref (source-ref directory)
+  (unless (committed-state-report-ok-p
+           (inspect-committed-state directory source-ref))
+    (%signal-commit-error :invalid-committed-state
+                          "The current branch is not valid GAW committed state")))
 
 (defun %resolve-commit-revision (revision directory operation)
   (check-type revision
@@ -290,7 +283,7 @@
   (%validate-commit-input message project-commits allow-empty-message)
   (multiple-value-bind (root source-ref first-parent tree-oid entries)
       (%prepare-commit directory)
-    (%ensure-registered-source-ref source-ref root)
+    (%ensure-valid-source-ref source-ref root)
     (%complete-commit root
                       source-ref
                       first-parent

@@ -301,12 +301,8 @@
                    commit-oid)
   (%repository-git directory
                    "symbolic-ref"
-                   "refs/gaw/heads/test"
-                   "refs/heads/test")
-  (%repository-git directory
-                   "symbolic-ref"
                    "refs/gaw/HEAD"
-                   "refs/gaw/heads/test"))
+                   "refs/heads/test"))
 
 (defun %create-config-commit (directory octets
                               &key
@@ -426,10 +422,6 @@
                      "symbolic-ref"
                      "--delete"
                      "refs/gaw/HEAD")
-    (%repository-git directory
-                     "symbolic-ref"
-                     "--delete"
-                     "refs/gaw/heads/test")
     (assert (equal '((:file "explicit"))
                    (%workspace-summary
                     (%read-config-from-source-ref
