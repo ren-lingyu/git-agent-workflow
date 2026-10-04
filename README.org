@@ -449,14 +449,14 @@ nix flake check
 #+end_src
 
 ** Package Layout
-Source packages are organized as directories under =lisp/src/=.  Each package
+Source packages are organized as directories under =asdf/src/=.  Each package
 directory contains its own =package.lisp= and the implementation files owned
-by that package.  The top-level =lisp/src/package.lisp= defines the
+by that package.  The top-level =asdf/src/package.lisp= defines the
 =git-agent-workflow= package; it is intentionally minimal and reserved for a
 future unified user-facing API.
 
-Tests follow the same package-oriented layout under =lisp/tests/=.  Shared test
-support and the top-level test runner remain directly under =lisp/tests/=, while
+Tests follow the same package-oriented layout under =asdf/tests/=.  Shared test
+support and the top-level test runner remain directly under =asdf/tests/=, while
 package-specific definitions and tests live in the corresponding package
 directory.
 
