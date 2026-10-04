@@ -75,9 +75,15 @@
         git-agent-workflow = project_.package;
       };
 
-      checks = {
-        git-agent-workflow-check = project_.check;
-      };
+      checks = pkgs.lib.mergeAttrsList [
+        (import ./tests {
+          inherit pkgs;
+          llib = self.lib;
+        })
+        {
+          git-agent-workflow-check = project_.check;
+        }
+      ];
 
       devShells = { };
 

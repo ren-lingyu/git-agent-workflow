@@ -22,6 +22,15 @@
 !lib/**/*.lisp
 !lib/**/*.nix
 
+!tests/
+!tests/**/
+!tests/**/*.asd
+!tests/**/*.lisp
+!tests/**/*.md
+!tests/**/*.nix
+!tests/**/*.txt
+!tests/**/VERSION
+
 !.github/
 !.github/**/
 !.github/**/*.yaml
