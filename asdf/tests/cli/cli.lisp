@@ -65,10 +65,10 @@
                   nil)
               (error () t)))))
 
-(defun %test-deploy-argument-parser ()
+(defun %test-deployment-argument-parser ()
   (multiple-value-bind (branch path)
-      (git-agent-workflow.cli::%parse-deploy-arguments
-       '("--branch=gaw" "--worktree-path" "agent"))
+      (git-agent-workflow.cli::%parse-deployment-arguments
+       '("--branch=gaw" "--worktree-path" "agent") "deploy")
     (assert (string= "gaw" branch))
     (assert (string= "agent" path)))
   (dolist (arguments '(("positional")
@@ -76,9 +76,24 @@
                        ("--branch" "one" "--branch" "two")))
     (assert (handler-case
                 (progn
-                  (git-agent-workflow.cli::%parse-deploy-arguments arguments)
+                  (git-agent-workflow.cli::%parse-deployment-arguments
+                   arguments "deploy")
                   nil)
               (error () t)))))
+
+(defun %test-deployment-argument-error-context ()
+  (with-temporary-directory (directory)
+    (dolist (command '("init" "deploy"))
+      (let ((message
+              (handler-case
+                  (progn
+                    (%dispatch-output (list command "--foo") directory)
+                    nil)
+                (error (condition)
+                  (princ-to-string condition)))))
+        (assert (string= (format nil "Unsupported ~A argument: --foo"
+                                 command)
+                         message))))))
 
 (defun %test-show-help-interception-is-exact ()
   (with-temporary-directory (directory)
@@ -134,9 +149,13 @@
     (multiple-value-bind (output status)
         (%dispatch-output '("undeploy") directory)
       (assert (zerop status))
-      (assert (search "GAW selector: removed" output)))
-    (assert (zerop (nth-value 1
-                    (%dispatch-output '("undeploy") directory))))
+      (assert (search "GAW selector: removed" output))
+      (assert (search "GAW hook config: cleared" output)))
+    (multiple-value-bind (output status)
+        (%dispatch-output '("undeploy") directory)
+      (assert (zerop status))
+      (assert (search "GAW selector: unchanged" output))
+      (assert (search "GAW hook config: cleared" output)))
     (assert (handler-case
                 (progn (%dispatch-output '("undeploy" "extra") directory)
                        nil)
@@ -326,7 +345,8 @@
   (%test-message-fragments-follow-commit-tree-semantics)
   (%test-commit-argument-parser)
   (%test-help-dispatch)
-  (%test-deploy-argument-parser)
+  (%test-deployment-argument-parser)
+  (%test-deployment-argument-error-context)
   (%test-show-help-interception-is-exact)
   (%test-check-dispatch)
   (%test-status-dispatch)

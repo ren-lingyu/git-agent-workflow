@@ -127,10 +127,10 @@
   (let ((result (undeploy directory)))
     (format stream "GAW selector: ~A~%"
             (if (undeploy-result-removed-selector-p result)
-                "removed" "absent or retained"))
+                "removed" "unchanged"))
     (format stream "GAW hook config: ~A~%"
             (if (undeploy-result-hook-cleared-p result)
-                "removed" "not fully removed"))
+                "cleared" "not fully removed"))
     (dolist (ref (undeploy-result-removed-legacy-refs result))
       (format stream "Removed legacy ref: ~A~%" ref))
     (dolist (detail (undeploy-result-residuals result))
@@ -139,7 +139,7 @@
 
 (defun %run-init (arguments directory stream)
   (multiple-value-bind (branch worktree-path)
-      (%parse-deploy-arguments arguments)
+      (%parse-deployment-arguments arguments "init")
     (unless branch
       (%cli-error "git gaw init requires --branch <name>"))
     (let ((result (initialize directory
@@ -153,7 +153,7 @@
 
 (defun %run-deploy (arguments directory stream)
   (multiple-value-bind (branch worktree-path)
-      (%parse-deploy-arguments arguments)
+      (%parse-deployment-arguments arguments "deploy")
     (let ((result (deploy directory
                           :branch branch
                           :worktree-path worktree-path)))

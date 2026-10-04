@@ -76,7 +76,7 @@
       (%cli-error "git gaw commit requires -m or -F"))
     (values fragments project-commits allow-empty allow-empty-message)))
 
-(defun %parse-deploy-arguments (arguments)
+(defun %parse-deployment-arguments (arguments command-name)
   (let ((branch nil) (worktree-path nil))
     (loop while arguments
           for argument = (pop arguments)
@@ -96,8 +96,8 @@
                               "Option --worktree-path may be specified only once"))
                            (setf worktree-path path
                                  arguments path-remaining))
-                         (%cli-error "Unsupported deploy argument: ~A"
-                                     argument))))))
+                         (%cli-error "Unsupported ~A argument: ~A"
+                                     command-name argument))))))
     (values branch worktree-path)))
 
 (defun %help-topic (name)
