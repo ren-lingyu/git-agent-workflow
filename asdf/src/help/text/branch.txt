@@ -1,17 +1,20 @@
 usage: git gaw branch -m <new-name>
    or: git gaw branch -d <name>
+   or: git gaw branch -D <name>
 
 Coordinate native Git branch lifecycle operations with local GAW protocol
 metadata.  Rename operates on the GAW branch checked out by the current
-worktree selected by refs/gaw/HEAD.  Delete accepts only an unselected branch
-with valid GAW committed state and retains native git branch -d safe-delete
-behavior.
+worktree selected by refs/gaw/HEAD.  Both delete forms accept only an
+unselected local direct branch with valid GAW committed state.  -d retains
+native git branch -d safe-delete checks; -D skips only those checks.  Neither
+form bypasses GAW validation or Git's worktree constraints.
 
 The native operation selectively disables only the GAW configured protection
-hook.  Failures during the following protocol update use best-effort
+hook.  During rename, failures in the following selector update use best-effort
 compensation; incomplete compensation is reported as a partial failure.
 
 Options:
    -m <new-name> rename the current GAW branch
    -d <name>     safely delete an unselected valid GAW branch
+   -D <name>     delete an unselected valid GAW branch without safe-delete check
    --help        show this help

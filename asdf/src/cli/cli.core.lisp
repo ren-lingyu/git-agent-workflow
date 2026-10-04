@@ -116,7 +116,7 @@
 
 (defun %usage-error ()
   (%cli-error
-   "Usage:~%  git gaw init --branch <name> [--worktree-path <path>]~%  git gaw deploy [--branch <name>] [--worktree-path <path>]~%  git gaw undeploy~%  git gaw branch -m <new-name> | -d <name>~%  git gaw commit [options] [--] [project-commit...]~%  git gaw show [options] [object...] [-- path...]~%  git gaw check~%  git gaw status [--diagnose]~%  git gaw help [init|deploy|undeploy|branch|commit|show|check|status|hooks|recovery]"))
+   "Usage:~%  git gaw init --branch <name> [--worktree-path <path>]~%  git gaw deploy [--branch <name>] [--worktree-path <path>]~%  git gaw undeploy~%  git gaw branch -m <new-name> | -d <name> | -D <name>~%  git gaw commit [options] [--] [project-commit...]~%  git gaw show [options] [object...] [-- path...]~%  git gaw check~%  git gaw status [--diagnose]~%  git gaw help [init|deploy|undeploy|branch|commit|show|check|status|hooks|recovery]"))
 
 (defun %sole-help-option-p (arguments)
   (and arguments

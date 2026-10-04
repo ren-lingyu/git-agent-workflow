@@ -15,7 +15,7 @@ The current release is =0.3.0=.  GAW branch identity now follows validated
 branch content rather than local registration refs.  =git gaw init= creates
 history, =git gaw deploy= selects an existing valid local branch, and
 =git gaw undeploy= exits local deployment without removing history or
-worktrees.  =git gaw branch= handles selected-branch rename and safe deletion
+worktrees.  =git gaw branch= handles selected-branch rename and deletion
 of an unselected valid GAW branch.  The =check=, edit, stage, =commit=, and
 =show= loop remains the daily interface.
 
@@ -189,6 +189,7 @@ GAW-owned branch lifecycle operations are exposed through:
 #+begin_src text
 git gaw branch -m <new-name>
 git gaw branch -d <name>
+git gaw branch -D <name>
 #+end_src
 
 Rename operates on the valid GAW branch checked out by the current worktree
@@ -196,9 +197,11 @@ and selected by =refs/gaw/HEAD=.  It uses native =git branch -m= so Git
 maintains worktree =HEAD=, reflogs, and branch configuration, then updates the
 selector and verifies the final invariant.
 
-Delete accepts only an unselected branch with valid GAW committed state.  It
-uses native =git branch -d=, retaining Git's checked-out-branch and safe-delete
-checks.  Ordinary branches remain native Git's responsibility.  Rename uses
+Both delete forms require an unselected local direct branch with valid GAW
+committed state.  =-d= uses native =git branch -d= and retains Git's safe-delete
+check; =-D= uses native =git branch -D= and skips only that check.  Git's
+worktree constraints still apply, and neither form bypasses GAW validation.
+Ordinary branches remain native Git's responsibility.  Rename uses
 strict preflight checks, ordered updates, and best-effort compensation because
 the native branch operation and selector update cannot share one transaction.
 Incomplete compensation is reported explicitly as a partial failure.

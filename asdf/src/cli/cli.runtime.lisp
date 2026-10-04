@@ -169,8 +169,8 @@
 
 (defun %run-branch (arguments directory stream)
   (unless (and (= 2 (length arguments))
-               (member (first arguments) '("-m" "-d") :test #'string=))
-    (%cli-error "Usage: git gaw branch -m <new-name> | -d <name>"))
+               (member (first arguments) '("-m" "-d" "-D") :test #'string=))
+    (%cli-error "Usage: git gaw branch -m <new-name> | -d <name> | -D <name>"))
   (let ((operation (first arguments))
         (name (second arguments)))
     (if (string= operation "-m")
@@ -178,7 +178,7 @@
           (rename-branch directory name)
           (format stream "Renamed GAW branch to ~A.~%" name))
         (progn
-          (delete-branch directory name)
+          (delete-branch directory name :force (string= operation "-D"))
           (format stream "Deleted GAW branch ~A.~%" name))))
   0)
 
