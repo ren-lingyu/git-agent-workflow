@@ -95,7 +95,7 @@
            condition (and rollback-errors (nreverse rollback-errors))))))
     (%make-branch-result :rename old-source-ref new-source-ref)))
 
-(defun %delete-branch (directory name source-ref-prefix selector-ref)
+(defun %delete-branch (directory name source-ref-prefix selector-ref force)
   (let* ((source-ref (%branch-name name directory source-ref-prefix))
          (selector-state (inspect-ref selector-ref directory)))
     (%require-direct-source source-ref directory)
@@ -108,6 +108,7 @@
         (%require-valid-branch-state selected directory)
         (when (string= source-ref selected)
           (%signal-branch-error :selected-branch
-                                "Undeploy or select another branch before deletion"))))
-    (%native-branch (list "-d" name) directory "deleting the branch")
+                                "Run git gaw undeploy or select another branch with git gaw deploy --branch before deletion"))))
+    (%native-branch (list (if force "-D" "-d") name)
+                    directory "deleting the branch")
     (%make-branch-result :delete source-ref nil)))

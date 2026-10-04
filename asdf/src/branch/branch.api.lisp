@@ -11,5 +11,5 @@
 (defun rename-branch (directory new-name)
   (%rename-branch directory new-name *source-ref-prefix*))
 
-(defun delete-branch (directory name)
-  (%delete-branch directory name *source-ref-prefix* *selector-ref*))
+(defun delete-branch (directory name &key force)
+  (%delete-branch directory name *source-ref-prefix* *selector-ref* force))
