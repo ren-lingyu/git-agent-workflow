@@ -16,6 +16,7 @@
     mkProject_ = pkgs_ : lib_ : lib_.asdfFunctions.mkProject {
       pkgs = pkgs_;
       asdFile = ./asdf/git-agent-workflow.asd;
+      pname = "git-agent-workflow";
       program = "git-gaw";
       lispDependencies = ps_ : [
         ps_.babel
