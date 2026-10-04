@@ -255,7 +255,14 @@
                                            (:file "cli.runtime"
                                             :depends-on ("cli.core"))
                                            (:file "cli.api"
-                                            :depends-on ("cli.runtime")))))))
+                                            :depends-on ("cli.runtime"))))))
+               (:module "share"
+                :pathname "share/"
+                :components ((:module "skills"
+                              :pathname "skills/"
+                              :components ((:module "git-agent-workflow"
+                                            :pathname "git-agent-workflow/"
+                                            :components ((:static-file "SKILL.md"))))))))
 
   :build-operation program-op
   :build-pathname "git-gaw"
