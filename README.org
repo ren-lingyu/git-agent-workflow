@@ -404,17 +404,57 @@ operation:
 git gaw deploy --branch agents --worktree-path .agents
 #+end_src
 
-Once deployed, the intended daily loop is:
+Use =git gaw status= when repository lifecycle state is unknown, and read its
+report rather than treating a zero exit status as proof that every reported
+state is valid.  Once in the GAW worktree, start from the current workspace and
+use =git gaw check= for worktree readiness.  When new durable memory merits a
+checkpoint, the loop is:
 
 #+begin_src text
 git gaw check
-git gaw status
-edit workspace files
-git status / git diff
-git add <paths>
+read and edit declared workspace files
+git status
+git diff
+git diff --cached
+git add <explicit-workspace-paths>
+git diff --cached
+git gaw check
 git gaw commit [options] [project-commit...]
 git gaw show
 #+end_src
+
+The complete current index, not just the paths most recently staged, becomes
+the commit's candidate tree.  =git gaw commit= runs at the GAW worktree root.
+Neither a session boundary nor a project commit requires a matching GAW
+checkpoint.
+
+** Agent Memory Skill
+The bundled [[file:asdf/share/skills/git-agent-workflow/SKILL.md][git-agent-workflow skill]] teaches a coding agent to use GAW as
+persistent working memory across sessions, rather than as a command reference.
+The declared workspace holds current memory, GAW commits are recoverable
+checkpoints, the first-parent chain is temporal memory history, and additional
+project parents ground memory in exact project snapshots.  The skill starts
+recovery from the current workspace and expands into relevant history only
+when needed.  It favors distilled, verifiable, actionable state over full
+conversation archives, fixed memory-file templates, or an ever-growing
+parallel progress log.  A checkpoint is useful when its memory state warrants
+independent future recovery; project parents are included only when they
+provide real provenance.
+
+The normal memory loop is intended to be agent-maintained in a validated GAW
+worktree: inspect and edit declared workspace paths, explicitly stage intended
+memory, and use =git gaw commit= for a useful checkpoint.  This narrow scope
+does not authorize changes to ordinary project history or GAW lifecycle, and
+the skill cannot override a host's higher-priority permission policy.  A host
+that does not permit this GAW-memory scope needs an integration decision; the
+skill itself does not grant that permission.
+
+The workflow draws on [[https://github.com/cline/prompts/blob/main/.clinerules/memory-bank.md][Cline Memory Bank]] for cross-session recovery,
+[[https://github.com/openai/openai-agents-python/blob/main/docs/sandbox/memory.md][OpenAI Agents SDK Memory]] for progressive disclosure and memory distillation,
+[[https://github.com/github/docs/blob/main/content/copilot/concepts/agents/copilot-memory.md][GitHub Copilot Memory]] for grounding and revalidation, and
+[[https://github.com/fockus/skill-memory-bank/blob/main/SKILL.md][skill-memory-bank]] for presenting a cross-agent workflow as a skill.  Their
+storage layouts, fixed file sets, and unrelated engineering policies are not
+part of GAW.
 
 ** History Semantics
 The first parent of a GAW commit represents temporal GAW history.
@@ -497,9 +537,10 @@ manifest generation, and installation steps.  When enabled, it uses the
 =share/skills= ASDF component subtree as the source of skill membership and
 installs only explicitly declared static files through nixpkgs'
 =installAgentSkills= helper.  A system without that subtree installs no skills.
-The current GAW system declares no bundled skill.  The fixture checks under
-=tests/lib.asdfFunctions/= cover declared-file installation, the disabled
-option, and a system without a skill subtree.
+The GAW system declares the bundled =git-agent-workflow= skill through that
+subtree.  The fixture checks under =tests/lib.asdfFunctions/= cover
+declared-file installation, the disabled option, and a system without a skill
+subtree.
 
 * License
 GAW is distributed under the [[file:LICENSE][MIT License]].
