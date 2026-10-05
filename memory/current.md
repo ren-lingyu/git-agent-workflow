@@ -2,7 +2,7 @@
 
 ## Objective
 
-The v0.3.0 runtime is available, and agent-skill packaging infrastructure is in place. The next objective is to write the bundled skill as a usable persistent-memory workflow rather than a CLI reference.
+The first bundled GAW skill now presents a persistent agent-memory loop on top of v0.3.0. Its job is to guide judgment about recovery, current memory, grounding, selective checkpoints, and handoff, not to duplicate CLI help or prescribe a fixed memory-file ontology.
 
 ## Established state
 
@@ -25,6 +25,15 @@ The v0.3.0 runtime is available, and agent-skill packaging infrastructure is in 
 - `lib.asdfFunctions.mkProject` exposes `installAgentSkills` as a default-enabled, opt-out capability rather than embedding skill policy in generic ASDF build/install phases. Disabling it omits the dependency, manifest, staging, and installation; a system without a skill subtree is a no-op.
 - The enabled path stages ASDF-declared files and delegates final layout to nixpkgs `installAgentSkills`. Fixture checks cover declared-only installation, the disabled option, and the no-skill case. The skill's source files remain separate from its build-time embedding/installation mechanics.
 
+## Agent memory workflow now bundled
+
+- Unknown lifecycle state starts with `git gaw status` and reading its report, not assuming exit 0 means health. Enter the actual GAW worktree and use `git gaw check` for readiness; `check` and repository-wide `status` serve different scopes. `status --diagnose` is exceptional repository-wide diagnosis, not the normal session start.
+- Recover from current declared workspace first, then relevant recent `git gaw show` checkpoints, older first-parent history, or associated project snapshots only as needed. Distill goals, verified findings, adopted decisions and reasons, unresolved questions, provenance, and the next action. Correct stale current content instead of preserving an ever-growing progress log or transcript.
+- For a checkpoint, inspect `git status`, unstaged diff, and the entire staged diff; explicitly stage intended workspace paths, inspect the complete index again, and run `git gaw check`. `git gaw commit` runs from the GAW worktree root and includes the full index, not untracked or unstaged files. A session boundary or project commit alone never requires a memory checkpoint.
+- Additional project parents identify the exact snapshots against which relevant work, observations, tests, or comparisons were actually performed. Zero parents are normal; do not use current branch tip or every intervening commit by habit. An unchanged GAW tree plus a real new project-parent association can still be meaningful.
+- In a validated GAW memory worktree, editing declared memory, explicit staging, and `git gaw commit` are the intended autonomous loop, subject to higher-priority host policy. This does not authorize native project-worktree commits, ref mutation, merge/rebase/reset, or network transport.
+- Use `init` only without GAW or GAW-like state to preserve; use `deploy` for existing valid local GAW history, not as corruption repair; `undeploy` and branch lifecycle are not ordinary session-end steps.
+
 ## Next step
 
-Write and bundle a skill centered on recovery, maintenance of current memory, verification, exact project grounding, selective checkpoints, and handoff. Avoid fixed memory-file templates, full transcript archives, and forcing a checkpoint at each session boundary.
+Dogfood the bundled skill in ongoing work, especially the transition from a substantive session that began before its GAW memory was written. Keep any new rule evidence-based and avoid importing another memory framework's storage layout.
