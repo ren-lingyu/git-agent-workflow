@@ -2,7 +2,7 @@
 
 ## Objective
 
-The first bundled GAW skill now presents a persistent agent-memory loop on top of v0.3.0. Its job is to guide judgment about recovery, current memory, grounding, selective checkpoints, and handoff, not to duplicate CLI help or prescribe a fixed memory-file ontology.
+The bundled GAW memory-loop skill now covers an additional entry point: a substantive session may already have happened before its durable state was written to GAW. The current rule consolidates that evidence into one current memory state; project-parent provenance remains strictly exact.
 
 ## Established state
 
@@ -34,6 +34,12 @@ The first bundled GAW skill now presents a persistent agent-memory loop on top o
 - In a validated GAW memory worktree, editing declared memory, explicit staging, and `git gaw commit` are the intended autonomous loop, subject to higher-priority host policy. This does not authorize native project-worktree commits, ref mutation, merge/rebase/reset, or network transport.
 - Use `init` only without GAW or GAW-like state to preserve; use `deploy` for existing valid local GAW history, not as corruption repair; `undeploy` and branch lifecycle are not ordinary session-end steps.
 
+## Existing-session consolidation rule
+
+- Treat the existing conversation and tool trace as evidence, not as memory or a transcript to import. Extract only future-useful state: current objective/progress, verified findings, adopted decisions and reasons, unresolved questions, relevant project provenance, and the next action. Merge it into the declared workspace; newer evidence should correct stale current content. No new durable signal permits a no-op.
+- At this point, the guidance consolidates the session into its current memory state and explicitly avoids constructing a sequence of GAW commits from past chronology. Creating a checkpoint is still selective rather than automatic at session end.
+- For retrospective grounding, attach a project parent only when existing evidence unambiguously identifies the exact commit against which the relevant work was performed. Current `HEAD`, nearby commits, timestamps, and likely intervals do not establish that fact. Unknown original provenance means no project parent; a later revalidation grounds only what was actually revalidated, not the old session retroactively.
+
 ## Next step
 
-Dogfood the bundled skill in ongoing work, especially the transition from a substantive session that began before its GAW memory was written. Keep any new rule evidence-based and avoid importing another memory framework's storage layout.
+Dogfood this entry point on a real long-running session. Check whether reducing its prior work to one current state preserves enough independently recoverable rationale and decisions in first-parent GAW history.
