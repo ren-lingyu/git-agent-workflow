@@ -1,0 +1,7 @@
+# Current GAW project memory
+
+- The `agents` GAW worktree is deployed at `.agents`; its declared workspace covers `memory/` and `skills/`. `git gaw check` passed during this consolidation.
+- `main` now includes the bundled `git-agent-workflow` skill and the README's memory-loop guidance. The skill treats an existing session as evidence: extract durable state into the current declared workspace, correct stale content, allow a no-op, and checkpoint only when the resulting state merits independent recovery. It does not archive transcripts or reconstruct past session checkpoints.
+- Retrospective project-parent edges require existing evidence that unambiguously identifies each exact snapshot used for the relevant work. The original snapshots for this consolidated session cannot be established to that standard, so this memory checkpoint has no additional project parent. A later revalidation can ground only the revalidated state, not the original session retroactively.
+- The latest skill and README text changes passed `git diff --check`; this agent did not run `nix flake check` after those changes. Run it with appropriate authorization if release verification is needed.
+- No further development task has been selected here. For future work, resume from this current memory and the relevant source, update or remove stale notes as evidence changes, and make another GAW checkpoint only for new durable information.
