@@ -2,7 +2,7 @@
 
 ## Objective
 
-The bundled GAW memory-loop skill now covers an additional entry point: a substantive session may already have happened before its durable state was written to GAW. The current rule consolidates that evidence into one current memory state; project-parent provenance remains strictly exact.
+The bundled GAW memory-loop skill and README now support reconstructing useful, evidence-backed memory evolution from a substantive session that predates its GAW history. This working memory records the current protocol and agent workflow; earlier decisions and their correction remain recoverable along the GAW first-parent chain.
 
 ## Established state
 
@@ -34,12 +34,14 @@ The bundled GAW memory-loop skill now covers an additional entry point: a substa
 - In a validated GAW memory worktree, editing declared memory, explicit staging, and `git gaw commit` are the intended autonomous loop, subject to higher-priority host policy. This does not authorize native project-worktree commits, ref mutation, merge/rebase/reset, or network transport.
 - Use `init` only without GAW or GAW-like state to preserve; use `deploy` for existing valid local GAW history, not as corruption repair; `undeploy` and branch lifecycle are not ordinary session-end steps.
 
-## Existing-session consolidation rule
+## Existing-session reconstruction rule
 
 - Treat the existing conversation and tool trace as evidence, not as memory or a transcript to import. Extract only future-useful state: current objective/progress, verified findings, adopted decisions and reasons, unresolved questions, relevant project provenance, and the next action. Merge it into the declared workspace; newer evidence should correct stale current content. No new durable signal permits a no-op.
-- At this point, the guidance consolidates the session into its current memory state and explicitly avoids constructing a sequence of GAW commits from past chronology. Creating a checkpoint is still selective rather than automatic at session end.
-- For retrospective grounding, attach a project parent only when existing evidence unambiguously identifies the exact commit against which the relevant work was performed. Current `HEAD`, nearby commits, timestamps, and likely intervals do not establish that fact. Unknown original provenance means no project parent; a later revalidation grounds only what was actually revalidated, not the old session retroactively.
+- Dogfooding exposed a flaw in the initial one-state rule: a long session can contain distinct, durable states whose evolution has independent recovery value. When evidence supports each state's content and relative order, reconstruct full workspace states as selective first-parent checkpoints in that order. Use semantic transitions, not turns, tool calls, minor edits, or a fabricated chronology. If only the final state is supportable, use one checkpoint; if nothing durable is new, do nothing. Do not backdate commits or rewrite existing GAW history during routine consolidation.
+- Assess each retrospective checkpoint's project parents independently of its first-parent position. Attach an exact project commit only when existing evidence unambiguously identifies the snapshot against which that checkpoint's relevant work occurred. Current `HEAD`, nearby commits, timestamps, and likely intervals do not establish original provenance. Unknown original provenance means no project parent. Later revalidation may ground the revalidated state at the actual checked snapshot, never the old session retroactively.
 
-## Next step
+## Evidence and handoff
 
-Dogfood this entry point on a real long-running session. Check whether reducing its prior work to one current state preserves enough independently recoverable rationale and decisions in first-parent GAW history.
+- The earlier local `tmp/PLAN.md` and `tmp/QUESTIONS.md` are config-phase material from 2026-09-29. Their substantive parser, schema, path, byte, error, and layering decisions were incorporated into the first checkpoint; this memory does not depend on those temporary files surviving.
+- Project commits `1e1f54a` and `578a813` record the skill correction and README explanation. On 2026-10-05 the installed skill was verified byte-for-byte against project snapshot `578a8138169961b552e2cf35afec4525779ee582`. A project-parent edge on this final checkpoint grounds that present revalidation only; it does not claim that earlier session phases were based on this snapshot.
+- No additional implementation task is established by this consolidation. In future work, recover the current workspace first and older first-parent checkpoints only as needed; correct any memory made stale by later evidence and checkpoint only a new durable state.
