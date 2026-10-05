@@ -458,9 +458,12 @@ may have none.  Later revalidation grounds only the revalidated state, not
 the original session retroactively.
 
 The normal memory loop is intended to be agent-maintained in a validated GAW
-worktree: inspect and edit declared workspace paths, explicitly stage intended
-memory, and use =git gaw commit= for a useful checkpoint.  This narrow scope
-does not authorize changes to ordinary project history or GAW lifecycle, and
+worktree.  Current memory is maintained as substantive work evolves rather
+than deferred to session handoff, while checkpoints remain selective rather
+than being created for every update.  The loop may inspect and edit declared
+workspace paths, explicitly stage intended memory, and use =git gaw commit=
+for a useful checkpoint.  This narrow scope does not authorize changes to
+ordinary project history or GAW lifecycle, and
 the skill cannot override a host's higher-priority permission policy.  A host
 that does not permit this GAW-memory scope needs an integration decision; the
 skill itself does not grant that permission.
