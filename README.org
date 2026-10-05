@@ -443,9 +443,14 @@ provide real provenance.
 
 When substantive work predates usable GAW memory history, the skill treats the
 session as evidence for current memory and any distinct, recoverable durable
-states.  When their order is supported and each merits independent recovery,
-it preserves that evolution as selective first-parent checkpoints rather
-than replaying the transcript or inventing intermediate history.  The final
+states.  Before choosing checkpoints it establishes the full session horizon,
+including any start or end boundary given by the user; neither the visible
+conversation tail nor existing GAW history silently shortens that horizon.
+When their order is supported and each merits independent recovery, the skill
+preserves that evolution as selective first-parent checkpoints rather than
+replaying the transcript or inventing intermediate history.  It checks
+coverage of the original horizon and reports unrecoverable substantive gaps
+instead of presenting a recoverable tail as the whole session.  The final
 workspace remains current; one checkpoint or no change is appropriate when
 less can be recovered.  Project parents are assessed separately and require
 unambiguous evidence of the exact snapshot used, so reconstructed checkpoints
