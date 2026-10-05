@@ -4,6 +4,12 @@
 
 Rewrite the v0.4.0 Common Lisp implementation in Haskell on `main`, preserving observable protocol behavior before any redesign. The fixed oracle baseline is project commit `df2d1d36c2aa690bbcb01baa191fdfcbbc58316c`; the old executable remains the default during migration, while `git-gaw-hs` is built and tested in parallel. The user explicitly requested continuous GAW memory maintenance during implementation. Linux is the continuously tested platform; macOS is a POSIX design target, not a current cutover test gate.
 
+## Haskell rewrite progress
+
+- Stage 0 is established: `tests/oracle/v0.4.0.tar.gz` contains the exact `df2d1d36c2aa690bbcb01baa191fdfcbbc58316c` tree, with SHA-256 `fed2f16650ac286ab794fdb09b0ac0a1b185dbf95a4ce1fa59832784339d3620`. A separate Nix derivation verifies the hash and builds the archived Lisp executable; it no longer depends on changing `asdf/` source.
+- Stage 1 skeleton is in the repository worktree: the Cabal declaration, `Main`, CLI, and copied help resources live under root-level `haskell/`, as the user explicitly clarified. `flake.nix` keeps Lisp as the default and exposes a parallel Haskell package. Both parallel Haskell and oracle Nix builds passed on Linux. Their `--version` output and overview help SHA-256 match (`7a395e99…f71beb5`). The project files are uncommitted and have not been staged.
+- Next implement the pure config/ref/workspace/state and hook decision layer, then read-only commands. Keep Haskell source, tests, entry point, and Cabal metadata inside `haskell/`; update `.gitignore` for each new tracked file type. Continue GAW memory updates during substantial changes. The user authorized this task's Nix build, eval, and flake check commands outside the sandbox, including timeout-wrapped forms.
+
 ## Established state
 
 - GAW uses an independent commit tree for its declared workspace. First parent is the preceding GAW checkpoint; optional additional project parents provide exact snapshot association and reachability, never merged content. The bootstrap `.gaw/config` remains unversioned, strictly parsed from a fixed immutable commit and exact UTF-8 blob bytes.
