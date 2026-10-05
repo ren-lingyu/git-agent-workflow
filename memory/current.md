@@ -2,7 +2,7 @@
 
 ## Objective
 
-The v0.3.0 protocol is tagged. GAW branch identity is now content-defined by complete committed-state validation, not by a symbolic registration. The next objective is to make this runtime usable as persistent agent memory.
+The v0.3.0 runtime is available, and agent-skill packaging infrastructure is in place. The next objective is to write the bundled skill as a usable persistent-memory workflow rather than a CLI reference.
 
 ## Established state
 
@@ -19,6 +19,12 @@ The v0.3.0 protocol is tagged. GAW branch identity is now content-defined by com
 - The configured hook guards `refs/gaw/*`. It rejects movement/deletion of a branch whose current tip is valid GAW state. If a tip is invalid but has a `.gaw/config` marker, it preserves that marker entry unchanged while other content may move. First introduction of the marker is allowed. The hook is a local accident guard, not a security boundary.
 - `git gaw status` inventories branch classification, selector, hook, and worktrees through Git-native ref commands. Its default zero exit means a report was produced, not that all findings are healthy. `--diagnose` additionally forwards repository-wide `git fsck` output and fails if either GAW status or fsck fails. `git gaw check` is current-worktree readiness and permits a missing selector as a warning.
 
+## Skill packaging now implemented
+
+- The ASDF system declaration is the authority for bundled skill membership and static files. Packaging installs only explicitly declared files; an undeclared sibling file or skill must not leak into the package.
+- `lib.asdfFunctions.mkProject` exposes `installAgentSkills` as a default-enabled, opt-out capability rather than embedding skill policy in generic ASDF build/install phases. Disabling it omits the dependency, manifest, staging, and installation; a system without a skill subtree is a no-op.
+- The enabled path stages ASDF-declared files and delegates final layout to nixpkgs `installAgentSkills`. Fixture checks cover declared-only installation, the disabled option, and the no-skill case. The skill's source files remain separate from its build-time embedding/installation mechanics.
+
 ## Next step
 
-Develop a distributable agent-memory workflow on top of the now usable lifecycle and daily runtime. Keep its workspace content independent of a fixed file ontology or transcript archive.
+Write and bundle a skill centered on recovery, maintenance of current memory, verification, exact project grounding, selective checkpoints, and handoff. Avoid fixed memory-file templates, full transcript archives, and forcing a checkpoint at each session boundary.
