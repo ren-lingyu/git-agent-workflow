@@ -2,17 +2,16 @@
 
 ## Objective
 
-Build Git Agent Workflow as an independent Git history for an agent workspace. A GAW commit's first parent carries temporal GAW history; optional additional project-commit parents associate exact project snapshots without merging their trees. The v0.1 runtime is still being assembled.
+The v0.1.0 runtime is tagged. It supports an already provisioned GAW worktree; the next major objective is to create and maintain that local state through GAW itself.
 
-## Established design
+## Established state
 
-- `.gaw/config` is an intentionally unversioned, structured workspace declaration, for example `(:workspace ((:file "AGENTS.md") (:directory "notes")))`. Do not introduce `:version` until its format and behavior have been decided.
-- The config is a `100644` blob in a GAW commit. Resolve the current ref to one immutable commit OID before inspecting its tree and blob; read blob stdout as exact octets without decoding or stripping it in the Git layer.
-- Parse exact Git blob bytes with strict UTF-8 decoding, a narrow lexical gate, the restricted Common Lisp reader with read evaluation disabled, and schema validation. Reject unsupported reader syntax and unknown tokens; keep size, depth, entry-count, and path-length limits explicit.
-- Workspace paths are literal repository-root-relative Git paths: `/` separators, no silent normalization, no empty, absolute, trailing-slash, `.` or `..` components. Reserve the root `.gaw` namespace and every `.git` component. Config validation checks the declaration, not the current filesystem kind.
-- A `:file` declaration can cover a regular file, executable file, or symlink; `:directory` covers a Git tree. Missing paths can represent deletion. Overlapping declared paths form a union, while duplicate canonical paths conflict.
-- Preserve the `api → runtime → core` layering. Resolve defaults and external Git at API boundaries, pass them explicitly into runtime, and keep core validation independent of Git I/O or dynamic configuration.
+- GAW uses an independent commit tree for its declared workspace. First parent is the preceding GAW checkpoint; optional additional project parents provide exact snapshot association and reachability, never merged content. The bootstrap `.gaw/config` remains unversioned, strictly parsed from a fixed immutable commit and exact UTF-8 blob bytes.
+- The v0.1 registration model uses `refs/gaw/heads/<name> -> refs/heads/<name>` and `refs/gaw/HEAD` as local GAW selection. A configured `reference-transaction` hook protects registered branches against ordinary Git ref updates. This is a local mistake guard, not an authorization boundary.
+- `git gaw commit` uses the complete current index, not unstaged or untracked files. Normal commits and merge-shaped checkpoints retain only the GAW first-parent tree; project parents are checked for path conflict but their trees are not merged. Git invocation ignores inherited user/system identity and signing settings and records `Git Agent Workflow <gaw@invalid>`.
+- `git gaw show` exposes first-parent history and first-parent patches while retaining ordinary `git show` formatting options. `git gaw check` reports current-worktree readiness; independent UTF-8 help files are embedded at build time. Native `git status`, `git diff`, and explicit `git add` remain part of the daily loop.
+- The implementation keeps `api → runtime → core` layering and injects the Git executable at the API boundary. Runtime tests cover Git process bytes, config parsing, workspace/index boundaries, hook protection, and the public commands.
 
 ## Next step
 
-Complete the runtime operations that consume this config: controlled GAW commits, first-parent history display, worktree readiness, and the daily edit/stage/checkpoint loop before declaring v0.1 ready.
+Design and implement `git gaw init`, `deploy`, and branch lifecycle. Distinguish portable GAW history from clone-local selector, registration, hook, and linked worktree state; do not equate a fresh clone with a need to initialize new history.
