@@ -441,15 +441,16 @@ parallel progress log.  A checkpoint is useful when its memory state warrants
 independent future recovery; project parents are included only when they
 provide real provenance.
 
-When substantive work predates GAW memory, the skill treats the existing
-session as evidence: it extracts durable state and consolidates it into the
-declared workspace, correcting stale content instead of archiving a transcript
-or reconstructing a series of past GAW checkpoints.  This may leave the
-workspace unchanged when the session adds no durable information.  A
-checkpoint remains selective; retroactive project parents require unambiguous
-evidence of the exact snapshot used for the relevant work.  Without that
-evidence, a checkpoint with no project parents is normal.  Later revalidation
-can ground the revalidated state, but not the original session retroactively.
+When substantive work predates usable GAW memory history, the skill treats the
+session as evidence for current memory and any distinct, recoverable durable
+states.  When their order is supported and each merits independent recovery,
+it preserves that evolution as selective first-parent checkpoints rather
+than replaying the transcript or inventing intermediate history.  The final
+workspace remains current; one checkpoint or no change is appropriate when
+less can be recovered.  Project parents are assessed separately and require
+unambiguous evidence of the exact snapshot used, so reconstructed checkpoints
+may have none.  Later revalidation grounds only the revalidated state, not
+the original session retroactively.
 
 The normal memory loop is intended to be agent-maintained in a validated GAW
 worktree: inspect and edit declared workspace paths, explicitly stage intended
