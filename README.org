@@ -11,13 +11,15 @@ context as the primary store of working state, GAW keeps selected agent state
 in Git and lets Git provide its history and reachability model.
 
 * Status
-The current release is =0.3.0=.  GAW branch identity now follows validated
-branch content rather than local registration refs.  =git gaw init= creates
-history, =git gaw deploy= selects an existing valid local branch, and
-=git gaw undeploy= exits local deployment without removing history or
-worktrees.  =git gaw branch= handles selected-branch rename and deletion
-of an unselected valid GAW branch.  The =check=, edit, stage, =commit=, and
-=show= loop remains the daily interface.
+The current version is =0.4.0=.  The bundled agent-memory skill maintains
+current workspace state as substantive work evolves, recovers relevant
+history across sessions, and creates selective, evidence-backed checkpoints.
+GAW branch identity follows validated branch content rather than local
+registration refs.  =git gaw init= creates history, =git gaw deploy= selects
+an existing valid local branch, and =git gaw undeploy= exits local deployment
+without removing history or worktrees.  =git gaw branch= handles
+selected-branch rename and deletion of an unselected valid GAW branch.  The
+=check=, edit, stage, =commit=, and =show= loop remains the daily interface.
 
 The repository protocol and user-facing interface may still change before a
 stable release.  Remote-side enforcement, automatic fetching, arbitrary
