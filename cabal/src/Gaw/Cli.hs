@@ -4,6 +4,8 @@
 module Gaw.Cli (main) where
 
 import qualified Data.ByteString as BS
+import qualified Data.ByteString.Char8 as BSC
+import Data.Version (showVersion)
 import Control.Exception (try)
 import System.IO.Error (isDoesNotExistError)
 import Data.FileEmbed (embedFile)
@@ -29,6 +31,7 @@ import Gaw.System.Git (Git (..), GitInvocation (..), GitResult (..), runGitPosix
 import Gaw.System.FileSystem (posixFileSystem)
 import Gaw.System.FileSystem (readPosixFile)
 import Gaw.System.Clock (posixClock)
+import qualified Paths_git_agent_workflow as Package
 import qualified System.OsString.Posix as OS
 import qualified System.Posix.Env.ByteString as Env
 import qualified System.Posix.Directory.ByteString as Directory
@@ -36,7 +39,7 @@ import System.Exit (ExitCode (..), exitWith)
 import System.IO (stdin, stderr, stdout)
 
 version :: BS.ByteString
-version = "git-gaw 0.4.0\n"
+version = BS.concat ["git-gaw ", BSC.pack (showVersion Package.version), "\n"]
 
 helpText :: BS.ByteString -> Maybe BS.ByteString
 helpText topic = case topic of

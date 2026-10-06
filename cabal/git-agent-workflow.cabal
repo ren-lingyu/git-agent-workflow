@@ -11,6 +11,8 @@ data-files:
 
 library
   hs-source-dirs:   src
+  other-modules:    Paths_git_agent_workflow
+  autogen-modules:  Paths_git_agent_workflow
   exposed-modules:
       Gaw.Cli
     , Gaw.Application.Hook
