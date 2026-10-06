@@ -11,7 +11,7 @@ context as the primary store of working state, GAW keeps selected agent state
 in Git and lets Git provide its history and reachability model.
 
 * Status
-The current version is =0.4.0=.  The bundled agent-memory skill maintains
+The current version is =0.5.0=.  The bundled agent-memory skill maintains
 current workspace state as substantive work evolves, recovers relevant
 history across sessions, and creates selective, evidence-backed checkpoints.
 GAW branch identity follows validated branch content rather than local
