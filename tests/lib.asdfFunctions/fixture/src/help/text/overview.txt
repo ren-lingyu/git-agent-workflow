@@ -1,1 +1,0 @@
-Internal help text must not be installed as part of a skill.

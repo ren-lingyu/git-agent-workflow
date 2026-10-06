@@ -13,79 +13,38 @@
 
   outputs = { self, ... }@inputs : let
 
-    mkProject_ = pkgs_ : lib_ : lib_.asdfFunctions.mkProject {
-      pkgs = pkgs_;
-      asdFile = ./asdf/git-agent-workflow.asd;
-      pname = "git-agent-workflow";
-      program = "git-gaw";
-      lispDependencies = ps_ : [
-        ps_.babel
-      ];
-      derivationAttrs = {
-        git ? pkgs_.git,
-      } : assert
-      (pkgs_.lib.assertMsg
-        (pkgs_.lib.versionAtLeast git.version "2.54")
-        "GAW requires Git >= 2.54, but got ${git.version}"
-      );
-      {
-        package = {
-          nativeBuildInputs = [
-            git
-          ];
-          GIT = pkgs_.lib.getExe git;
-        };
-        check = {
-          nativeBuildInputs = [
-            git
-          ];
-        };
-      };
-      meta = {
-        description = "Git Agent Workflow (GAW)";
-        platforms = [
-          "x86_64-linux"
-        ];
-      };
+    mkPackage_ = pkgs_ : pkgs_.callPackage ./package.nix {
+      haskellPackages = pkgs_.haskell.packages.ghc912;
     };
 
   in inputs.flake-parts.lib.mkFlake { inherit inputs; } {
 
     systems = [
       "x86_64-linux"
+      "aarch64-linux"
+      "aarch64-darwin"
     ];
 
     flake = {
-      lib = import ./lib;
-      overlays = {
-        default = final_ : prev_ : {
-          git-agent-workflow = (mkProject_ final_ self.lib).package;
-        };
+      overlays.default = final_ : prev_ : {
+        git-agent-workflow = mkPackage_ final_;
       };
     };
 
     perSystem = { pkgs, ... } : let
 
-      project_ = mkProject_ pkgs self.lib;
+      package_ = mkPackage_ pkgs;
 
     in {
 
       packages = {
-        default = project_.package;
-        git-agent-workflow = project_.package;
+        default = package_;
+        git-agent-workflow = package_;
       };
 
-      checks = pkgs.lib.mergeAttrsList [
-        (import ./tests {
-          inherit pkgs;
-          llib = self.lib;
-        })
-        {
-          git-agent-workflow-check = project_.check;
-        }
-      ];
-
-      devShells = { };
+      checks = {
+        git-agent-workflow = package_;
+      };
 
     };
 

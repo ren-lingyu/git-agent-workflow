@@ -7,29 +7,15 @@
 !LICENSE
 !flake.nix
 !flake.lock
+!package.nix
 
-!asdf/
-!asdf/**/
-!asdf/*.asd
-!asdf/VERSION
-!asdf/share/**/*.md
-!asdf/src/**/*.lisp
-!asdf/src/**/text/*.txt
-!asdf/tests/**/*.lisp
-
-!lib/
-!lib/**/
-!lib/**/*.lisp
-!lib/**/*.nix
-
-!tests/
-!tests/**/
-!tests/**/*.asd
-!tests/**/*.lisp
-!tests/**/*.md
-!tests/**/*.nix
-!tests/**/*.txt
-!tests/**/VERSION
+!cabal/
+!cabal/**/
+!cabal/**/*.hs
+!cabal/*.cabal
+!cabal/cabal.project
+!cabal/resources/**/*.txt
+!cabal/share/**/*.md
 
 !.github/
 !.github/**/

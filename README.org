@@ -26,9 +26,11 @@ stable release.  Remote-side enforcement, automatic fetching, arbitrary
 corruption repair, and system-wide deployment integration remain out of scope.
 
 * Installation
-GAW currently supports =x86_64-linux= and requires Nix with flakes enabled.
-Git 2.54 or newer is required for the configured hook support used by branch
-protection.
+The Haskell implementation is continuously built and tested on
+=x86_64-linux=.  It targets POSIX/Unix-like systems, including macOS, but
+Darwin builds and tests are not yet part of the release gate.  Windows is not
+currently supported.  Git 2.54 or newer is required for the configured hook
+support used by branch protection.
 
 Build the default package from a checkout:
 
@@ -47,6 +49,15 @@ git gaw --help
 The flake also exports the package as =packages.x86_64-linux.default= and as
 =git-agent-workflow= through its default overlay.  Building and testing do not
 provision a GAW worktree or modify repository-local hook configuration.
+
+The Cabal project is in =cabal/=.  With GHC, Cabal, Git 2.54 or newer, and
+the declared Haskell dependencies available, it can also be built directly:
+
+#+begin_src sh
+cd cabal
+cabal build all
+cabal test
+#+end_src
 
 * Design
 ** Separate GAW History
@@ -111,21 +122,13 @@ Workspace paths are literal repository-root-relative Git paths.  They use
 contain =.= or =..= components.  The repository-root =.gaw= namespace and
 every =.git= component are reserved.
 
-The Common Lisp entry point =(git-agent-workflow.config:read-config
-directory)= resolves the current GAW source ref to an immutable commit ID,
-reads the blob as exact bytes, strictly decodes UTF-8, and validates a
-restricted S-expression grammar and schema.  It does not inspect current
-worktree path kinds; that matching belongs to later workspace operations.
-The API layer resolves the current source ref and supplies the fixed config
-path and resource limits as explicit runtime arguments; runtime and core do
-not read those defaults from package-level state.
-
-The related entry point =(git-agent-workflow.config:read-config-at-tree
-directory tree-oid)= accepts a full tree object ID.  It is used when a staged
-tree must be validated before a commit makes it reachable.
-=(git-agent-workflow.config:read-config-blob directory blob-oid)= provides the
-same strict parsing for an already resolved immutable config blob, allowing an
-index consumer to parse one coherent index snapshot without rereading it.
+The Haskell implementation resolves the current GAW source ref to an
+immutable commit ID and reads the blob as exact bytes.  It strictly decodes
+UTF-8 and validates the existing restricted S-expression grammar and schema.
+It does not inspect current worktree path kinds while parsing; that matching
+belongs to later workspace operations.  A staged candidate is validated from
+its tree, and an index consumer can parse the already resolved immutable
+config blob without rereading a changing index.
 
 ** Project Association
 A GAW commit may be associated with zero, one, or multiple project commits.
@@ -325,9 +328,8 @@ restricted.
 GAW does not currently provide a =diff= subcommand.  Arbitrary tree, index, or
 worktree comparisons remain available through =git diff= itself.
 
-The same operation is available to Common Lisp callers as
-=(git-agent-workflow.show:show directory arguments)=.  It writes Git's output
-directly to the current process streams and returns Git's exit status.
+The Haskell CLI writes Git's output directly to the current process streams
+and returns Git's exit status.
 
 ** Checking a GAW Worktree
 The command =git gaw check= performs a read-only readiness check for the
@@ -431,7 +433,7 @@ Neither a session boundary nor a project commit requires a matching GAW
 checkpoint.
 
 ** Agent Memory Skill
-The bundled [[file:asdf/share/skills/git-agent-workflow/SKILL.md][git-agent-workflow skill]] teaches a coding agent to use GAW as
+The bundled [[file:cabal/share/skills/git-agent-workflow/SKILL.md][git-agent-workflow skill]] teaches a coding agent to use GAW as
 persistent working memory across sessions, rather than as a command reference.
 The declared workspace holds current memory, GAW commits are recoverable
 checkpoints, the first-parent chain is temporal memory history, and additional
@@ -501,67 +503,42 @@ encoded directly in the Git commit graph rather than duplicated in a
 separate metadata database.
 
 * Development
-GAW is implemented in Common Lisp and built as an ASDF system.
+The active implementation is Haskell.  Its Cabal declaration, executable
+entry point, source, native tests, help resources, and bundled agent skill all
+live under =cabal/=.  Pure protocol validation and planning live in
+=Gaw.Protocol.*=; command orchestration lives in =Gaw.Application.*=; Git,
+process, filesystem, and clock adapters live in =Gaw.System.*=.  The system
+boundary uses small capability records and raw-byte Git I/O with POSIX path
+representations.
 
-The build is managed with Nix flakes and the repository's ASDF build helpers.
-The currently supported system is =x86_64-linux=, and GAW requires Git 2.54
-or newer.
-
-Run the Common Lisp and Git integration tests, together with the ASDF build
-helper fixture checks, with:
+Build and test the native Cabal project with:
 
 #+begin_src sh
-nix flake check
+cd cabal
+cabal build all
+cabal test
 #+end_src
 
-** Package Layout
-Source packages are organized as directories under =asdf/src/=.  Each package
-directory contains its own =package.lisp= and the implementation files owned
-by that package.  The top-level =asdf/src/package.lisp= defines the
-=git-agent-workflow= package; it is intentionally minimal and reserved for a
-future unified user-facing API.
+The Nix package is defined by =package.nix=.  Nix selects Git 2.54 or newer
+and exposes its executable as =GIT= while compiling the Cabal project.
+=Gaw.System.ExternalGit= captures that value at compile time; ordinary Cabal
+builds fall back to =git= and therefore use normal =PATH= lookup.  This keeps
+the selected Nix Git in the runtime closure without duplicating the Cabal
+executable name in Nix packaging.
 
-Tests follow the same package-oriented layout under =asdf/tests/=.  Shared test
-support and the top-level test runner remain directly under =asdf/tests/=, while
-package-specific definitions and tests live in the corresponding package
-directory.
+The Cabal =data-files= declaration is the source of truth for bundled data,
+including agent skills.  =package.nix= disables the automatic source-tree scan
+from nixpkgs' =installAgentSkills= hook, then runs that hook against Cabal's
+installed data output.  A Cabal package that declares no installed skill fails
+the Nix package build; concrete skill names and member paths remain Cabal
+concerns.
 
-** Implementation Layers
-Implementation files use the naming pattern =<name>.<layer>.lisp=.  The
-available layers have the following responsibilities:
+Build and check the Nix package with:
 
-- =*.external.lisp= resolves package-owned external programs from the build
-  environment, with source-tree fallbacks.
-- =*.core.lisp= contains pure transformations, validation, policy, and data
-  definitions.  It does not perform Git I/O or read dynamically bound
-  configuration.
-- =*.runtime.lisp= performs Git I/O and orchestrates operations using explicit
-  arguments and the core layer.
-- =*.api.lisp= provides package entry points.  Where configurable defaults
-  exist, it converts special variables, external programs, or default
-  configuration into explicit arguments for the runtime layer.
-
-The API layer depends on the external and runtime layers; the runtime layer
-depends on the core layer.  A package only defines the layers it needs; empty
-layer files are not required.
-
-** ASDF Composition
-Package directories are represented by ASDF modules with explicit
-=:pathname= values.  File-level =:depends-on= declarations encode the layer
-order and cross-package dependencies rather than relying on incidental source
-file ordering.  The test system uses corresponding modules for tested
-packages and dispatches their runners from a top-level test entry point.
-
-The =lib.asdfFunctions.mkProject= build helper enables agent skill installation
-by default; callers can set =installAgentSkills= to =false= to omit its dependency,
-manifest generation, and installation steps.  When enabled, it uses the
-=share/skills= ASDF component subtree as the source of skill membership and
-installs only explicitly declared static files through nixpkgs'
-=installAgentSkills= helper.  A system without that subtree installs no skills.
-The GAW system declares the bundled =git-agent-workflow= skill through that
-subtree.  The fixture checks under =tests/lib.asdfFunctions/= cover
-declared-file installation, the disabled option, and a system without a skill
-subtree.
+#+begin_src sh
+nix build
+nix flake check
+#+end_src
 
 * License
 GAW is distributed under the [[file:LICENSE][MIT License]].

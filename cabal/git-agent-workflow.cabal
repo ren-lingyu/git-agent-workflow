@@ -1,0 +1,92 @@
+cabal-version:      3.0
+name:               git-agent-workflow
+version:            0.4.0
+synopsis:           Git Agent Workflow
+license:            MIT
+build-type:         Simple
+extra-source-files:
+    resources/help/*.txt
+data-files:
+    share/skills/git-agent-workflow/SKILL.md
+
+library
+  hs-source-dirs:   src
+  exposed-modules:
+      Gaw.Cli
+    , Gaw.Application.Hook
+    , Gaw.Application.State
+    , Gaw.Application.Check
+    , Gaw.Application.Status
+    , Gaw.Application.Commit
+    , Gaw.Application.Undeploy
+    , Gaw.Application.Deploy
+    , Gaw.Application.Branch
+    , Gaw.Application.Init
+    , Gaw.Protocol.Check
+    , Gaw.Protocol.Commit
+    , Gaw.Protocol.Config
+    , Gaw.Protocol.Hook
+    , Gaw.Protocol.Ref
+    , Gaw.Protocol.Workspace
+    , Gaw.Protocol.State
+    , Gaw.Protocol.Show
+    , Gaw.Protocol.Status
+    , Gaw.Protocol.Undeploy
+    , Gaw.Protocol.Deploy
+    , Gaw.Protocol.Branch
+    , Gaw.Protocol.Init
+    , Gaw.System.Git
+    , Gaw.System.ExternalGit
+    , Gaw.System.Repository
+    , Gaw.System.Config
+    , Gaw.System.FileSystem
+    , Gaw.System.Clock
+  build-depends:
+      base >=4.16 && <5
+    , bytestring
+    , containers
+    , file-embed
+    , filepath
+    , os-string
+    , text
+    , template-haskell
+    , time
+    , transformers
+    , unix
+  default-language: Haskell2010
+  ghc-options:      -Wall
+
+test-suite protocol-tests
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   test
+  main-is:          Main.hs
+  build-depends:
+      base >=4.16 && <5
+    , bytestring
+    , git-agent-workflow
+    , text
+  default-language: Haskell2010
+  ghc-options:      -Wall
+
+test-suite git-adapter-tests
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   test
+  main-is:          GitAdapter.hs
+  build-depends:
+      base >=4.16 && <5
+    , bytestring
+    , directory
+    , git-agent-workflow
+    , os-string
+    , unix
+  default-language: Haskell2010
+  ghc-options:      -Wall
+
+executable git-gaw
+  hs-source-dirs:   app
+  main-is:          Main.hs
+  build-depends:
+      base >=4.16 && <5
+    , git-agent-workflow
+  default-language: Haskell2010
+  ghc-options:      -Wall

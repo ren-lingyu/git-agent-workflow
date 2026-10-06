@@ -1,1 +1,0 @@
-Declared reference file.

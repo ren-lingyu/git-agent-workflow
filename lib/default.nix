@@ -1,5 +1,0 @@
-{
-
-  asdfFunctions = import ./asdfFunctions;
-
-}
