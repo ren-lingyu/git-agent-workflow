@@ -26,11 +26,12 @@ stable release.  Remote-side enforcement, automatic fetching, arbitrary
 corruption repair, and system-wide deployment integration remain out of scope.
 
 * Installation
-The Haskell implementation is continuously built and tested on
-=x86_64-linux=.  It targets POSIX/Unix-like systems, including macOS, but
-Darwin builds and tests are not yet part of the release gate.  Windows is not
-currently supported.  Git 2.54 or newer is required for the configured hook
-support used by branch protection.
+The Haskell implementation is currently tested on =x86_64-linux=.  The flake
+declares outputs for =x86_64-linux=, =aarch64-linux=, and =aarch64-darwin=;
+the latter two are not currently verified test platforms.  The implementation
+targets POSIX/Unix-like systems, including macOS.  Windows is outside the
+current scope.  Git 2.54 or newer is required for the configured hook support
+used by branch protection.
 
 Build the default package from a checkout:
 
@@ -50,13 +51,14 @@ The flake also exports the package as =packages.x86_64-linux.default= and as
 =git-agent-workflow= through its default overlay.  Building and testing do not
 provision a GAW worktree or modify repository-local hook configuration.
 
-The Cabal project is in =cabal/=.  With GHC, Cabal, Git 2.54 or newer, and
-the declared Haskell dependencies available, it can also be built directly:
+The Cabal project is in =cabal/=.  Native Cabal builds are a development
+path when the calling environment provides GHC, Cabal, the declared Haskell
+dependencies, and Git 2.54 or newer:
 
 #+begin_src sh
 cd cabal
-cabal build all
-cabal test
+cabal build git-gaw
+cabal run git-gaw -- --help
 #+end_src
 
 * Design
@@ -328,8 +330,8 @@ restricted.
 GAW does not currently provide a =diff= subcommand.  Arbitrary tree, index, or
 worktree comparisons remain available through =git diff= itself.
 
-The Haskell CLI writes Git's output directly to the current process streams
-and returns Git's exit status.
+The Haskell CLI forwards Git's stdout and stderr bytes unchanged and returns
+Git's exit status.
 
 ** Checking a GAW Worktree
 The command =git gaw check= performs a read-only readiness check for the
@@ -388,9 +390,10 @@ GAW provides overview and command-specific help through =git gaw help= and
 overview is also available as =git gaw --help= or =git gaw -h=, while each
 command accepts =--help= as its sole argument.
 
-Help text is maintained as independent UTF-8 plain-text source files.  It is
-strictly decoded and embedded when the Lisp system is compiled, so the packaged
-executable does not locate or read those source files at runtime.
+Help text is maintained as independent plain-text files under
+=cabal/resources/help/=.  Their bytes are embedded in the executable at
+compile time and written unchanged by the CLI, so the packaged executable
+does not need those source files at runtime.
 
 ** Daily Runtime Loop
 For a new repository, initialize a source branch and optionally materialize a
@@ -511,16 +514,23 @@ process, filesystem, and clock adapters live in =Gaw.System.*=.  The system
 boundary uses small capability records and raw-byte Git I/O with POSIX path
 representations.
 
-Build and test the native Cabal project with:
+The two Cabal test suites cover different boundaries: =protocol-tests= checks
+config, refs, workspace, hook, and other pure protocol decisions, while
+=git-adapter-tests= exercises real Git and injected Git failures around
+application operations.  =cabal test= runs both suites in a complete native
+development environment.  The supported Linux release check uses the Nix
+package, which runs these suites as part of its check phase.
+
+Run the native Cabal suites with:
 
 #+begin_src sh
 cd cabal
-cabal build all
 cabal test
 #+end_src
 
-The Nix package is defined by =package.nix=.  Nix selects Git 2.54 or newer
-and exposes its executable as =GIT= while compiling the Cabal project.
+The Nix package is defined by =package.nix=.  The flake selects GHC 9.12;
+Nix selects Git 2.54 or newer and exposes its executable as =GIT= while
+compiling the Cabal project.
 =Gaw.System.ExternalGit= captures that value at compile time; ordinary Cabal
 builds fall back to =git= and therefore use normal =PATH= lookup.  This keeps
 the selected Nix Git in the runtime closure without duplicating the Cabal
@@ -533,11 +543,26 @@ installed data output.  A Cabal package that declares no installed skill fails
 the Nix package build; concrete skill names and member paths remain Cabal
 concerns.
 
-Build and check the Nix package with:
+Run the supported Linux release check with:
 
 #+begin_src sh
-nix build
-nix flake check
+nix flake check -L
+nix build --rebuild -L .#checks.x86_64-linux.git-agent-workflow
+#+end_src
+
+The flake's =git-agent-workflow= check points to the package derivation, whose
+check phase runs the Cabal suites.  An ordinary =nix build= may reuse an
+existing store result.  =nix flake check= validates the flake outputs, but its
+summary alone does not establish that the package build and tests ran again.
+The explicit =--rebuild= forces the package build and its tests to run again.
+
+The migration differential harness and fixed v0.4.0 Common Lisp oracle are
+kept on the separate =haskell_differential_test= branch at project commit
+=6c4951470b9f0e19beea72cfbd38800d7f779bcc=.  To run that branch's
+CLI and repository-state comparison on Linux, check out that branch and run:
+
+#+begin_src sh
+nix build .#checks.x86_64-linux.haskell-cli-differential
 #+end_src
 
 * License
