@@ -540,5 +540,17 @@ nix build
 nix flake check
 #+end_src
 
+The flake exposes the fixed Common Lisp v0.4.0 oracle and a black-box
+differential harness against the Haskell executable as checks.  The oracle
+archive and Nix checks live under =tests/=; the test-only Haskell harness
+lives under =cabal/differential/=.  The harness compares CLI bytes, refs,
+worktrees, and commit structure across isolated repositories.  Its oracle is
+fixed to project commit =df2d1d36c2aa690bbcb01baa191fdfcbbc58316c= and
+is passed as an explicit executable path.  On Linux, run just this check with:
+
+#+begin_src sh
+nix build .#checks.x86_64-linux.haskell-cli-differential
+#+end_src
+
 * License
 GAW is distributed under the [[file:LICENSE][MIT License]].

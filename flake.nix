@@ -42,9 +42,12 @@
         git-agent-workflow = package_;
       };
 
-      checks = {
-        git-agent-workflow = package_;
-      };
+      checks = pkgs.lib.mergeAttrsList [
+        {
+          git-agent-workflow = package_;
+        }
+        (import ./tests { inherit pkgs; })
+      ];
 
     };
 
