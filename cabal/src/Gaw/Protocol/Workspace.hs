@@ -11,7 +11,7 @@ module Gaw.Protocol.Workspace
 
 import qualified Data.ByteString as BS
 import qualified Data.Text.Encoding as TE
-import Gaw.Protocol.Config
+import Gaw.Protocol.Workspace.Types
 
 data GitEntry = GitEntry
   { entryMode :: BS.ByteString
@@ -40,13 +40,13 @@ validateSnapshot = mapM_ check
       | not (isTree entry || isFile entry) = Left (UnsupportedEntry (entryPath entry))
       | otherwise = Right ()
 
-validateWorkspace :: Config -> [GitEntry] -> Either WorkspaceError ()
-validateWorkspace config entries = do
+validateWorkspace :: Workspace -> [GitEntry] -> Either WorkspaceError ()
+validateWorkspace workspace entries = do
   validateSnapshot entries
   mapM_ checkDeclared declarations
   mapM_ checkEntry entries
   where
-    declarations = map declaration (configWorkspace config)
+    declarations = map declaration (workspaceEntries workspace)
     checkDeclared (kind, path) = case findEntry path entries of
       Nothing -> Right ()
       Just entry
@@ -60,12 +60,12 @@ validateWorkspace config entries = do
       | otherwise = Left (OutsideDeclaredWorkspace path)
       where path = entryPath entry
 
-firstProjectPathConflict :: Config -> [GitEntry] -> Maybe BS.ByteString
-firstProjectPathConflict config entries = case filter conflicts entries of
+firstProjectPathConflict :: Workspace -> [GitEntry] -> Maybe BS.ByteString
+firstProjectPathConflict workspace entries = case filter conflicts entries of
   entry : _ -> Just (entryPath entry)
   [] -> Nothing
   where
-    declarations = map declaration (configWorkspace config)
+    declarations = map declaration (workspaceEntries workspace)
     conflicts entry = isReservedProtocolPath path
       || any (projectConflict entry) declarations
       where path = entryPath entry

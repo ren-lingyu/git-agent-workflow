@@ -6,7 +6,8 @@ module Gaw.Application.State
   ) where
 
 import qualified Data.ByteString as BS
-import Gaw.Protocol.Config (Config)
+import Gaw.Protocol.Config (effectiveWorkspace)
+import Gaw.Protocol.Workspace.Types (Workspace)
 import Gaw.Protocol.Ref
 import Gaw.Protocol.State
 import Gaw.Protocol.Workspace
@@ -57,19 +58,19 @@ inspectResolvedCommit git directory source commit = inspectCommit commit
       treeEntries <- readTreeRecords git directory tree
       let workspaceFinding = case treeEntries of
             Left _ -> finding HeadWorkspace FindingError Indeterminate "Cannot validate the HEAD workspace"
-            Right entries -> case validateWorkspace config entries of
+            Right entries -> case validateWorkspace (effectiveWorkspace config) entries of
               Right () -> finding HeadWorkspace FindingOk Determinate
                 "HEAD satisfies its workspace declaration"
               Left problem -> finding HeadWorkspace FindingError (workspaceCertainty problem)
                 (workspaceDetail problem)
-      parentFinding <- inspectParents git directory current config
+      parentFinding <- inspectParents git directory current (effectiveWorkspace config)
       pure (StateReport source (Just current) (Just tree) (Just config)
         [finding Head FindingOk Determinate "HEAD resolves to a commit",
          finding HeadConfig FindingOk Determinate "HEAD contains a valid .gaw/config",
          workspaceFinding, parentFinding])
 
-inspectParents :: Monad m => Git m -> PosixPath -> ObjectId -> Config -> m StateFinding
-inspectParents git directory commit config = do
+inspectParents :: Monad m => Git m -> PosixPath -> ObjectId -> Workspace -> m StateFinding
+inspectParents git directory commit workspace = do
   result <- command git directory ["rev-list", "--parents", "-n", "1", objectIdBytes commit]
   case parseParents commit result of
     Nothing -> pure (queryFailure ProjectParents "Cannot validate project parents")
@@ -86,7 +87,7 @@ inspectParents git directory commit config = do
           entriesResult <- readTreeRecords git directory tree
           case entriesResult of
             Left _ -> pure (queryFailure ProjectParents "Cannot validate project parents")
-            Right entries -> case firstProjectPathConflict config entries of
+            Right entries -> case firstProjectPathConflict workspace entries of
               Just _ -> pure (finding ProjectParents FindingError Determinate
                 "An associated project parent tracks a reserved or workspace path")
               Nothing -> go rest

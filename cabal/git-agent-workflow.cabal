@@ -27,9 +27,11 @@ library
     , Gaw.Protocol.Check
     , Gaw.Protocol.Commit
     , Gaw.Protocol.Config
+    , Gaw.Protocol.SExpr
     , Gaw.Protocol.Hook
     , Gaw.Protocol.Ref
     , Gaw.Protocol.Workspace
+    , Gaw.Protocol.Workspace.Types
     , Gaw.Protocol.State
     , Gaw.Protocol.Show
     , Gaw.Protocol.Status

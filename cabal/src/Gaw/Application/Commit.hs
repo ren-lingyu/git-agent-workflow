@@ -14,6 +14,7 @@ import Gaw.Protocol.Commit
 import Gaw.Protocol.Ref
 import Gaw.Protocol.State (CommittedState (..), classifyCommittedState, stateFindings)
 import Gaw.System.Clock (Clock (..))
+import Gaw.Protocol.Config (effectiveWorkspace)
 import Gaw.System.Config (readConfigAtTree)
 import Gaw.System.FileSystem (FileSystem (..))
 import Gaw.System.Git
@@ -68,7 +69,7 @@ createCommit git fs clock directory request = runExceptT $ do
   firstTree <- resolveOid (objectIdBytes firstParent <> "^{tree}") GitFailure
     "Cannot resolve the first parent tree"
   plan <- either throwE pure (planCommit request source firstParent firstTree stagedTree
-    config entries projects)
+    (effectiveWorkspace config) entries projects)
   timestamp <- lift (unixTimestamp clock)
   let date = "@" <> BSC.pack (show timestamp) <> " +0000"
       identity = [("GIT_AUTHOR_NAME", "Git Agent Workflow"),

@@ -4,6 +4,7 @@ module Main (main) where
 
 import qualified Data.ByteString as BS
 import qualified Data.Text.Encoding as TE
+import Gaw.Protocol.SExpr
 import Gaw.Protocol.Config
 import Gaw.Protocol.Deploy
 import Gaw.Protocol.Hook
@@ -20,6 +21,9 @@ assert False = exitFailure
 
 main :: IO ()
 main = do
+  assert $ parseSExpr "(:custom ())" == Right (SList [SKeyword "custom", SList []])
+  assert $ decodeConfig (SList [SKeyword "custom", SList []])
+    == Left (InvalidSchema "Unknown config keyword")
   let parsed = parseConfig "(:workspace ((:file \"a\\\"b\") (:directory \"memory\")))"
   assert $ case parsed of
     Right config -> length (configWorkspace config) == 2
@@ -80,14 +84,14 @@ main = do
       file = GitEntry "100644" "blob" (BS.replicate 40 97) nonUtfPath 0 False
       outside = file {entryPath = "outside"}
   assert $ case config of
-    Right value -> validateWorkspace value (synthesizeIndexDirectories [file]) == Right ()
-      && validateWorkspace value [outside] == Left (OutsideDeclaredWorkspace "outside")
-      && firstProjectPathConflict value [file] == Just nonUtfPath
+    Right value -> validateWorkspace (effectiveWorkspace value) (synthesizeIndexDirectories [file]) == Right ()
+      && validateWorkspace (effectiveWorkspace value) [outside] == Left (OutsideDeclaredWorkspace "outside")
+      && firstProjectPathConflict (effectiveWorkspace value) [file] == Just nonUtfPath
     Left _ -> False
   assert $ validateSnapshot [file {entryStage = 2}] == Left (UnmergedIndex nonUtfPath)
   assert $ validateSnapshot [file {entryIntentToAdd = True}] == Left (IntentToAdd nonUtfPath)
   assert $ case config of
-    Right value -> validateWorkspace value [file {entryPath = ".GAW/config"}]
+    Right value -> validateWorkspace (effectiveWorkspace value) [file {entryPath = ".GAW/config"}]
       == Left (NoncanonicalProtocolPath ".GAW/config")
     Left _ -> False
   assert $ prepareShowArguments ["--no-diff-merges", "--", "-m"]

@@ -7,14 +7,17 @@ module Gaw.Protocol.Config
   , WorkspaceKind (..)
   , WorkspacePath
   , configWorkspace
+  , effectiveWorkspace
   , workspaceEntryKind
   , workspaceEntryPath
   , workspacePathText
   , parseConfig
+  , decodeConfig
   ) where
 
 import qualified Data.ByteString as BS
-import Data.Char (ord)
+import Gaw.Protocol.Workspace.Types
+import Gaw.Protocol.SExpr
 import qualified Data.Set as Set
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
@@ -25,93 +28,36 @@ data ConfigError
   | LimitExceeded T.Text
   deriving (Eq, Show)
 
-data WorkspaceKind = WorkspaceFile | WorkspaceDirectory
-  deriving (Eq, Show)
-
-newtype WorkspacePath = WorkspacePath T.Text
-  deriving (Eq, Ord, Show)
-
-data WorkspaceEntry = WorkspaceEntry WorkspaceKind WorkspacePath
-  deriving (Eq, Show)
-
 newtype Config = Config [WorkspaceEntry]
   deriving (Eq, Show)
 
 configWorkspace :: Config -> [WorkspaceEntry]
 configWorkspace (Config entries) = entries
 
-workspaceEntryKind :: WorkspaceEntry -> WorkspaceKind
-workspaceEntryKind (WorkspaceEntry kind _) = kind
-
-workspaceEntryPath :: WorkspaceEntry -> WorkspacePath
-workspaceEntryPath (WorkspaceEntry _ path) = path
-
-workspacePathText :: WorkspacePath -> T.Text
-workspacePathText (WorkspacePath path) = path
-
-data Form = FormList [Form] | FormKeyword T.Text | FormString T.Text
-  deriving (Eq, Show)
+effectiveWorkspace :: Config -> Workspace
+effectiveWorkspace = Workspace . configWorkspace
 
 parseConfig :: BS.ByteString -> Either ConfigError Config
-parseConfig bytes
-  | BS.length bytes > 65536 = Left (LimitExceeded "Config exceeds 65536 octets")
-  | otherwise = do
-      input <- either (const (Left (InvalidSyntax "Config is not valid UTF-8"))) Right
-        (TE.decodeUtf8' bytes)
-      if T.isPrefixOf "\xfeff" input
-        then Left (InvalidSyntax "UTF-8 BOM is not allowed")
-        else do
-          (form, rest) <- parseForm 0 (skipTrivia (T.unpack input))
-          if null (skipTrivia rest)
-            then configFromForm form
-            else Left (InvalidSyntax "Config contains multiple forms")
+parseConfig bytes = do
+  form <- either (Left . syntaxError) Right (parseSExpr bytes)
+  decodeConfig form
+  where
+    syntaxError (SyntaxError detail) = InvalidSyntax detail
+    syntaxError (SyntaxLimit detail) = LimitExceeded detail
 
-parseForm :: Int -> String -> Either ConfigError (Form, String)
-parseForm _ [] = Left (InvalidSyntax "Config is empty or incomplete")
-parseForm depth ('(':rest)
-  | depth >= 16 = Left (LimitExceeded "List nesting exceeds 16")
-  | otherwise = parseList (depth + 1) [] rest
-parseForm _ (')':_) = Left (InvalidSyntax "Unmatched closing parenthesis")
-parseForm _ ('"':rest) = parseString [] rest
-parseForm _ input =
-  let (token, rest) = span (not . delimiter) input
-   in case token of
-        ":workspace" -> Right (FormKeyword "workspace", rest)
-        ":file" -> Right (FormKeyword "file", rest)
-        ":directory" -> Right (FormKeyword "directory", rest)
-        ':':_ -> Left (InvalidSchema "Unknown config keyword")
-        _ -> Left (InvalidSyntax "Unsupported token")
+decodeConfig :: SExpr -> Either ConfigError Config
+decodeConfig form = do
+  checkKeywords form
+  configFromForm form
+  where
+    checkKeywords (SList forms) = mapM_ checkKeywords forms
+    checkKeywords (SKeyword keyword)
+      | keyword `notElem` ["workspace", "file", "directory"] =
+          Left (InvalidSchema "Unknown config keyword")
+    checkKeywords _ = Right ()
 
-parseList :: Int -> [Form] -> String -> Either ConfigError (Form, String)
-parseList depth acc input = case skipTrivia input of
-  [] -> Left (InvalidSyntax "Unclosed list")
-  ')':rest -> Right (FormList (reverse acc), rest)
-  rest -> do
-    (form, next) <- parseForm depth rest
-    parseList depth (form : acc) next
-
-parseString :: [Char] -> String -> Either ConfigError (Form, String)
-parseString _ [] = Left (InvalidSyntax "Unterminated string")
-parseString acc ('"':rest) = Right (FormString (T.pack (reverse acc)), rest)
-parseString acc ('\\':escaped:rest)
-  | escaped == '"' || escaped == '\\' = parseString (escaped : acc) rest
-  | otherwise = Left (InvalidSyntax "Unsupported string escape")
-parseString _ ['\\'] = Left (InvalidSyntax "Incomplete string escape")
-parseString acc (c:rest)
-  | ord c < 32 || ord c == 127 = Left (InvalidSyntax "Literal ASCII control character in string")
-  | otherwise = parseString (c : acc) rest
-
-delimiter :: Char -> Bool
-delimiter c = c `elem` (" \t\n\r();" :: String)
-
-skipTrivia :: String -> String
-skipTrivia input = case input of
-  c:rest | c `elem` (" \t\n\r" :: String) -> skipTrivia rest
-  ';':rest -> skipTrivia (dropWhile (/= '\n') rest)
-  _ -> input
-
-configFromForm :: Form -> Either ConfigError Config
-configFromForm (FormList [FormKeyword "workspace", FormList forms]) = do
+configFromForm :: SExpr -> Either ConfigError Config
+configFromForm (SList [SKeyword "workspace", SList forms]) = do
   if length forms > 1024
     then Left (LimitExceeded "Workspace contains more than 1024 entries")
     else do
@@ -122,8 +68,8 @@ configFromForm (FormList [FormKeyword "workspace", FormList forms]) = do
         else Left (InvalidSchema "Duplicate workspace path")
 configFromForm _ = Left (InvalidSchema "Expected exactly one :workspace form")
 
-entryFromForm :: Form -> Either ConfigError WorkspaceEntry
-entryFromForm (FormList [FormKeyword kind, FormString text]) = do
+entryFromForm :: SExpr -> Either ConfigError WorkspaceEntry
+entryFromForm (SList [SKeyword kind, SString text]) = do
   checkedKind <- case kind of
     "file" -> Right WorkspaceFile
     "directory" -> Right WorkspaceDirectory

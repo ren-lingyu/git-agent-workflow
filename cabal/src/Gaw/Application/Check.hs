@@ -6,6 +6,7 @@ module Gaw.Application.Check
 
 import qualified Data.ByteString as BS
 import Gaw.Application.State (inspectCommittedState)
+import Gaw.Protocol.Config (effectiveWorkspace)
 import Gaw.Protocol.Check
 import Gaw.Protocol.Ref
 import Gaw.Protocol.State
@@ -99,7 +100,7 @@ inspectCheck git fs directory = do
                       config <- readConfigBlob git directory oid
                       pure $ case config of
                         Left _ -> indexError "Invalid staged config"
-                        Right parsed -> case validateWorkspace parsed entries of
+                        Right parsed -> case validateWorkspace (effectiveWorkspace parsed) entries of
                           Left problem -> indexError (workspaceDetail problem)
                           Right () -> finding "index" CheckOk
                             "The staged candidate satisfies its workspace declaration"

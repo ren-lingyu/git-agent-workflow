@@ -14,7 +14,7 @@ module Gaw.Protocol.Commit
   ) where
 
 import qualified Data.ByteString as BS
-import Gaw.Protocol.Config (Config)
+import Gaw.Protocol.Workspace.Types (Workspace)
 import Gaw.Protocol.Ref (ObjectId, RefName)
 import Gaw.Protocol.Workspace
 
@@ -42,17 +42,17 @@ data CommitPlan = CommitPlan
   } deriving (Eq, Show)
 
 planCommit :: CommitRequest -> RefName -> ObjectId -> ObjectId -> ObjectId
-  -> Config -> [GitEntry] -> [(ObjectId, [GitEntry])]
+  -> Workspace -> [GitEntry] -> [(ObjectId, [GitEntry])]
   -> Either CommitError CommitPlan
-planCommit request source firstParent firstTree stagedTree config entries projects = do
+planCommit request source firstParent firstTree stagedTree workspace entries projects = do
   if BS.null (requestMessage request) && not (requestAllowEmptyMessage request)
     then Left (CommitError EmptyMessage "The commit message is empty") else Right ()
   checkParents [] (map fst projects)
-  case validateWorkspace config entries of
+  case validateWorkspace workspace entries of
     Left problem -> Left (CommitError InvalidWorkspace (workspaceDetail problem))
     Right () -> Right ()
   case filter (\(_, projectEntries) ->
-        firstProjectPathConflict config projectEntries /= Nothing) projects of
+        firstProjectPathConflict workspace projectEntries /= Nothing) projects of
     [] -> Right ()
     _ -> Left (CommitError PathConflict
       "A project parent tracks a reserved or workspace path")
