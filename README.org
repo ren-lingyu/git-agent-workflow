@@ -138,6 +138,12 @@ A GAW commit may be associated with zero, one, or multiple project commits.
 These associations are represented directly as additional Git parent edges
 rather than through a separate snapshot database or identifier scheme.
 
+All additional parents express the same structural relation: association
+with an exact project snapshot.  Their positions do not encode business
+roles such as /based-on/ or /resulting state/.  Workspace content explains
+the purpose, evidence, causal relationships, and results of the associated
+work; the Git graph supplies the exact structural links.
+
 A project commit attached to GAW history must not itself track the GAW
 workspace or reserved GAW protocol paths.  This is a local validity condition
 on commits that participate in GAW history rather than a repository-wide
@@ -491,6 +497,22 @@ participate in that temporal ordering.
 As a result, the canonical history traversal of GAW follows first-parent
 edges, and the canonical change represented by a GAW commit is the change
 relative to its first parent.
+
+The workspace tree holds the durable memory state at each checkpoint;
+its content explains goals, decisions, evidence, results, and next actions.
+This semantic explanation complements the graph's evolution and snapshot
+associations rather than assigning different meanings to additional-parent
+positions.
+
+Durable workspace references should not depend on GAW checkpoint OIDs as
+stable semantic identifiers, including a checkpoint's own OID or another
+checkpoint's OID.  History curation may change those OIDs while preserving
+first-parent evolution, project associations, and memory states.  Prefer
+Git relationships and stable workspace paths to locate that structure.
+Project OIDs may still serve independent historical lookup or reproducibility
+needs, though an existing project-parent edge usually makes a repeated OID
+in memory unnecessary.  Exact Git object identity is not semantic identity
+that remains stable across history rewriting.
 
 ** Git as the History Store
 GAW deliberately relies on Git itself for:
