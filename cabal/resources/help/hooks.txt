@@ -10,3 +10,7 @@ GAW lifecycle operations selectively disable this named hook for validated
 ref updates. For deliberate manual recovery, a user may explicitly run a
 native Git command with -c hook.gaw-reference-transaction.enabled=false.
 That bypass does not validate GAW invariants; inspect the result afterward.
+
+An unsupported config version is indeterminate: the hook conservatively
+rejects branch movement even if the config marker would remain unchanged.
+Role metadata and non-blocking config warnings do not change protection.

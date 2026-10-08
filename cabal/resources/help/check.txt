@@ -14,3 +14,7 @@ Exit status is 0 when no error finding exists and 1 otherwise.  Warnings do
 not make the report fail.  A missing selector is a warning, not a deployment
 prerequisite.  A missing or divergent protection hook is also a warning
 because it is a local guard rather than a runtime prerequisite.
+
+Config v0 and v1 are supported. Unknown top-level v1 fields produce separate
+HEAD and index warnings without making the check fail. Unsupported config
+versions are reported explicitly and prevent readiness.

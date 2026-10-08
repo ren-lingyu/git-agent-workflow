@@ -15,7 +15,7 @@ import Gaw.Protocol.Ref
 import Gaw.Protocol.State (CommittedState (..), classifyCommittedState, stateFindings)
 import Gaw.System.Clock (Clock (..))
 import Gaw.Protocol.Config (effectiveWorkspace)
-import Gaw.System.Config (readConfigAtTree)
+import Gaw.System.Config (readConfigAtTree, configReadDetail)
 import Gaw.System.FileSystem (FileSystem (..))
 import Gaw.System.Git
 import Gaw.System.Repository (readTreeRecords)
@@ -57,8 +57,7 @@ createCommit git fs clock directory request = runExceptT $ do
     _ -> throwE (CommitError CommitInvalidCommittedState
       "The current branch is not valid GAW committed state")
   stagedConfigResult <- lift (readConfigAtTree git directory stagedTree)
-  config <- either (const (throwE (CommitError InvalidWorkspace
-    "Invalid staged config"))) pure stagedConfigResult
+  config <- either (throwE . CommitError InvalidWorkspace . configReadDetail) pure stagedConfigResult
   projects <- forM (requestProjectRevisions request) $ \revision -> do
     oid <- resolveOid (revision <> "^{commit}") InvalidProjectCommit
       ("Cannot resolve project commit \"" <> revision <> "\"")

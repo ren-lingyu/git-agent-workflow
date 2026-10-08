@@ -18,7 +18,7 @@ data InitResult = InitResult
   } deriving (Eq, Show)
 
 initialConfig :: BS.ByteString
-initialConfig = "(:workspace ())\n"
+initialConfig = "(:version 1 :workspace ())\n"
 
 initialMessage :: BS.ByteString
 initialMessage = "Initialize GAW"

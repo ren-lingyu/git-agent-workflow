@@ -2,6 +2,7 @@
 
 module Main (main) where
 
+import CliConfig (configCliTests)
 import Control.Exception (finally, try, SomeException)
 import Control.Monad (forM_)
 import qualified Data.ByteString as BS
@@ -274,6 +275,7 @@ main = do
       selectorAfter <- inspectRef realGit initPath selectorRef
       require (sourceAfter == Right RefMissing && selectorAfter == Right RefMissing)
       FileDirectory.removePathForcibly initRepo
+      configCliTests (BSC.unpack temp) (BSC.unpack gitExecutable)
       putStrLn "Git adapter tests passed"
     ) `finally` (Directory.removeDirectory rawDirectory >> Directory.removeDirectory temp)
 

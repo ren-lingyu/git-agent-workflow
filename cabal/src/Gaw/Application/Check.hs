@@ -6,12 +6,12 @@ module Gaw.Application.Check
 
 import qualified Data.ByteString as BS
 import Gaw.Application.State (inspectCommittedState)
-import Gaw.Protocol.Config (effectiveWorkspace)
+import Gaw.Protocol.Config (effectiveWorkspace, configWarnings, renderConfigWarning)
 import Gaw.Protocol.Check
 import Gaw.Protocol.Ref
 import Gaw.Protocol.State
 import Gaw.Protocol.Workspace
-import Gaw.System.Config (readConfigBlob)
+import Gaw.System.Config (readConfigBlob, configReadDetail)
 import Gaw.System.FileSystem (FileSystem (..))
 import Gaw.System.Git
 import Gaw.System.Repository (inspectRef, readIndexRecords)
@@ -33,19 +33,21 @@ inspectCheck git fs directory = do
       branchResult <- currentBranch
       selectorFinding <- inspectSelector
       stateFindings' <- case branchResult of
-        Right source -> map fromState . stateFindings <$>
-          inspectCommittedState git directory source
+        Right source -> do
+          report <- inspectCommittedState git directory source
+          pure (map fromState (stateFindings report) ++
+            maybe [] (warnings "head-config") (stateConfig report))
         Left _ -> pure (map (\name -> finding name CheckSkipped
           "Skipped because no local branch is available")
           ["head", "head-config", "head-workspace", "project-parents"])
-      indexFinding <- inspectIndex
+      indexFindings <- inspectIndex
       operationFinding <- inspectOperationState
       hookFinding <- inspectHook
       let branchFinding = case branchResult of
             Right source -> finding "branch" CheckOk (refNameBytes source)
             Left detail -> finding "branch" CheckError detail
       pure (CheckReport ([rootFinding, branchFinding, selectorFinding] ++
-        stateFindings' ++ [indexFinding, operationFinding, hookFinding]))
+        stateFindings' ++ indexFindings ++ [operationFinding, hookFinding]))
   where
     noWorktree = ["branch", "selector", "head", "head-config", "head-workspace",
                   "project-parents", "index", "operation-state", "protection-hook"]
@@ -83,7 +85,7 @@ inspectCheck git fs directory = do
     inspectIndex = do
       query <- readIndexRecords git directory
       case query of
-        Left _ -> pure (finding "index" CheckError "Cannot read the Git index")
+        Left _ -> pure [finding "index" CheckError "Cannot read the Git index"]
         Right rawEntries -> do
           let entries = synthesizeIndexDirectories rawEntries
           case validateSnapshot entries of
@@ -99,12 +101,17 @@ inspectCheck git fs directory = do
                     Right oid -> do
                       config <- readConfigBlob git directory oid
                       pure $ case config of
-                        Left _ -> indexError "Invalid staged config"
-                        Right parsed -> case validateWorkspace (effectiveWorkspace parsed) entries of
-                          Left problem -> indexError (workspaceDetail problem)
-                          Right () -> finding "index" CheckOk
-                            "The staged candidate satisfies its workspace declaration"
-      where indexError = finding "index" CheckError
+                        Left problem -> indexError (configReadDetail problem)
+                        Right parsed ->
+                          (case validateWorkspace (effectiveWorkspace parsed) entries of
+                            Left problem -> indexError (workspaceDetail problem)
+                            Right () -> [finding "index" CheckOk
+                              "The staged candidate satisfies its workspace declaration"])
+                          ++ warnings "index-config" parsed
+      where indexError detail = [finding "index" CheckError detail]
+
+    warnings name config = [finding name CheckWarning (renderConfigWarning warning)
+      | warning <- configWarnings config]
 
     inspectOperationState = do
       states <- go operationNames

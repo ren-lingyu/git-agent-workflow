@@ -9,6 +9,7 @@ module Gaw.Application.Status
 import qualified Data.ByteString as BS
 import Data.List (sort)
 import Gaw.Application.State (inspectCommittedState)
+import Gaw.Protocol.Config (configWarnings, renderConfigWarning)
 import Gaw.Protocol.Ref
 import Gaw.Protocol.State
 import Gaw.Protocol.Status
@@ -68,18 +69,18 @@ inspectStatus git directory = do
         state <- inspectRef git directory ref
         case state of
           Left _ -> pure (Left (StatusMalformed "Cannot inspect a local branch"))
-          Right RefMissing -> pure (Right (StatusBranch name Nothing InvalidBranch
+          Right RefMissing -> pure (Right (StatusBranch name Nothing InvalidBranch []
             (Just "Source ref is missing or symbolic")))
-          Right (RefSymbolic _) -> pure (Right (StatusBranch name Nothing InvalidBranch
+          Right (RefSymbolic _) -> pure (Right (StatusBranch name Nothing InvalidBranch []
             (Just "Source ref is missing or symbolic")))
-          Right (RefInvalid _) -> pure (Right (StatusBranch name Nothing InvalidBranch
+          Right (RefInvalid _) -> pure (Right (StatusBranch name Nothing InvalidBranch []
             (Just "Source ref is missing or symbolic")))
           Right (RefDirect oid) -> do
             marked <- markerAt name
             case marked of
               Left problem -> pure (Left problem)
               Right False -> pure (Right (StatusBranch name (Just (objectIdBytes oid))
-                OrdinaryBranch Nothing))
+                OrdinaryBranch [] Nothing))
               Right True -> do
                 report <- inspectCommittedState git directory ref
                 let classification = classifyCommittedState (stateFindings report)
@@ -90,7 +91,10 @@ inspectStatus git directory = do
                 pure (Right (StatusBranch name (Just (objectIdBytes oid))
                   (case classification of
                     ValidCommittedState _ -> ValidBranch
-                    _ -> InvalidBranch) firstError))
+                    InvalidCommittedState _ -> InvalidBranch
+                    IndeterminateCommittedState _ -> IndeterminateBranch)
+                  (maybe [] (map renderConfigWarning . configWarnings) (stateConfig report))
+                  firstError))
 
     markerAt name = do
       let args = ["ls-tree", "-z", "--full-tree", name, "--", ".gaw/config"]

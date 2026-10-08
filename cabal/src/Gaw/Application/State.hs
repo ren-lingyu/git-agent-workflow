@@ -6,7 +6,7 @@ module Gaw.Application.State
   ) where
 
 import qualified Data.ByteString as BS
-import Gaw.Protocol.Config (effectiveWorkspace)
+import Gaw.Protocol.Config (ConfigError (UnsupportedVersion), effectiveWorkspace, unsupportedVersionDetail)
 import Gaw.Protocol.Workspace.Types (Workspace)
 import Gaw.Protocol.Ref
 import Gaw.Protocol.State
@@ -119,6 +119,7 @@ queryFailure name = finding name FindingError Indeterminate
 
 configCertainty :: ConfigReadError -> Certainty
 configCertainty problem = case problem of
+  InvalidConfig (UnsupportedVersion _) -> Indeterminate
   ConfigGitFailure _ _ -> Indeterminate
   WrongTreeObject _ -> Indeterminate
   InvalidConfigSize _ -> Indeterminate
@@ -130,6 +131,7 @@ configDetail problem = case problem of
   MissingConfig -> "Invalid HEAD config: Invalid GAW config (:MISSING): .gaw/config is absent from the current GAW commit"
   InvalidConfigEntry _ -> "Invalid HEAD config: Invalid GAW config (:INVALID-OBJECT): .gaw/config is not a 100644 blob"
   ConfigTooLarge _ -> "Invalid HEAD config: Config exceeds 65536 octets"
+  InvalidConfig (UnsupportedVersion version) -> unsupportedVersionDetail version
   InvalidConfig _ -> "Invalid HEAD config"
   _ -> "Cannot inspect HEAD config"
 

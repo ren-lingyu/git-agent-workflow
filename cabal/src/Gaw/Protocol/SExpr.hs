@@ -14,7 +14,7 @@ import qualified Data.Text.Encoding as TE
 data SyntaxError = SyntaxError T.Text | SyntaxLimit T.Text
   deriving (Eq, Show)
 
-data SExpr = SList [SExpr] | SKeyword T.Text | SString T.Text
+data SExpr = SList [SExpr] | SKeyword T.Text | SString T.Text | SInteger Integer
   deriving (Eq, Show)
 
 parseSExpr :: BS.ByteString -> Either SyntaxError SExpr
@@ -42,7 +42,13 @@ parseForm _ input =
   let (token, rest) = span (not . delimiter) input
    in case token of
         ':':keyword -> Right (SKeyword (T.pack keyword), rest)
-        _ -> Left (SyntaxError "Unsupported token")
+        _ | decimal token -> Right (SInteger (read token), rest)
+          | otherwise -> Left (SyntaxError "Unsupported token")
+  where
+    decimal [] = False
+    decimal ('-':digits) = not (null digits) && all asciiDigit digits
+    decimal digits = all asciiDigit digits
+    asciiDigit c = c >= '0' && c <= '9'
 
 parseList :: Int -> [SExpr] -> String -> Either SyntaxError (SExpr, String)
 parseList depth acc input = case skipTrivia input of

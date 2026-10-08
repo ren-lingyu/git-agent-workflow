@@ -14,3 +14,8 @@ Options:
 
 Additional project commits become parents after the previous GAW commit.
 Their trees are checked for conflicts but are not merged into the GAW tree.
+
+HEAD and staged configs are decoded independently. A valid v0 checkpoint may
+be followed by a v1 checkpoint without changing the old config. Unsupported
+versions fail explicitly; role groups use the same workspace and project
+parent validation as direct declarations. Config warnings are not printed.

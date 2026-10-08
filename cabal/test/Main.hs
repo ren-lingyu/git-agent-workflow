@@ -3,6 +3,7 @@
 module Main (main) where
 
 import qualified Data.ByteString as BS
+import qualified Data.Text as DataText
 import qualified Data.Text.Encoding as TE
 import Gaw.Protocol.SExpr
 import Gaw.Protocol.Config
@@ -120,6 +121,7 @@ main = do
     == Left (BranchAlreadyAttached "refs/heads/gaw" "/tmp/agent")
   assert $ planWorktree "refs/heads/gaw" (Just "/tmp/new") True []
     == Left (PathOccupied "/tmp/new")
+  versionedConfigTests
   putStrLn "Protocol tests passed"
 
 invalidSyntax :: Either ConfigError Config -> Bool
@@ -149,3 +151,59 @@ assertCase predicate input =
     else do
       putStrLn ("Unexpected config result for " <> show input <> ": " <> show (parseConfig input))
       exitFailure
+
+
+versionedConfigTests :: IO ()
+versionedConfigTests = do
+  let v0 = "(:workspace ((:directory \"notes\") (:directory \"notes/archive\") (:file \"CONTEXT.md\")))"
+      explicit0 = "(:version 0 :workspace ((:directory \"notes\") (:directory \"notes/archive\") (:file \"CONTEXT.md\")))"
+      v1 = "(:version 1 :workspace ((:memory ((:directory \"notes\"))) (:archive ((:directory \"notes/archive\"))) (:memory ((:file \"CONTEXT.md\")))))"
+      bytes = BS.replicate 40 97
+      note = GitEntry "100644" "blob" bytes "notes/a" 0 False
+      context = note {entryPath = "CONTEXT.md"}
+      good = synthesizeIndexDirectories [note, context]
+      samples = [good, [note {entryPath = "outside"}], [note {entryPath = "notes", entryMode = "160000", entryType = "commit"}], [note {entryPath = ".GAW/config"}], [note {entryStage = 2}]]
+  case (parseConfig v0, parseConfig explicit0, parseConfig v1) of
+    (Right legacy, Right explicit, Right grouped) -> do
+      assert (legacy == explicit)
+      assert (configVersion grouped == ConfigV1)
+      assert (length (configSections grouped) == 3)
+      assert (configWorkspace legacy == configWorkspace grouped)
+      assert (null (configWarnings grouped))
+      mapM_ (\entries -> do
+        assert (validateWorkspace (effectiveWorkspace legacy) entries == validateWorkspace (effectiveWorkspace grouped) entries)
+        assert (firstProjectPathConflict (effectiveWorkspace legacy) entries == firstProjectPathConflict (effectiveWorkspace grouped) entries)) samples
+    other -> print other >> exitFailure
+  let mixed = "(:version 1 :workspace ((:directory \"misc\") (:research ((:directory \"experiments\"))) (:research ())))"
+  case parseConfig mixed of
+    Right config -> do
+      assert (length (configWorkspace config) == 2 && null (configWarnings config))
+      assert $ case configSections config of
+        [DirectEntry _, RoleGroup "research" [_], RoleGroup "research" []] -> True
+        _ -> False
+    other -> print other >> exitFailure
+  assert (parseConfig "(:version 2 :workspace :future-shape)" == Left (UnsupportedVersion 2))
+  mapM_ (assertCase invalidSchema)
+    [ "(:version -1 :workspace ())"
+    , "(:version \"1\" :workspace ())"
+    , "(:version 1 :version 1 :workspace ())"
+    , "(:version 1 :workspace () :workspace ())"
+    , "(:version 1 :workspace)"
+    , "(:version 1)"
+    , "(:version 0 :workspace () :description \"extra\")"
+    , "(:workspace ((:memory ((:file \"a\")))))"
+    , "(:version 1 :workspace ((:Memory ((:file \"a\")))))"
+    , "(:version 1 :workspace ((:bad_role ())))"
+    , "(:version 1 :workspace ((:file ((:file \"a\")))))"
+    , "(:version 1 :workspace ((:directory ((:file \"a\")))))"
+    , "(:version 1 :workspace ((:memory ((:unknown \"a\")))))"
+    , "(:version 1 :workspace ((:memory ((:archive ((:file \"a\")))))))"
+    , "(:version 1 :workspace ((:memory ((:file \"a\"))) (:archive ((:directory \"a\")))))"
+    , "(:version 1 :workspace ((:file \"a\") (:memory ((:file \"a\")))))"
+    , "(:version 1 :workspace () :description 0 :description 1)"
+    ]
+  case parseConfig "(:version 1 :workspace () :description (\"extra\" :custom 12) :future ())" of
+    Right config -> assert (configWarnings config == [UnknownTopLevelField "description", UnknownTopLevelField "future"])
+    other -> print other >> exitFailure
+  assert $ isLimit (parseConfig ("(:version 1 :workspace ((:memory (" <> BS.concat ["(:file \"p" <> TE.encodeUtf8 (DataText.pack (show i)) <> "\")" | i <- [1..1025 :: Int]] <> "))))"))
+  assert $ isLimit (parseConfig (BS.replicate 17 40 <> BS.replicate 17 41))

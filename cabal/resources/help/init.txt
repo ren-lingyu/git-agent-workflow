@@ -13,3 +13,6 @@ Options:
    --branch <name>         name of the new local GAW source branch (required)
    --worktree-path <path> create the deployed linked worktree at path
    --help                  show this help
+
+The default config is (:version 1 :workspace ()); no fixed memory, archive or
+skills directories are created. Older CLIs may not understand this config.

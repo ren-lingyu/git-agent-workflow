@@ -15,13 +15,14 @@ module Gaw.Protocol.Status
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BSC
 
-data BranchClass = OrdinaryBranch | ValidBranch | InvalidBranch
+data BranchClass = OrdinaryBranch | ValidBranch | InvalidBranch | IndeterminateBranch
   deriving (Eq, Show)
 
 data StatusBranch = StatusBranch
   { statusBranchRef :: BS.ByteString
   , statusBranchOid :: Maybe BS.ByteString
   , statusBranchClass :: BranchClass
+  , statusBranchWarnings :: [BS.ByteString]
   , statusBranchDetail :: Maybe BS.ByteString
   } deriving (Eq, Show)
 
@@ -59,7 +60,7 @@ data StatusReport = StatusReport
 
 statusHealthy :: StatusReport -> Bool
 statusHealthy report =
-  all ((/= InvalidBranch) . statusBranchClass) (statusBranches report)
+  all ((`elem` [OrdinaryBranch, ValidBranch]) . statusBranchClass) (statusBranches report)
   && all (not . badRef . protocolStatus) (statusProtocolRefs report)
   && protocolStatus (statusSelector report) `elem` [ProtocolMissing, ProtocolValid]
   && statusHook report /= HookConflict
@@ -87,6 +88,7 @@ renderStatusReport report = BS.concat
     renderGawBranch branch = "  " <> statusBranchRef branch <> " " <>
       maybe "" (<> " ") (statusBranchOid branch) <> branchName (statusBranchClass branch) <>
       maybe "" ("; " <>) (statusBranchDetail branch) <> "\n" <>
+      BS.concat ["    warning: " <> warning <> "\n" | warning <- statusBranchWarnings branch] <>
       BS.concat ["    at " <> worktreePath tree <> "\n"
         | tree <- statusWorktrees report, worktreeBranch tree == Just (statusBranchRef branch)]
 
@@ -112,6 +114,7 @@ branchName kind = case kind of
   OrdinaryBranch -> "ordinary"
   ValidBranch -> "valid"
   InvalidBranch -> "invalid"
+  IndeterminateBranch -> "indeterminate"
 
 protocolStatusName :: ProtocolStatus -> BS.ByteString
 protocolStatusName kind = case kind of

@@ -3,6 +3,14 @@
 module Gaw.Protocol.Config
   ( Config
   , ConfigError (..)
+  , ConfigVersion (..)
+  , WorkspaceSection (..)
+  , ConfigWarning (..)
+  , configVersion
+  , configSections
+  , configWarnings
+  , renderConfigWarning
+  , unsupportedVersionDetail
   , WorkspaceEntry
   , WorkspaceKind (..)
   , WorkspacePath
@@ -26,16 +34,42 @@ data ConfigError
   = InvalidSyntax T.Text
   | InvalidSchema T.Text
   | LimitExceeded T.Text
+  | UnsupportedVersion Integer
   deriving (Eq, Show)
 
-newtype Config = Config [WorkspaceEntry]
+data ConfigVersion = ConfigV0 | ConfigV1
   deriving (Eq, Show)
+
+data WorkspaceSection
+  = DirectEntry WorkspaceEntry
+  | RoleGroup T.Text [WorkspaceEntry]
+  deriving (Eq, Show)
+
+newtype ConfigWarning = UnknownTopLevelField T.Text
+  deriving (Eq, Show)
+
+data Config = Config
+  { configVersion :: ConfigVersion
+  , configSections :: [WorkspaceSection]
+  , configWarnings :: [ConfigWarning]
+  } deriving (Eq, Show)
 
 configWorkspace :: Config -> [WorkspaceEntry]
-configWorkspace (Config entries) = entries
+configWorkspace = concatMap entries . configSections
+  where
+    entries (DirectEntry entry) = [entry]
+    entries (RoleGroup _ paths) = paths
 
 effectiveWorkspace :: Config -> Workspace
 effectiveWorkspace = Workspace . configWorkspace
+
+renderConfigWarning :: ConfigWarning -> BS.ByteString
+renderConfigWarning (UnknownTopLevelField name) =
+  "Ignoring unknown top-level config field :" <> TE.encodeUtf8 name
+
+unsupportedVersionDetail :: Integer -> BS.ByteString
+unsupportedVersionDetail version =
+  "Unsupported config version " <> TE.encodeUtf8 (T.pack (show version))
 
 parseConfig :: BS.ByteString -> Either ConfigError Config
 parseConfig bytes = do
@@ -47,26 +81,46 @@ parseConfig bytes = do
 
 decodeConfig :: SExpr -> Either ConfigError Config
 decodeConfig form = do
-  checkKeywords form
-  configFromForm form
-  where
-    checkKeywords (SList forms) = mapM_ checkKeywords forms
-    checkKeywords (SKeyword keyword)
-      | keyword `notElem` ["workspace", "file", "directory"] =
-          Left (InvalidSchema "Unknown config keyword")
-    checkKeywords _ = Right ()
-
-configFromForm :: SExpr -> Either ConfigError Config
-configFromForm (SList [SKeyword "workspace", SList forms]) = do
-  if length forms > 1024
+  fields <- plist form
+  version <- case lookup "version" fields of
+    Nothing -> Right ConfigV0
+    Just (SInteger 0) -> Right ConfigV0
+    Just (SInteger 1) -> Right ConfigV1
+    Just (SInteger number) | number >= 0 -> Left (UnsupportedVersion number)
+    _ -> Left (InvalidSchema "Config version must be a non-negative integer")
+  let unknown = [name | (name, _) <- fields, name `notElem` ["version", "workspace"]]
+  if version == ConfigV0 && not (null unknown)
+    then Left (InvalidSchema "Unknown config keyword")
+    else pure ()
+  forms <- case lookup "workspace" fields of
+    Just (SList entries) -> Right entries
+    _ -> Left (InvalidSchema "Expected a :workspace list")
+  sections <- traverse (sectionFromForm version) forms
+  let config = Config version sections (map UnknownTopLevelField unknown)
+      entries = configWorkspace config
+      paths = map workspaceEntryPath entries
+  if length entries > 1024
     then Left (LimitExceeded "Workspace contains more than 1024 entries")
-    else do
-      entries <- traverse entryFromForm forms
-      let paths = map workspaceEntryPath entries
-      if Set.size (Set.fromList paths) == length paths
-        then Right (Config entries)
-        else Left (InvalidSchema "Duplicate workspace path")
-configFromForm _ = Left (InvalidSchema "Expected exactly one :workspace form")
+    else if Set.size (Set.fromList paths) /= length paths
+      then Left (InvalidSchema "Duplicate workspace path")
+      else Right config
+
+plist :: SExpr -> Either ConfigError [(T.Text, SExpr)]
+plist (SList forms) = go Set.empty forms
+  where
+    go _ [] = Right []
+    go seen (SKeyword key:value:rest)
+      | not (validName key) = Left (InvalidSchema "Invalid top-level config keyword")
+      | key `Set.member` seen = Left (InvalidSchema "Duplicate top-level config key")
+      | otherwise = ((key, value) :) <$> go (Set.insert key seen) rest
+    go _ _ = Left (InvalidSchema "Config must be a keyword/value plist")
+plist _ = Left (InvalidSchema "Config must be a keyword/value plist")
+
+sectionFromForm :: ConfigVersion -> SExpr -> Either ConfigError WorkspaceSection
+sectionFromForm ConfigV1 (SList [SKeyword role, SList forms])
+  | role `notElem` ["file", "directory"] && validName role =
+      RoleGroup role <$> traverse entryFromForm forms
+sectionFromForm _ form = DirectEntry <$> entryFromForm form
 
 entryFromForm :: SExpr -> Either ConfigError WorkspaceEntry
 entryFromForm (SList [SKeyword kind, SString text]) = do
@@ -77,6 +131,14 @@ entryFromForm (SList [SKeyword kind, SString text]) = do
   path <- validatePath text
   Right (WorkspaceEntry checkedKind path)
 entryFromForm _ = Left (InvalidSchema "Workspace entry must contain kind and path")
+
+validName :: T.Text -> Bool
+validName name = case T.uncons name of
+  Just (first, rest) -> lower first && T.all continuation rest
+  Nothing -> False
+  where
+    lower c = c >= 'a' && c <= 'z'
+    continuation c = lower c || (c >= '0' && c <= '9') || c == '-'
 
 validatePath :: T.Text -> Either ConfigError WorkspacePath
 validatePath path

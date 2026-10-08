@@ -18,3 +18,7 @@ failure returns nonzero.
 --no-progress after a report is produced. Git's output is passed through
 unchanged and may describe unrelated repository problems. This mode returns
 zero only if the GAW report has no protocol errors and Git fsck succeeds.
+
+Supported v1 configs may carry non-blocking unknown-field warnings, printed
+under the corresponding branch. Unsupported config versions are shown as
+indeterminate with a reason; they do not become ordinary invalid state.

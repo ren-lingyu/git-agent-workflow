@@ -76,12 +76,16 @@ test-suite git-adapter-tests
   type:             exitcode-stdio-1.0
   hs-source-dirs:   test
   main-is:          GitAdapter.hs
+  other-modules:    CliConfig
+  build-tool-depends: git-agent-workflow:git-gaw
   build-depends:
       base >=4.16 && <5
     , bytestring
     , directory
     , git-agent-workflow
     , os-string
+    , filepath
+    , process
     , unix
   default-language: Haskell2010
   ghc-options:      -Wall
