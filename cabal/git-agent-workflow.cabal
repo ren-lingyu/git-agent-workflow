@@ -8,6 +8,9 @@ extra-source-files:
     resources/help/*.txt
 data-files:
     share/skills/git-agent-workflow/SKILL.md
+    share/skills/git-agent-workflow/references/memory.md
+    share/skills/git-agent-workflow/references/archive.md
+    share/skills/git-agent-workflow/references/skills.md
 
 library
   hs-source-dirs:   src

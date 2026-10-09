@@ -5,31 +5,76 @@ description: Use Git Agent Workflow (GAW) to establish, recover, maintain, groun
 
 # Git Agent Workflow
 
-GAW is a persistent agent-memory loop, not an ordinary project branching workflow. The declared GAW workspace holds current working memory; a GAW commit is a memory checkpoint; its first-parent chain preserves temporal memory history. Additional project-commit parents ground a checkpoint in exact project snapshots without merging their trees. Conversation and tool traces are evidence, not automatically durable memory.
+GAW is persistent agent memory, not an ordinary project branch workflow.
+The workspace tree holds each durable state, the first-parent chain records
+its evolution, and additional project parents associate exact snapshots
+without merging their trees. Workspace content explains goals, evidence,
+causes, decisions and results.
 
 ## Establish state and resume
 
-When repository lifecycle state is unknown, run `git gaw status` and read the report before choosing a branch, worktree, `init`, or `deploy`. Its default zero exit status means a report was produced, not that every reported branch or selector is valid. Do not run `git gaw status --diagnose` at every session start; it adds repository-wide Git diagnostics when a deeper investigation is warranted.
+When lifecycle state is unknown, run `git gaw status` and read the whole report
+before choosing a branch, worktree or lifecycle action. Exit zero means a
+report was produced, not that every finding is healthy. Reserve
+`status --diagnose` for a relevant repository-wide investigation.
 
-Enter the actual GAW worktree and run `git gaw check` for current-worktree readiness. `status` is repository-wide discovery; `check` examines the current committed and staged candidate but does not replace native Git inspection of unstaged or untracked changes. `check` may run in a worktree subdirectory; `git gaw commit` must run at its root.
+Enter the reported GAW worktree, run `git gaw check`, read `.gaw/config` and
+recover current goals, established conclusions, unresolved questions,
+provenance and the next action from its declared workspace first. Check also
+native Git status and unstaged/untracked changes: check examines HEAD and the
+staged candidate. If current memory is insufficient, inspect relevant recent
+`git gaw show` checkpoints, then older first-parent history or an explicitly
+relevant project snapshot as needed; do not scan all history by default.
 
-Read the workspace declaration in `.gaw/config` and follow the existing organization of the declared paths. Implicit or explicit v0 declares paths without roles; do not infer roles from directory names alone. V1 can mix direct paths with role groups and repeat a role group. Use its declared role metadata to discover organization: `memory` holds current goals, state, decisions, evidence and next actions; `archive` holds historical evidence and raw material, not automatically current instructions; `skills` holds reusable agent workflows. Custom roles are valid and need project guidance or a relevant skill to explain them. The CLI flattens all declarations for the same Git validation and protection rules; roles have no inheritance or precedence, including for nested paths. Do not edit `.gaw/config` as routine memory maintenance, migrate historical configs or require a version upgrade just to resume memory work. Config warnings from `check`/`status` are non-blocking metadata diagnostics; an unsupported config version is a readiness error requiring a compatible CLI, not evidence that ref protection may be bypassed. Recover current goals, established conclusions, unresolved questions, provenance, and the next actionable step from the current workspace first. If that is insufficient, use `git gaw show` to inspect recent relevant checkpoints, then older first-parent history or an explicitly relevant associated project snapshot only as needed. Do not scan the whole history just to reconstruct a conversation.
+Use v1 role metadata to discover organization, including mixed direct entries
+and repeated groups. V0 and ungrouped entries declare no role: follow project
+guidance and existing organization without inventing a declared role from a
+directory name. Custom roles are valid and need project guidance to explain
+them. Roles do not add Git protection, inheritance or precedence. Unknown-field
+warnings are non-blocking metadata diagnostics; an unsupported version needs
+a compatible CLI, not a protection bypass. Do not change config as routine
+memory maintenance or require a version upgrade to resume.
 
-## Maintain current memory
+## Shared content and snapshot constraints
 
-Distill work into information that could help a later agent act: the current objective and state, important decisions and reasons, difficult findings, unresolved issues, and useful handoff instructions. Respect an existing repository convention for raw evidence, but do not default to archiving every message or tool result. Do not impose a fixed set of memory files; create a new file only when the declared workspace lacks a suitable place.
+- **Memory** holds current project knowledge, goals, decisions, verified facts,
+  evidence, unresolved issues and next actions.
+- **Archive** holds selected historical or raw evidence. Its contents do not
+  automatically become current memory or agent instructions.
+- **Skills** hold stable reusable procedures, constraints, routing and needed
+  resources; current progress and temporary project facts belong in memory.
+- **First-parent history** preserves evolution and superseded durable states.
+
+These are workflow roles, not required directory names or a closed CLI role
+set. Maintain current memory promptly when a substantive finding, decision,
+blocker or next action changes recovery; checkpoint selectively.
+
+The complete workspace snapshot must explain the durable state at that point.
+Its references, terms and conventions must agree with each other, without
+requiring a later checkpoint's layout or explanation. Individual files need
+not repeat all context. Explicit external dependencies are allowed and need
+not be copied, but their identity, reference roots and prerequisites must be
+clear. Interpret earlier snapshots using their own conventions; do not apply
+new standards retroactively or rewrite history to make it look current.
+
+Review coordination across the whole candidate snapshot, not only new
+paragraphs. Use relevant summaries, manifests and targeted reads while
+respecting file-size, sensitive-data and workspace permissions. This semantic
+review belongs to the skill; the CLI does not validate natural language.
 
 Use workspace content to explain goals, evidence, causal relationships, and results; the Git graph supplies checkpoint evolution and exact project associations. Do not use GAW checkpoint OIDs as durable semantic identifiers, either for the checkpoint itself or for other checkpoints expected to remain identifiable across history rewriting. Prefer Git relationships and stable workspace paths. Usually omit project OIDs already supplied by project-parent edges; retain them when independent historical lookup or reproducibility needs justify them, without treating object identity as stable semantic identity across rewriting. Historical evidence, diagnostic output, and other hashes are not automatically semantic dependencies merely because they contain hash strings.
 
-Maintain current memory as substantive work evolves, not only during retrospective consolidation or session handoff. When a verified finding, adopted decision, blocker, objective, current state, or next action materially changes what a future agent should resume from, update the declared workspace promptly. This does not require a checkpoint for every update; create one only when the resulting state has independent recovery value.
+## Load workflow details when needed
 
-Before reconstructing a session that predates usable GAW memory history, establish its full evidence horizon, honoring any start or end boundary the user gives. Do not silently replace that horizon with the currently visible conversation tail, the current workspace, or the beginning of existing GAW history. Survey the whole horizon coarsely before choosing checkpoints. Account for each substantive interval as already represented in GAW history, examined for durable states, or lacking recoverable evidence; existing GAW history can establish what was persisted, but does not redefine where the session began.
+- For substantive current-memory updates, retrospective reconstruction or
+  handoff, read [the memory workflow](references/memory.md).
+- For selection, faithful capture, description and verification of historical
+  material, read [the archive workflow](references/archive.md).
+- For creating, modifying, referencing, renaming or retiring project skills,
+  read [the project-skill workflow](references/skills.md).
 
-When substantive work predates usable GAW memory history, treat the session as evidence for both current memory and distinct earlier durable states. Recover consequential findings, adopted or revised decisions, validation results, and phase transitions as separate checkpoints only when each state has independent recovery value and its content and relative order are supported by the evidence. For each checkpoint, make the declared workspace represent the full durable state recoverable at that point, then create GAW commits in the supported first-parent order. Leave the final workspace expressing the current state, correcting stale content when newer evidence supersedes it. These commits are created at consolidation time; do not backdate them to the original session.
-
-Do not replay the conversation or tool transcript, checkpoint minor steps, or invent intermediate states or ordering. Before the first reconstructed checkpoint, pause to seek further evidence if a substantive gap within the requested horizon might hide earlier durable states or affect their order. If the gap is confirmed unrecoverable, proceed only with supported evolution; identify the gap in the current memory when creating checkpoints and report it explicitly rather than claiming full coverage. If no checkpoint is warranted, report the gap without writing memory. Where evolution is uncertain, keep only the smallest checkpoint set whose states and order can be supported; if only the final state is supported, consolidate that state alone, and if nothing durable is new, leave the workspace unchanged. Before declaring reconstruction complete, account for the whole original horizon, including persisted intervals and unrecoverable gaps. Continue from existing valid GAW history rather than rewriting it as part of routine consolidation; correcting an already-collapsed historical checkpoint is separate recovery work.
-
-Treat remembered project facts as a useful prior, not proof of current behavior. Recheck a potentially stale claim against the current project state when it matters, then update or remove obsolete current-memory text. Keep current memory current; let GAW history preserve earlier plans, assumptions, and conclusions instead of growing an append-only progress log by default.
+Read only the references relevant to the task. They inherit these shared
+constraints and do not create additional execution permissions.
 
 ## Ground and checkpoint selectively
 
@@ -41,22 +86,44 @@ Keep project-parent associations within a checkpoint as homogeneous in meaning a
 
 For each retrospective checkpoint, assess additional project parents independently of its first-parent memory position. Attach each parent only when existing evidence unambiguously identifies the exact commit against which that checkpoint's relevant work was performed. Current `HEAD`, nearby history, timestamps, and likely work intervals do not establish provenance; omit uncertain parents rather than guessing or attaching candidate ranges. Missing project provenance does not prevent a memory checkpoint. A later revalidation may ground the revalidated state in the snapshot actually checked, but does not establish the original session's provenance; do not revalidate merely to obtain a parent. If missing original provenance affects interpretation, record that uncertainty briefly in current memory.
 
-`git gaw commit` takes its complete candidate tree from the current index; it neither stages files nor includes unstaged or untracked changes. Before a checkpoint in the GAW worktree:
+`git gaw commit` uses the complete current index, not unstaged or untracked
+files, and must run at the GAW worktree root. Before a checkpoint:
 
-1. Inspect `git status`, `git diff`, and `git diff --cached` to understand the entire index, not just files changed in this session.
-   A new checkpoint cannot mix changed paths inside and outside `.gaw/`, including additions, deletions, content, modes or cross-boundary moves. Compare the candidate with its first-parent tree; unchanged paths merely present in the index do not count. Stage protocol changes separately from workspace content, and preserve snapshot validity for each checkpoint. Root initialization and old history are unaffected; unchanged-tree associations retain their existing rules. `git gaw check` does not replace this commit-transition check.
-2. Stage intended memory with `git add <explicit-workspace-paths>`; avoid broad staging unless its full scope has been reviewed.
-3. Inspect `git diff --cached` again, run `git gaw check`, and resolve findings that make the candidate invalid.
-4. From the GAW worktree root, run `git gaw commit` with an appropriate message and only the selected project commits, then use `git gaw show` when the resulting checkpoint needs inspection.
+1. Inspect native Git status, unstaged diff and the entire staged diff. Confirm
+   that the complete candidate snapshot is valid and coherent.
+2. Separate changed paths inside `.gaw/` from changed paths outside it,
+   including additions, deletions, content, modes and cross-boundary moves.
+   The comparison is with the first-parent tree; unchanged index entries do
+   not count. Root init and old history are unaffected, and unchanged-tree
+   associations retain existing rules. `git gaw check` does not replace this
+   commit-transition check. Do not invent extra commit categories or mandated
+   migration steps; preserve validity of each intentional intermediate state.
+3. Stage intended declared-workspace paths explicitly, review the complete
+   index again, run `git gaw check` and resolve invalid-candidate findings.
+4. Use public `git gaw commit` with an appropriate message and only justified
+   project parents. Inspect the result with `git gaw show` when needed.
 
-GAW decides whether and what to checkpoint, not the general commit-message style. Reuse a specialized message skill when its evidence model applies; do not force one that requires a nonempty staged diff onto a checkpoint whose tree is unchanged but whose project-parent association matters.
+GAW determines recovery value, not commit-message style. Reuse a suitable
+message workflow when applicable, without forcing a nonempty-diff requirement
+onto a meaningful unchanged-tree project association.
 
-## Handoff, lifecycle, and boundaries
+## Lifecycle and authority
 
-Before ending substantive work, leave enough current memory for an agent without this conversation to know the goal, verified state, open questions, next action, and necessary provenance. Handoff is a final consistency check on memory already maintained during the work, not the normal time for the session's first memory update. Do not make a meaningless checkpoint solely because the session is ending. Keep the deployment in place for the next session; `git gaw undeploy` is not a session-end command.
+Before ending work, check that current memory already maintained during the
+work is sufficient to resume. Do not checkpoint solely for a session boundary.
+Keep deployment in place; undeploy is not a session-end action.
 
 Use `git gaw init` only when repository inspection shows no existing GAW history or GAW-like state. If either exists, inspect or recover it rather than reinitializing. Use `git gaw deploy` when an existing valid local GAW branch needs to be selected or materialized as local deployment. Repeating deployment against the same valid state is safe, but deploy does not fetch or repair malformed or conflicting GAW state. `git gaw branch` rename and deletion, and `undeploy`, are explicit lifecycle work, not part of routine memory maintenance. For damage or ambiguity, inspect `git gaw status`, the relevant worktree's `git gaw check`, and `git gaw help recovery` or `git gaw help hooks`; stop before manual ref changes, hook bypass, or speculative repair.
 
-Within a validated GAW worktree, editing declared memory, explicitly staging it, and creating GAW checkpoints are the normal agent-memory loop. This narrow capability remains subject to higher-priority host policy; if the host does not provide it, follow that policy and report the host-integration gap rather than treating manual checkpointing as a GAW workflow requirement. It does not authorize native Git commits or history mutation in an ordinary project worktree, merge/rebase/reset, fetch/push, or GAW lifecycle changes.
+Within a validated GAW worktree, declared memory edits, explicit staging and
+GAW checkpoints form the normal loop, subject to active host authorization.
+If the host does not grant that capability, report the integration gap rather
+than treating manual checkpoints as a GAW requirement. A skill or plan does
+not authorize project writes, builds, networking or external actions.
 
-Use public `git gaw` commands for GAW lifecycle, validation, checkpoint, and history operations. Native Git may be used for ordinary read-only repository/worktree inspection and for explicit staging inside the validated GAW worktree. Do not use native Git to mutate GAW refs or history. Do not call hidden machine options, internal implementation APIs, or low-level ref and hook operations. Consult `git gaw help <command>` for exact syntax instead of treating this skill as a CLI reference.
+Use public GAW commands for lifecycle, validation, checkpoint and history
+operations. Native Git is for ordinary read-only inspection and authorized
+explicit staging. Do not use native commits or direct ref updates to mutate
+GAW history, call hidden machine options/internal APIs, bypass hooks, perform
+ordinary project history mutations, or silently repair state. Consult public
+`git gaw help <command>` for exact syntax.
