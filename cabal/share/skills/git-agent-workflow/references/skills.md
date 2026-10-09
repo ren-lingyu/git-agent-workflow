@@ -57,6 +57,54 @@ Keep substantial workflow detail in resources routed from the main skill
 when that reduces irrelevant context. Verify links after installation or
 distribution, not only against the development checkout.
 
+## Transplant and adapt workflows
+
+When project practice informs a general skill, or a general workflow gains
+an applicable improvement, identify the affected existing project skills.
+Separate reusable procedures and decision criteria from project-specific
+constraints, parameters, resources and permissions. Distinguish improvements
+supported by practice from temporary state that belongs in memory. Preserve
+useful operational detail when generalizing, not just abstract principles.
+
+From project to general, extract the reusable procedure and its reasons, then
+adapt it to the general skill's responsibility and scope. Do not mechanically
+copy local paths, naming, resources or permission assumptions, or impose one
+project's mandatory constraints on unrelated projects.
+
+From general to project, first confirm the relevant capability is actually
+available in the target agent environment. A change merged into the source
+repository, a released version and an available installed skill are distinct
+states. Inspect affected project skills and integrate useful improvements
+into their existing procedures, preserving local constraints and complete
+steps. Validate the adapted workflow against the project's actual resources,
+tools and conditions within its authorized boundaries.
+
+Transplantation is not a deduplication exercise. Useful workflow guidance can
+remain at both levels. References can explain dependencies or route work,
+but do not replace useful self-contained project instructions merely because
+a general skill also describes the procedure. Do not require every project
+skill to depend on a particular general reference file. Retire a skill only
+when it has lost independent purpose, not because its text overlaps.
+
+For example, org-texmacs-gaw-archive supplies a complete archive procedure
+with selection, manifests, source records and byte verification; some of
+that practice informed the general archive workflow. Later general guidance
+distinguishes the project HEAD inspected during capture from original source
+provenance, chooses project parents from actual evidence, and distinguishes
+redacted derivatives from original-byte copies. When maintaining that project,
+evaluate integrating these improvements into its archive procedure while
+retaining useful snapshot naming, manifest conventions and complete steps.
+This example does not authorize modifying that project or imply its agent
+environment has adopted the newer general workflow.
+
+For an authorized adaptation, check skill names, triggers, callers, resource
+references and dependencies together, and update affected skills and routing
+so the new workspace snapshot explains itself coherently. Preserve earlier
+checkpoints and their conventions. Discovering a maintenance need grants no
+permission to read or modify another worktree, install environment or history;
+obtain the target project's required authorization. No workflow IDs, sync
+database, automatic transplantation or automatic self-maintenance are needed.
+
 ## Evolve the current snapshot coherently
 
 When changing a skill, inspect its callers and references, preserve unrelated
