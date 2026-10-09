@@ -1,0 +1,103 @@
+GAW configuration
+
+The configuration is a 100644 blob at .gaw/config in the independent GAW
+tree. Edit it in the GAW worktree, not the ordinary project worktree.
+It declares allowed workspace paths; the CLI does not interpret their
+natural-language contents.
+
+Versions and syntax
+
+The top level is a keyword/value plist with a required :workspace list and
+an optional non-negative decimal integer :version. Top-level keyword names
+use [a-z][a-z0-9-]*. Duplicate keys and malformed values are rejected.
+
+Without :version, the original format is implicit v0:
+
+    (:workspace
+     ((:directory "memory")
+      (:directory "skills")))
+
+Explicit v0 uses the same workspace structure:
+
+    (:version 0
+     :workspace
+     ((:file "CONTEXT.md")
+      (:directory "notes")))
+
+V0 has no role information. V1 accepts optional role groups together with
+direct declarations:
+
+    (:version 1
+     :workspace
+     ((:memory ((:directory "notes") (:file "CONTEXT.md")))
+      (:archive ((:directory "history")))
+      (:skills ((:directory "agent-skills")))
+      (:directory "misc")))
+
+git gaw init generates (:version 1 :workspace ()) without predefined
+directories. Declarations need not exist in the tree and do not create files
+or directories.
+
+Role groups
+
+A group contains a list of :file/:directory entries, so even one entry needs
+the extra list: (:memory ((:directory "notes"))).
+Role names match [a-z][a-z0-9-]*; file and directory are reserved for entries.
+Custom names such as research are legal without warnings. A role group may
+appear repeatedly, retaining declaration order. Groups cannot contain other
+role groups. No role is required.
+
+The decoder preserves metadata and flattens all declarations into the same
+effective workspace. Roles add no path coverage, inheritance, precedence or
+ref protection. Their workflow meaning belongs in skills or project guidance;
+directory names do not invent declared roles for v0 or direct entries.
+
+Paths and coverage
+
+Paths are literal Git paths relative to the GAW worktree root. They must be
+nonempty and canonical, using / separators: no absolute or trailing /, empty
+components, . or .. components, or backslashes. A root .gaw component and any
+.git component are reserved, with ASCII case-insensitive comparison.
+
+A :file entry permits the named Git file entry; a :directory permits its
+subtree. Necessary ancestor trees are allowed. If a declared path is present,
+its Git kind must match; supported file entries are regular blobs, executable
+blobs and symlink blobs. The config itself must remain a 100644 blob.
+Project-parent trees must not track declared workspace paths or reserved GAW
+paths, including conflicting ancestor/descendant paths.
+Ordinary directory ancestors may remain when their contents stay disjoint;
+an ancestor file occupying a declared path's route is a conflict.
+
+Nested declarations are allowed, including across roles, without role
+inheritance or override semantics. Identical paths are rejected even if their
+kinds or groups differ. The reserved .gaw namespace is protocol content, not
+a workspace declaration.
+
+Parsing is restricted to lists, keywords, strings, decimal integers and
+semicolon comments, without reader macros or evaluation. Strings support
+escaped double quotes and backslashes; path validation still rejects a
+decoded backslash. Invalid UTF-8, a BOM, unsupported escapes and literal ASCII
+control characters in strings are rejected. Limits are 65,536 config bytes,
+16 list levels, 1,024 flattened declarations and 4,096 UTF-8 bytes per path.
+
+Diagnostics and compatibility
+
+V0 rejects unknown top-level fields. V1 ignores their meaning and retains a
+field-name warning; their values must still satisfy restricted syntax and
+limits. check reports HEAD and index warnings separately; status shows them
+under the relevant branch. Warnings do not invalidate the config or change
+exit status. Other commands and the protection hook do not print them.
+A field changing core protocol semantics needs a new config version.
+
+Unsupported version numbers are not guessed as v0/v1. An unsupported-version
+error makes committed-state inspection indeterminate and protection remains
+conservative; use a compatible CLI. Other syntax/schema errors remain errors.
+New CLIs read supported old configs; older CLIs need not understand v1.
+Each historical checkpoint is interpreted with its own config, not today's
+HEAD config, and no history migration is required.
+
+HEAD and staged configs are read independently from immutable Git objects.
+Unstaged edits are not included in check or commit. A new checkpoint cannot
+change paths both inside and outside .gaw/: stage and commit those changes
+separately while keeping each candidate valid. check does not replace this
+commit-transition rule. See git gaw help check and git gaw help commit.

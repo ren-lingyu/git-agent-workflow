@@ -440,9 +440,14 @@ fsck is not run.
 
 ** Command Help
 GAW provides overview and command-specific help through =git gaw help= and
-=git gaw help init|deploy|undeploy|branch|commit|show|check|status|hooks|recovery=.  The
+=git gaw help init|deploy|undeploy|branch|commit|show|check|status|config|hooks|recovery=.  The
 overview is also available as =git gaw --help= or =git gaw -h=, while each
 command accepts =--help= as its sole argument.
+
+=git gaw help config= provides the workspace format, version, role, path and
+compatibility reference.  =config=, =hooks= and =recovery= are help-only topics,
+not additional commands.  Command help covers interfaces and Git protocol;
+the bundled skill covers agent workflows.
 
 Help text is maintained as independent plain-text files under
 =cabal/resources/help/=.  Their bytes are embedded in the executable at
