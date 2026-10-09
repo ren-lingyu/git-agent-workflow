@@ -16,3 +16,4 @@ Options:
 
 The default config is (:version 1 :workspace ()); no fixed memory, archive or
 skills directories are created. Older CLIs may not understand this config.
+See git gaw help config for versions, role groups and path rules.

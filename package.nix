@@ -63,6 +63,16 @@ let
                 with archive.extractfile(member) as stream:
                     if stream.read(1048577) != expected:
                         raise ValueError(f"Source-distribution resource differs: {name}")
+            help_root = pathlib.Path("resources/help")
+            help_files = sorted(help_root.glob("*.txt"))
+            for path in help_files:
+                member = archive.getmember(f"{prefix}/{path.as_posix()}")
+                if not member.isfile():
+                    raise ValueError(f"Nonregular help source: {path}")
+                with archive.extractfile(member) as stream:
+                    if stream.read(1048577) != contents(path, help_root.resolve()):
+                        raise ValueError(f"Source-distribution help differs: {path}")
+            print(f"Verified source-distribution help: {len(help_files)} files")
     elif mode == "installed":
         check_tree(pathlib.Path(sys.argv[3]))
     elif mode == "self-test":

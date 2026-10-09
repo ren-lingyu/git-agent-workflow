@@ -3,10 +3,11 @@
 module CliConfig (configCliTests) where
 
 import Control.Exception (finally)
-import Control.Monad (unless)
+import Control.Monad (unless, forM_)
 import qualified Data.ByteString.Char8 as BSC
 import Data.List (isInfixOf, intercalate)
 import Gaw.Application.State (inspectCommittedState)
+import Gaw.Protocol.Config (parseConfig, configVersion, ConfigVersion (..))
 import Gaw.Protocol.Ref (parseSourceRef)
 import Gaw.Protocol.State
 import Gaw.System.Git (Git (..), GitInvocation (..), GitResult (..), runGitPosix)
@@ -27,6 +28,7 @@ configCliTests temporary git = do
   let root = temporary </> "config-cli"
   createDirectory root
   finally (do
+    helpTopics candidate root
     newConfig candidate root
     boundaryChanges candidate root
     migrateLegacy candidate root
@@ -70,6 +72,47 @@ configCliTests temporary git = do
       _ <- gitOk directory ["add", "--", "project.txt"]
       nativeCommit directory "project"
       pure directory
+    helpTopics candidate root = do
+      let commands = ["init", "deploy", "undeploy", "branch", "commit", "show", "check", "status"]
+          helpOnly = ["config", "hooks", "recovery"]
+      overview <- readFile "resources/help/overview.txt"
+      forM_ [["help"], ["--help"], ["-h"]] $ \args -> do
+        (code, out, err) <- invoke root candidate args
+        require (code == ExitSuccess && out == overview && null err)
+          ("overview alias changed: " ++ show args)
+      require (isInfixOf "Help-only topics: config, hooks, recovery." overview)
+        "config help is not discoverable"
+      forM_ (commands ++ helpOnly) $ \topic -> do
+        expected <- readFile ("resources/help/" ++ topic ++ ".txt")
+        (code, out, err) <- invoke root candidate ["help", topic]
+        require (code == ExitSuccess && out == expected && null err)
+          ("embedded help differs: " ++ topic)
+      forM_ commands $ \command -> do
+        topic <- cliOk candidate root ["help", command]
+        alias <- cliOk candidate root [command, "--help"]
+        require (topic == alias) ("command help alias changed: " ++ command)
+      forM_ helpOnly $ \topic -> do
+        usage <- cliFail candidate root [topic, "--help"]
+        require (isInfixOf "git-gaw: Usage:" usage) ("help topic became a command: " ++ topic)
+      forM_ ["not-a-topic", "overview"] $ \topic -> do
+        (code, out, err) <- invoke root candidate ["help", topic]
+        require (code == ExitFailure 1 && null out &&
+          err == "git-gaw: Unknown help topic: " ++ topic ++ "\n")
+          ("unknown-topic behavior changed: " ++ topic)
+      (extraCode, _, extraError) <- invoke root candidate ["help", "config", "extra"]
+      require (extraCode == ExitFailure 1 && isInfixOf "config|hooks|recovery" extraError)
+        "usage does not discover config or accepts extra help arguments"
+      source <- readFile "resources/help/config.txt"
+      let exampleBlocks [] = []
+          exampleBlocks (line:rest)
+            | take 4 line == "    " =
+                let (block, suffix) = span (\item -> take 4 item == "    ") rest
+                in unlines (map (drop 4) (line:block)) : exampleBlocks suffix
+            | otherwise = exampleBlocks rest
+      decoded <- mapM (either (fail . show) pure . parseConfig . BSC.pack)
+        (exampleBlocks (lines source))
+      require (map configVersion decoded == [ConfigV0, ConfigV0, ConfigV1])
+        "published v0/v1 configuration examples do not decode"
     newConfig candidate root = do
       directory <- seed root "new"
       let agent = root </> "agent"

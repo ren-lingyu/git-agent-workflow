@@ -44,6 +44,7 @@ version = BS.concat ["git-gaw ", BSC.pack (showVersion Package.version), "\n"]
 helpText :: BS.ByteString -> Maybe BS.ByteString
 helpText topic = case topic of
   "overview" -> Just $(embedFile "resources/help/overview.txt")
+  "config" -> Just $(embedFile "resources/help/config.txt")
   "commit" -> Just $(embedFile "resources/help/commit.txt")
   "show" -> Just $(embedFile "resources/help/show.txt")
   "check" -> Just $(embedFile "resources/help/check.txt")
@@ -91,7 +92,7 @@ usageText = BS.concat
   , "  git gaw show [options] [object...] [-- path...]\n"
   , "  git gaw check\n"
   , "  git gaw status [--diagnose]\n"
-  , "  git gaw help [init|deploy|undeploy|branch|commit|show|check|status|hooks|recovery]\n"
+  , "  git gaw help [init|deploy|undeploy|branch|commit|show|check|status|config|hooks|recovery]\n"
   ]
 
 runBranch :: [BS.ByteString] -> IO ExitCode
