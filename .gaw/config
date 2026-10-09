@@ -1,2 +1,4 @@
-(:workspace ((:directory "memory")
-             (:directory "skills")))
+(:version 1
+ :workspace ((:archive ((:directory "archive")))
+             (:skills ((:directory "skills")))
+             (:memory ((:directory "memory")))))
