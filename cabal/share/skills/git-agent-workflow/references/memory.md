@@ -10,6 +10,41 @@ Distill work into information that could help a later agent act: the current obj
 
 Maintain current memory as substantive work evolves, not only during retrospective consolidation or session handoff. When a verified finding, adopted decision, blocker, objective, current state, or next action materially changes what a future agent should resume from, update the declared workspace promptly. This does not require a checkpoint for every update; create one only when the resulting state has independent recovery value.
 
+## Track motivation and related work
+
+At the start of substantive work, identify its motivation: why it is needed,
+the problem it addresses and the intended outcome. Check known related issues,
+PRs, plans or other work items, and retain useful associations in current
+memory when they help later recovery. Work need not have an external issue,
+and checkpoints need not correspond one-to-one with work items.
+
+Keep motivation, external tracking, implementation status and verification
+status distinct. Update their relationship and the next action when goals,
+decisions, results or evidence materially change. Preserve enough context to
+resume without copying an issue's full contents. A changed project HEAD or a
+closing footer does not establish that the work or external tracking is done.
+
+At completion or a phase transition, record the conclusions supported by the
+implementation and verification evidence, and check whether related tracking
+still needs attention. Remind the user to update or close a work item when
+useful; external changes require their own authorization. An open issue can
+coexist with a completed implementation, and implementation completion does
+not imply verification completion or external closure.
+
+For example, help config may be motivated by making the installed CLI provide
+its own configuration and compatibility reference, tracked by issue #8, with
+implementation on main and a remaining action to confirm validation and
+handle any still-open tracking. This illustrates the relationship, not a
+fixed Markdown template or a claim about that issue's current state.
+
+Completed motivations and progress need not remain permanently in current
+memory. Remove or consolidate them when they no longer affect project state
+or the next action; first-parent history retains their evolution. Keep any
+conclusion still needed by future work in suitable current knowledge. Do not
+introduce motivation IDs, dedicated files or a required tracking system.
+
+## Reconstruct supported earlier states
+
 Before reconstructing a session that predates usable GAW memory history, establish its full evidence horizon, honoring any start or end boundary the user gives. Do not silently replace that horizon with the currently visible conversation tail, the current workspace, or the beginning of existing GAW history. Survey the whole horizon coarsely before choosing checkpoints. Account for each substantive interval as already represented in GAW history, examined for durable states, or lacking recoverable evidence; existing GAW history can establish what was persisted, but does not redefine where the session began.
 
 When substantive work predates usable GAW memory history, treat the session as evidence for both current memory and distinct earlier durable states. Recover consequential findings, adopted or revised decisions, validation results, and phase transitions as separate checkpoints only when each state has independent recovery value and its content and relative order are supported by the evidence. For each checkpoint, make the declared workspace represent the full durable state recoverable at that point, then create GAW commits in the supported first-parent order. Leave the final workspace expressing the current state, correcting stale content when newer evidence supersedes it. These commits are created at consolidation time; do not backdate them to the original session.
