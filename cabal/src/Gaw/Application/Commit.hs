@@ -18,7 +18,7 @@ import Gaw.Protocol.Config (effectiveWorkspace)
 import Gaw.System.Config (readConfigAtTree, configReadDetail)
 import Gaw.System.FileSystem (FileSystem (..))
 import Gaw.System.Git
-import Gaw.System.Repository (readTreeRecords)
+import Gaw.System.Repository (readTreeRecords, readChangedPaths)
 import System.OsPath.Posix (PosixPath)
 
 createCommit :: Monad m => Git m -> FileSystem m -> Clock m -> PosixPath
@@ -67,6 +67,11 @@ createCommit git fs clock directory request = runExceptT $ do
     pure (oid, projectEntries)
   firstTree <- resolveOid (objectIdBytes firstParent <> "^{tree}") GitFailure
     "Cannot resolve the first parent tree"
+  changedPaths <- if firstTree == stagedTree then pure [] else do
+    queried <- lift (readChangedPaths git directory firstTree stagedTree)
+    either (const (throwE (CommitError GitFailure "Cannot read the tree change paths")))
+      pure queried
+  either throwE pure (validateChangeBoundary changedPaths)
   plan <- either throwE pure (planCommit request source firstParent firstTree stagedTree
     (effectiveWorkspace config) entries projects)
   timestamp <- lift (unixTimestamp clock)

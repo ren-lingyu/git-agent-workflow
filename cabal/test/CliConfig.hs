@@ -9,7 +9,7 @@ import Data.List (isInfixOf, intercalate)
 import Gaw.Application.State (inspectCommittedState)
 import Gaw.Protocol.Ref (parseSourceRef)
 import Gaw.Protocol.State
-import Gaw.System.Git (runGitPosix)
+import Gaw.System.Git (Git (..), GitInvocation (..), GitResult (..), runGitPosix)
 import qualified System.OsString.Posix as OS
 import System.Directory (findExecutable, makeAbsolute, createDirectory,
   createDirectoryIfMissing, removePathForcibly, removeFile)
@@ -28,6 +28,7 @@ configCliTests temporary git = do
   createDirectory root
   finally (do
     newConfig candidate root
+    boundaryChanges candidate root
     migrateLegacy candidate root
     futureVersion candidate root
     ) (removePathForcibly root)
@@ -116,6 +117,116 @@ configCliTests temporary git = do
       require (still == before) "rejected candidates changed HEAD"
       _ <- cliOk candidate agent ["branch", "-m", "renamed"]
       _ <- cliOk candidate agent ["branch", "-m", "agents"]
+      pure ()
+    stageRawPath directory path = do
+      blob <- gitOk directory ["hash-object", "-w", "--stdin"]
+      executable <- OS.fromBytes (BSC.pack git)
+      location <- OS.fromBytes (BSC.pack directory)
+      result <- runGit (runGitPosix executable) (GitInvocation location
+        ["update-index", "--add", "--cacheinfo", "100644",
+          BSC.pack (takeWhile (/= '\n') blob), path] Nothing [])
+      require (gitExitCode result == 0) "could not stage the raw-byte fixture path"
+    removeRawPath directory path = do
+      executable <- OS.fromBytes (BSC.pack git)
+      location <- OS.fromBytes (BSC.pack directory)
+      result <- runGit (runGitPosix executable) (GitInvocation location
+        ["update-index", "--force-remove", path] Nothing [])
+      require (gitExitCode result == 0) "could not unstage the raw-byte fixture path"
+    boundaryChanges candidate root = do
+      directory <- seed root "boundary"
+      let agent = root </> "boundary-agent"
+          metadata = agent </> ".gaw/meta"
+          note = agent </> "memory/old"
+          rawPath = BSC.pack "memory/" <> BSC.singleton '\255'
+          rejectMixed label = do
+            before <- gitOk agent ["rev-parse", "HEAD"]
+            errorText <- cliFail candidate agent ["commit", "-m", label]
+            require (isInfixOf ":MIXED-PROTOCOL-CHANGES" errorText)
+              ("missing mixed-change error for " ++ label)
+            after <- gitOk agent ["rev-parse", "HEAD"]
+            require (before == after) ("mixed change moved HEAD for " ++ label)
+      _ <- cliOk candidate directory ["init", "--branch", "agents", "--worktree-path", agent]
+      config agent "(:version 1 :workspace ((:memory ((:directory \"memory\")))))\n"
+      _ <- cliOk candidate agent ["commit", "-m", "config only"]
+      createDirectory (agent </> "memory")
+      writeFile metadata "metadata\n"
+      writeFile note "memory\n"
+      _ <- gitOk agent ["add", "--", ".gaw/meta", "memory/old"]
+      rejectMixed "mixed additions"
+      _ <- gitOk agent ["restore", "--staged", "--", "memory/old"]
+      _ <- cliOk candidate agent ["commit", "-m", "protocol addition"]
+      _ <- gitOk agent ["add", "--", "memory/old"]
+      _ <- cliOk candidate agent ["commit", "-m", "workspace addition"]
+      -- Existing files on both sides do not count as changed paths.
+      writeFile metadata "changed metadata\n"
+      writeFile note "changed memory\n"
+      _ <- gitOk agent ["add", "--", ".gaw/meta", "memory/old"]
+      rejectMixed "mixed content"
+      _ <- gitOk agent ["restore", "--staged", "--", ".gaw/meta"]
+      _ <- cliOk candidate agent ["commit", "-m", "workspace content only"]
+      _ <- gitOk agent ["add", "--", ".gaw/meta"]
+      _ <- cliOk candidate agent ["commit", "-m", "protocol content only"]
+      -- Only mode bits change here; filesystem chmod is unnecessary.
+      _ <- gitOk agent ["update-index", "--chmod=+x", "--", ".gaw/meta", "memory/old"]
+      rejectMixed "mixed modes"
+      _ <- gitOk agent ["restore", "--staged", "--", "memory/old"]
+      _ <- cliOk candidate agent ["commit", "-m", "protocol mode only"]
+      _ <- gitOk agent ["update-index", "--chmod=+x", "--", "memory/old"]
+      _ <- cliOk candidate agent ["commit", "-m", "workspace mode only"]
+      removeFile metadata
+      removeFile note
+      _ <- gitOk agent ["add", "-u", "--", ".gaw/meta", "memory/old"]
+      rejectMixed "mixed deletions"
+      _ <- gitOk agent ["restore", "--staged", "--", "memory/old"]
+      _ <- cliOk candidate agent ["commit", "-m", "protocol deletion"]
+      _ <- gitOk agent ["add", "-u", "--", "memory/old"]
+      _ <- cliOk candidate agent ["commit", "-m", "workspace deletion"]
+      -- Explicitly enable renames to test the query's override.
+      _ <- gitOk agent ["config", "diff.renames", "true"]
+      writeFile (agent </> ".gaw/source") "move me\n"
+      _ <- gitOk agent ["add", "--", ".gaw/source"]
+      _ <- cliOk candidate agent ["commit", "-m", "protocol source"]
+      _ <- gitOk agent ["mv", "--", ".gaw/source", "memory/moved"]
+      rejectMixed "cross-boundary move"
+      _ <- gitOk agent ["restore", "--staged", "--", "memory/moved"]
+      _ <- cliOk candidate agent ["commit", "-m", "remove protocol source"]
+      _ <- gitOk agent ["add", "--", "memory/moved"]
+      _ <- cliOk candidate agent ["commit", "-m", "add workspace destination"]
+      _ <- gitOk agent ["mv", "--", "memory/moved", "memory/renamed"]
+      _ <- cliOk candidate agent ["commit", "-m", "workspace rename"]
+      _ <- gitOk agent ["mv", "--", "memory/renamed", ".gaw/destination"]
+      rejectMixed "reverse cross-boundary move"
+      _ <- gitOk agent ["restore", "--staged", "--", ".gaw/destination"]
+      _ <- cliOk candidate agent ["commit", "-m", "remove workspace source"]
+      _ <- gitOk agent ["add", "--", ".gaw/destination"]
+      _ <- cliOk candidate agent ["commit", "-m", "add protocol destination"]
+      _ <- gitOk agent ["mv", "--", ".gaw/destination", ".gaw/renamed"]
+      _ <- cliOk candidate agent ["commit", "-m", "protocol rename"]
+      writeFile (agent </> "memory/line\nbreak") "newline path\n"
+      writeFile (agent </> ".gaw/unusual") "metadata\n"
+      _ <- gitOk agent ["add", "--", ".gaw/unusual", "memory/line\nbreak"]
+      rejectMixed "newline path"
+      _ <- gitOk agent ["restore", "--staged", "--", "memory/line\nbreak"]
+      stageRawPath agent rawPath
+      rejectMixed "non-UTF8 path"
+      removeRawPath agent rawPath
+      _ <- cliOk candidate agent ["commit", "-m", "protocol with raw paths unstaged"]
+      _ <- gitOk agent ["add", "--", "memory/line\nbreak"]
+      stageRawPath agent rawPath
+      _ <- cliOk candidate agent ["commit", "-m", "unusual workspace paths"]
+      previous <- gitOk agent ["rev-parse", "HEAD"]
+      tree <- gitOk agent ["rev-parse", "HEAD^{tree}"]
+      project <- gitOk directory ["rev-parse", "main"]
+      _ <- cliOk candidate agent ["commit", "-m", "unchanged tree association", "--", "main"]
+      sameTree <- gitOk agent ["rev-parse", "HEAD^{tree}"]
+      first <- gitOk agent ["rev-parse", "HEAD^1"]
+      second <- gitOk agent ["rev-parse", "HEAD^2"]
+      require (tree == sameTree && first == previous && second == project)
+        "unchanged-tree project association regressed"
+      _ <- cliOk candidate agent ["commit", "--allow-empty", "-m", "intentional empty"]
+      noChange <- cliFail candidate agent ["commit", "-m", "empty without flag"]
+      require (isInfixOf ":EMPTY-COMMIT" noChange) "empty-commit behavior changed"
+      _ <- cliOk candidate agent ["check"]
       pure ()
     migrateLegacy candidate root = do
       directory <- seed root "legacy"

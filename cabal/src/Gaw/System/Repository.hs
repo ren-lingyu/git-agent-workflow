@@ -9,6 +9,8 @@ module Gaw.System.Repository
   , parseTreeRecords
   , readIndexRecords
   , readTreeRecords
+  , parseChangedPaths
+  , readChangedPaths
   ) where
 
 import qualified Data.ByteString as BS
@@ -79,9 +81,23 @@ readTreeRecords git directory tree = do
   result <- invoke git directory arguments
   pure (parseSnapshot arguments result parseTreeRecords)
 
+parseChangedPaths :: BS.ByteString -> Either SnapshotParseError [BS.ByteString]
+parseChangedPaths input = do
+  paths <- records input
+  if any BS.null paths then Left (MalformedRecord input) else Right paths
+
+readChangedPaths :: Monad m => Git m -> PosixPath -> ObjectId -> ObjectId
+  -> m (Either SnapshotQueryError [BS.ByteString])
+readChangedPaths git directory before after = do
+  let arguments = ["diff-tree", "-r", "--no-commit-id", "--name-only", "-z",
+        "--no-renames", "--no-ext-diff", "--no-textconv",
+        objectIdBytes before, objectIdBytes after, "--"]
+  result <- invoke git directory arguments
+  pure (parseSnapshot arguments result parseChangedPaths)
+
 parseSnapshot :: [BS.ByteString] -> GitResult
-  -> (BS.ByteString -> Either SnapshotParseError [GitEntry])
-  -> Either SnapshotQueryError [GitEntry]
+  -> (BS.ByteString -> Either SnapshotParseError a)
+  -> Either SnapshotQueryError a
 parseSnapshot arguments result parser
   | gitExitCode result /= 0 = Left (SnapshotGitFailure arguments result)
   | otherwise = either (Left . SnapshotMalformed) Right (parser (gitStdout result))

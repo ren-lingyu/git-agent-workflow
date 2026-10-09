@@ -10,6 +10,7 @@ module Gaw.Protocol.Commit
   , plannedParents
   , plannedMessage
   , planCommit
+  , validateChangeBoundary
   , renderCommitError
   ) where
 
@@ -28,7 +29,7 @@ data CommitRequest = CommitRequest
 data CommitReason = EmptyMessage | NotWorktreeRoot | DetachedHead
   | OperationInProgress | CommitUnmergedIndex | CommitInvalidCommittedState
   | InvalidProjectCommit | DuplicateParent | InvalidWorkspace
-  | PathConflict | EmptyCommit | RefMoved | GitFailure
+  | PathConflict | MixedProtocolChanges | EmptyCommit | RefMoved | GitFailure
   deriving (Eq, Show)
 
 data CommitError = CommitError CommitReason BS.ByteString
@@ -40,6 +41,16 @@ data CommitPlan = CommitPlan
   , plannedParents :: [ObjectId]
   , plannedMessage :: BS.ByteString
   } deriving (Eq, Show)
+
+-- Paths come from the first-parent/candidate tree diff, not the index inventory.
+validateChangeBoundary :: [BS.ByteString] -> Either CommitError ()
+validateChangeBoundary paths
+  | any inside paths && any (not . inside) paths =
+      Left (CommitError MixedProtocolChanges
+        "A checkpoint cannot change paths both inside and outside .gaw/")
+  | otherwise = Right ()
+  where
+    inside path = path == ".gaw" || ".gaw/" `BS.isPrefixOf` path
 
 planCommit :: CommitRequest -> RefName -> ObjectId -> ObjectId -> ObjectId
   -> Workspace -> [GitEntry] -> [(ObjectId, [GitEntry])]
@@ -85,6 +96,7 @@ reasonName reason = case reason of
   DuplicateParent -> "DUPLICATE-PARENT"
   InvalidWorkspace -> "INVALID-WORKSPACE"
   PathConflict -> "PATH-CONFLICT"
+  MixedProtocolChanges -> "MIXED-PROTOCOL-CHANGES"
   EmptyCommit -> "EMPTY-COMMIT"
   RefMoved -> "REF-MOVED"
   GitFailure -> "RUNTIME-FAILURE"

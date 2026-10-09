@@ -44,6 +44,7 @@ For each retrospective checkpoint, assess additional project parents independent
 `git gaw commit` takes its complete candidate tree from the current index; it neither stages files nor includes unstaged or untracked changes. Before a checkpoint in the GAW worktree:
 
 1. Inspect `git status`, `git diff`, and `git diff --cached` to understand the entire index, not just files changed in this session.
+   A new checkpoint cannot mix changed paths inside and outside `.gaw/`, including additions, deletions, content, modes or cross-boundary moves. Compare the candidate with its first-parent tree; unchanged paths merely present in the index do not count. Stage protocol changes separately from workspace content, and preserve snapshot validity for each checkpoint. Root initialization and old history are unaffected; unchanged-tree associations retain their existing rules. `git gaw check` does not replace this commit-transition check.
 2. Stage intended memory with `git add <explicit-workspace-paths>`; avoid broad staging unless its full scope has been reviewed.
 3. Inspect `git diff --cached` again, run `git gaw check`, and resolve findings that make the candidate invalid.
 4. From the GAW worktree root, run `git gaw commit` with an appropriate message and only the selected project commits, then use `git gaw show` when the resulting checkpoint needs inspection.

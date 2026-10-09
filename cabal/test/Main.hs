@@ -7,6 +7,7 @@ import qualified Data.Text as DataText
 import qualified Data.Text.Encoding as TE
 import Gaw.Protocol.SExpr
 import Gaw.Protocol.Config
+import Gaw.Protocol.Commit (CommitError (..), CommitReason (..), validateChangeBoundary, renderCommitError)
 import Gaw.Protocol.Deploy
 import Gaw.Protocol.Hook
 import Gaw.Protocol.Ref
@@ -122,11 +123,42 @@ main = do
   assert $ planWorktree "refs/heads/gaw" (Just "/tmp/new") True []
     == Left (PathOccupied "/tmp/new")
   versionedConfigTests
+  commitBoundaryTests
   putStrLn "Protocol tests passed"
 
 invalidSyntax :: Either ConfigError Config -> Bool
 invalidSyntax (Left (InvalidSyntax _)) = True
 invalidSyntax _ = False
+
+commitBoundaryTests :: IO ()
+commitBoundaryTests = do
+  mapM_ (assert . (== Right ()) . validateChangeBoundary)
+    [ [], [".gaw/config"], [".gaw/a", ".gaw/b"], [".gaw"]
+    , ["memory/current.md"], ["archive/a", "skills/b"]
+    , [".gaw-other/file", "memory/.gaw/config"]
+    ]
+  mapM_ (assert . mixed . validateChangeBoundary)
+    [ [".gaw/config", "memory/current.md"]
+    , ["memory/renamed", ".gaw/original"]
+    , [".gaw", ".gaw-other/file"]
+    , [".gaw/config", "memory/line\nbreak"]
+    , [".gaw/config", BS.concat ["memory/", BS.pack [255]]]
+    ]
+  let raw = BS.concat [".gaw/config\0memory/line\nbreak\0memory/", BS.pack [255], "\0"]
+  assert $ case parseChangedPaths raw of
+    Right paths -> length paths == 3 && mixed (validateChangeBoundary paths)
+    _ -> False
+  assert $ parseChangedPaths "" == Right []
+  assert $ parseChangedPaths (BS.init raw) == Left UnterminatedRecord
+  assert $ case parseChangedPaths "a\0\0" of
+    Left (MalformedRecord _) -> True
+    _ -> False
+  assert $ case validateChangeBoundary [".gaw/config", "memory/a"] of
+    Left problem -> ":MIXED-PROTOCOL-CHANGES" `BS.isInfixOf` renderCommitError problem
+    _ -> False
+  where
+    mixed (Left (CommitError MixedProtocolChanges _)) = True
+    mixed _ = False
 
 invalidSchema :: Either ConfigError Config -> Bool
 invalidSchema (Left (InvalidSchema _)) = True

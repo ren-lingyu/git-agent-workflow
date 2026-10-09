@@ -216,6 +216,44 @@ main = do
                   && lookup "GIT_AUTHOR_DATE" bindings == Just "@1700000000 +0000"
                   && lookup "GIT_COMMITTER_DATE" bindings == Just "@1700000000 +0000")
               _ -> exitFailure
+          forM_
+            [ (GitResult 0 ".gaw/config\0memory/current.md\0" "", MixedProtocolChanges)
+            , (GitResult 3 "" "injected diff failure", GitFailure)
+            , (GitResult 0 ".gaw/config\0memory/current.md" "", GitFailure)
+            , (GitResult 0 ".gaw/config\0\0" "", GitFailure)
+            ] $ \(diffResult, expectedReason) -> do
+              calls <- newIORef []
+              let candidateTree = BS.replicate 40 102
+                  expectedDiff = ["diff-tree", "-r", "--no-commit-id", "--name-only", "-z",
+                    "--no-renames", "--no-ext-diff", "--no-textconv", tree, candidateTree, "--"]
+                  boundaryGit = Git $ \request -> do
+                    modifyIORef' calls (request:)
+                    case gitArguments request of
+                      ["rev-parse", "--show-toplevel"] -> pure (GitResult 0 (rawDirectory <> "\n") "")
+                      ["rev-parse", "--show-prefix"] -> pure (GitResult 0 "\n" "")
+                      ["symbolic-ref", "--quiet", "HEAD"] -> pure (GitResult 0 "refs/heads/agents\n" "")
+                      ["rev-parse", "--path-format=absolute", "--git-path", name] ->
+                        pure (GitResult 0 (rawDirectory <> "/" <> name <> "\n") "")
+                      ["ls-files", "-u", "-z", "--full-name", "--", ":/"] -> pure (GitResult 0 "" "")
+                      ["write-tree"] -> pure (GitResult 0 (candidateTree <> "\n") "")
+                      "diff-tree" : _ -> do
+                        require (gitArguments request == expectedDiff)
+                        pure diffResult
+                      _ -> runGit scripted (request {gitArguments =
+                        map (\argument -> if argument == candidateTree then tree else argument)
+                          (gitArguments request)})
+              result <- createCommit boundaryGit (FileSystem (\_ -> pure False) OS.fromBytes)
+                (Clock (pure 1700000000)) directory (CommitRequest "boundary\n" [] False False)
+              require $ case result of
+                Left (CommitError reason _) -> reason == expectedReason
+                _ -> False
+              observed <- readIORef calls
+              let startsWith name invocation = case gitArguments invocation of
+                    command : _ -> command == name
+                    _ -> False
+              require (length (filter (startsWith "diff-tree") observed) == 1)
+              require (not (any (startsWith "commit-tree") observed))
+              require (not (any (elem "update-ref" . gitArguments) observed))
       undeployCalls <- newIORef []
       let undeployGit = Git $ \request -> do
             modifyIORef' undeployCalls (request:)
