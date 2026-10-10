@@ -1,19 +1,21 @@
 ---
 name: git-agent-workflow-gaw-archive
-description: Preserve selected git-agent-workflow historical documents and experiment evidence as verified immutable GAW archive snapshots using the repository's interim MANIFEST.md and files layout.
+description: Preserve selected git-agent-workflow historical documents and experiment evidence as verified immutable GAW archive snapshots using MANIFEST.md and the files layout.
 ---
 
 # git-agent-workflow repository archive
 
 Use the generic `git-agent-workflow` skill and its archive reference first.
-This project skill supplies interim conventions adapted from org-texmacs.
+This project skill supplies repository conventions adapted from org-texmacs.
 It lives in the declared GAW skills workspace, not the bundled generic skill
 or a global installation. The generic skill must be available separately;
 host permissions and current user instructions govern reads, writes and execution.
 
-Until formal archive tooling is adopted, every archive operation uses the same
-layout, including a single retired document. MANIFEST.md is the interim format,
-not a claim of Data Package or RO-Crate compliance. Preserve old snapshots.
+The repository formally adopts MANIFEST.md plus files/ for every archive
+operation, including a single retired document. This is a lightweight GAW
+workflow convention, not a separately published universal archive standard.
+Use ordinary file operations and comparisons; no external metadata tooling,
+dedicated manifest parser or validator is required. Preserve old snapshots.
 
 ## Discover and select
 
@@ -67,8 +69,8 @@ The manifest records:
 
 Do not put the checkpoint's OID into its own tree. HEAD-at-capture does not
 prove that ignored or modified files originated in that commit. SHA-256 is an
-interim capture-review convention, not a replacement for Git integrity or a
-mandatory field of the future standard.
+repository capture-review convention, not a replacement for Git integrity or
+a mandatory field of the generic GAW workflow.
 
 ## Verify and checkpoint
 
