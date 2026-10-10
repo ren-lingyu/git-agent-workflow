@@ -1,0 +1,170 @@
+$versions
+$versions$R
+[1] "4.6.1"
+
+$versions$frictionless
+[1] "1.2.1"
+
+$versions$rocrateR
+[1] "0.1.0"
+
+
+$`datapackage-read-query-edit`
+$`datapackage-read-query-edit`$resources
+[1] "artifact-0" "artifact-1" "artifact-2"
+
+$`datapackage-read-query-edit`$before_paths
+$`datapackage-read-query-edit`$before_paths[[1]]
+[1] "files/tmp/doc-01-file-url-probe.el"
+
+$`datapackage-read-query-edit`$before_paths[[2]]
+[1] "files/tmp/doc-01-file-url-probe.scm"
+
+$`datapackage-read-query-edit`$before_paths[[3]]
+[1] "files/tmp/doc-01-file-url-probe.txt"
+
+
+$`datapackage-read-query-edit`$after_paths
+$`datapackage-read-query-edit`$after_paths[[1]]
+[1] "doc-01-file-url-probe.el"
+
+$`datapackage-read-query-edit`$after_paths[[2]]
+[1] "doc-01-file-url-probe.scm"
+
+$`datapackage-read-query-edit`$after_paths[[3]]
+[1] "doc-01-file-url-probe.txt"
+
+
+$`datapackage-read-query-edit`$relations
+$`datapackage-read-query-edit`$relations[[1]]
+$`datapackage-read-query-edit`$relations[[1]]$source
+[1] "artifact-0"
+
+$`datapackage-read-query-edit`$relations[[1]]$target
+[1] "artifact-1"
+
+
+
+$`datapackage-read-query-edit`$custom
+$`datapackage-read-query-edit`$custom[[1]]
+$`datapackage-read-query-edit`$custom[[1]]$state
+[1] "historical snapshot"
+
+$`datapackage-read-query-edit`$custom[[1]]$limits
+[1] "not a new experiment"
+
+
+$`datapackage-read-query-edit`$custom[[2]]
+$`datapackage-read-query-edit`$custom[[2]]$state
+[1] "historical snapshot"
+
+$`datapackage-read-query-edit`$custom[[2]]$limits
+[1] "not a new experiment"
+
+
+$`datapackage-read-query-edit`$custom[[3]]
+$`datapackage-read-query-edit`$custom[[3]]$state
+[1] "historical snapshot"
+
+$`datapackage-read-query-edit`$custom[[3]]$limits
+[1] "not a new experiment"
+
+
+
+$`datapackage-read-query-edit`$schema
+[1] "https://datapackage.org/profiles/2.0/datapackage.json"
+
+
+$`datapackage-non-tabular-content`
+$`datapackage-non-tabular-content`$error
+[1] "Resource \"artifact-0\" must have a profile property with value\n\"tabular-data-resource\"."
+
+
+$`datapackage-create-ordinary-single`
+$`datapackage-create-ordinary-single`$files
+[1] "PLAN.md"          "datapackage.json"
+
+
+$`datapackage-negative-missing-resources`
+$`datapackage-negative-missing-resources`$accepted
+[1] TRUE
+
+
+$`datapackage-negative-wrong-title`
+$`datapackage-negative-wrong-title`$accepted
+[1] TRUE
+
+
+$`datapackage-negative-wrong-schema`
+$`datapackage-negative-wrong-schema`$accepted
+[1] TRUE
+
+
+$`datapackage-negative-missing-file`
+$`datapackage-negative-missing-file`$accepted
+[1] TRUE
+
+
+$`rocrate-default-version`
+$`rocrate-default-version`$context
+[1] "https://w3id.org/ro/crate/1.2/context"
+
+$`rocrate-default-version`$metadata
+$`rocrate-default-version`$metadata[[1]]
+
+
+
+$`rocrate-create-multi`
+$`rocrate-create-multi`$context
+[1] "https://w3id.org/ro/crate/1.3/context"
+
+$`rocrate-create-multi`$files
+$`rocrate-create-multi`$files[[1]]
+
+$`rocrate-create-multi`$files[[2]]
+
+$`rocrate-create-multi`$files[[3]]
+
+
+$`rocrate-create-multi`$validation
+
+
+$`rocrate-create-single`
+$`rocrate-create-single`$validation
+
+$`rocrate-create-single`$entities
+[1] 3
+
+
+$`rocrate-negative-missing-date`
+$`rocrate-negative-missing-date`$validation
+
+
+$`rocrate-negative-missing-name`
+$`rocrate-negative-missing-name`$validation
+
+
+$`rocrate-negative-wrong-date-type`
+$`rocrate-negative-wrong-date-type`$validation
+
+
+$`rocrate-negative-missing-file`
+$`rocrate-negative-missing-file`$validation
+
+
+$`rocrate-negative-dangling-reference`
+$`rocrate-negative-dangling-reference`$validation
+
+
+$`rocrate-negative-unknown-schema-context`
+$`rocrate-negative-unknown-schema-context`$validation
+
+
+$`rocrate-edit-roundtrip`
+$`rocrate-edit-roundtrip`$entity
+$`rocrate-edit-roundtrip`$entity[[1]]
+
+
+$`rocrate-edit-roundtrip`$validation
+
+

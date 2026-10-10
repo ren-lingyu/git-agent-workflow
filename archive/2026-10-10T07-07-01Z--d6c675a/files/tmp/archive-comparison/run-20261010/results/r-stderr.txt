@@ -1,0 +1,33 @@
+<RO-Crate entity>
+ @id = 'ro-crate-metadata.json'
+ @type = 'CreativeWork'
+<RO-Crate entity>
+ @id = 'files/tmp/doc-01-file-url-probe.el'
+ @type = 'File'
+<RO-Crate entity>
+ @id = 'files/tmp/doc-01-file-url-probe.scm'
+ @type = 'File'
+<RO-Crate entity>
+ @id = 'files/tmp/doc-01-file-url-probe.txt'
+ @type = 'File'
+<RO-Crate validation>
+✔ Valid RO-Crate
+<RO-Crate validation>
+✔ Valid RO-Crate
+<RO-Crate validation>
+✔ Valid RO-Crate
+<RO-Crate validation>
+✔ Valid RO-Crate
+<RO-Crate validation>
+✔ Valid RO-Crate
+<RO-Crate validation>
+✔ Valid RO-Crate
+<RO-Crate validation>
+✔ Valid RO-Crate
+<RO-Crate validation>
+✔ Valid RO-Crate
+<RO-Crate entity>
+ @id = 'files/tmp/doc-01-file-url-probe.el'
+ @type = 'File'
+<RO-Crate validation>
+✔ Valid RO-Crate

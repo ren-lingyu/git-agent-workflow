@@ -1,0 +1,185 @@
+{
+  "versions": {
+    "R": "4.6.1",
+    "frictionless": "1.2.1",
+    "rocrateR": "0.1.0"
+  },
+  "datapackage-read-query-edit": {
+    "resources": ["artifact-0", "artifact-1", "artifact-2"],
+    "before_paths": [
+      "files/tmp/doc-01-file-url-probe.el",
+      "files/tmp/doc-01-file-url-probe.scm",
+      "files/tmp/doc-01-file-url-probe.txt"
+    ],
+    "after_paths": [
+      "doc-01-file-url-probe.el",
+      "doc-01-file-url-probe.scm",
+      "doc-01-file-url-probe.txt"
+    ],
+    "relations": [
+      {
+        "source": "artifact-0",
+        "target": "artifact-1"
+      }
+    ],
+    "custom": [
+      {
+        "state": "historical snapshot",
+        "limits": "not a new experiment"
+      },
+      {
+        "state": "historical snapshot",
+        "limits": "not a new experiment"
+      },
+      {
+        "state": "historical snapshot",
+        "limits": "not a new experiment"
+      }
+    ],
+    "schema": "https://datapackage.org/profiles/2.0/datapackage.json"
+  },
+  "datapackage-non-tabular-content": {
+    "error": "Resource \"artifact-0\" must have a profile property with value\n\"tabular-data-resource\"."
+  },
+  "datapackage-create-ordinary-single": {
+    "files": ["PLAN.md", "datapackage.json"]
+  },
+  "datapackage-negative-missing-resources": {
+    "accepted": true
+  },
+  "datapackage-negative-wrong-title": {
+    "accepted": true
+  },
+  "datapackage-negative-wrong-schema": {
+    "accepted": true
+  },
+  "datapackage-negative-missing-file": {
+    "accepted": true
+  },
+  "rocrate-default-version": {
+    "context": "https://w3id.org/ro/crate/1.2/context",
+    "metadata": [
+      {
+        "@id": "ro-crate-metadata.json",
+        "@type": "CreativeWork",
+        "about": {
+          "@id": "./"
+        },
+        "conformsTo": {
+          "@id": "https://w3id.org/ro/crate/1.2"
+        }
+      }
+    ]
+  },
+  "rocrate-create-multi": {
+    "context": "https://w3id.org/ro/crate/1.3/context",
+    "files": [
+      {
+        "@id": "files/tmp/doc-01-file-url-probe.el",
+        "@type": "File",
+        "description": "historical evidence",
+        "originalPath": "tmp/doc-01-file-url-probe.el",
+        "evidence": {
+          "state": "archived"
+        },
+        "isRelatedTo": {
+          "@id": "files/tmp/doc-01-file-url-probe.scm"
+        }
+      },
+      {
+        "@id": "files/tmp/doc-01-file-url-probe.scm",
+        "@type": "File",
+        "description": "historical evidence",
+        "originalPath": "tmp/doc-01-file-url-probe.scm",
+        "evidence": {
+          "state": "archived"
+        }
+      },
+      {
+        "@id": "files/tmp/doc-01-file-url-probe.txt",
+        "@type": "File",
+        "description": "historical evidence",
+        "originalPath": "tmp/doc-01-file-url-probe.txt",
+        "evidence": {
+          "state": "archived"
+        }
+      }
+    ],
+    "validation": {
+      "errors": [],
+      "warnings": [],
+      "info": []
+    }
+  },
+  "rocrate-create-single": {
+    "validation": {
+      "errors": [],
+      "warnings": [],
+      "info": []
+    },
+    "entities": 3
+  },
+  "rocrate-negative-missing-date": {
+    "validation": {
+      "errors": [],
+      "warnings": [],
+      "info": []
+    }
+  },
+  "rocrate-negative-missing-name": {
+    "validation": {
+      "errors": [],
+      "warnings": [],
+      "info": []
+    }
+  },
+  "rocrate-negative-wrong-date-type": {
+    "validation": {
+      "errors": [],
+      "warnings": [],
+      "info": []
+    }
+  },
+  "rocrate-negative-missing-file": {
+    "validation": {
+      "errors": [],
+      "warnings": [],
+      "info": []
+    }
+  },
+  "rocrate-negative-dangling-reference": {
+    "validation": {
+      "errors": [],
+      "warnings": [],
+      "info": []
+    }
+  },
+  "rocrate-negative-unknown-schema-context": {
+    "validation": {
+      "errors": [],
+      "warnings": [],
+      "info": []
+    }
+  },
+  "rocrate-edit-roundtrip": {
+    "entity": [
+      {
+        "@id": "files/tmp/doc-01-file-url-probe.el",
+        "@type": "File",
+        "description": "edited",
+        "originalPath": "tmp/doc-01-file-url-probe.el",
+        "evidence": {
+          "state": "archived"
+        },
+        "isRelatedTo": {
+          "@id": "files/tmp/doc-01-file-url-probe.scm"
+        }
+      }
+    ],
+    "validation": {
+      "errors": [],
+      "warnings": [],
+      "info": []
+    }
+  }
+}

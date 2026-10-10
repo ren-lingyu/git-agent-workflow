@@ -1,0 +1,388 @@
+[
+  {
+    "case": "network-denial",
+    "result": "ENETUNREACH; no external route"
+  },
+  {
+    "case": "native-versus-adapted-multi",
+    "result": {
+      "native_2_0_errors": [
+        "'file' is not one of ['table']",
+        "'file' is not one of ['table']",
+        "'file' is not one of ['table']"
+      ],
+      "adapter": "omit legacy type=file",
+      "adapted_errors": []
+    }
+  },
+  {
+    "case": "native-versus-adapted-single",
+    "result": {
+      "native_2_0_errors": [
+        "'file' is not one of ['table']"
+      ],
+      "adapter": "omit legacy type=file",
+      "adapted_errors": []
+    }
+  },
+  {
+    "case": "native-versus-adapted-single-second",
+    "result": {
+      "native_2_0_errors": [
+        "'file' is not one of ['table']"
+      ],
+      "adapter": "omit legacy type=file",
+      "adapted_errors": []
+    }
+  },
+  {
+    "case": "python-create-read-multi",
+    "result": {
+      "resource_count": 3,
+      "metadata_bytes": 1534,
+      "roles": [
+        "runner",
+        "query",
+        "output"
+      ],
+      "read_bytes": [
+        617,
+        1177,
+        1040
+      ],
+      "official_2_0_errors": [],
+      "frictionless_validation": {
+        "valid": true,
+        "stats": {
+          "tasks": 3,
+          "errors": 0,
+          "warnings": 0,
+          "seconds": 0.001
+        },
+        "warnings": [],
+        "errors": [],
+        "tasks": [
+          {
+            "name": "artifact-0",
+            "type": "file",
+            "valid": true,
+            "place": "files/tmp/doc-01-file-url-probe.el",
+            "labels": [],
+            "stats": {
+              "errors": 0,
+              "warnings": 0,
+              "seconds": 0.0,
+              "md5": "1b74652ee936915fde8abc53d3a1606b",
+              "sha256": "1e393407888126af3450ecb5dfd1bd56f5c3742e3324a1a0c52b86688e2f2807",
+              "bytes": 617
+            },
+            "warnings": [],
+            "errors": []
+          },
+          {
+            "name": "artifact-1",
+            "type": "file",
+            "valid": true,
+            "place": "files/tmp/doc-01-file-url-probe.scm",
+            "labels": [],
+            "stats": {
+              "errors": 0,
+              "warnings": 0,
+              "seconds": 0.0,
+              "md5": "9ac4c41a2ffa8afe20002765463eb26b",
+              "sha256": "f6ff41abf891bec94d6af12f5014f93658a728928f5be877ad79b2b8f201a058",
+              "bytes": 1177
+            },
+            "warnings": [],
+            "errors": []
+          },
+          {
+            "name": "artifact-2",
+            "type": "text",
+            "valid": true,
+            "place": "files/tmp/doc-01-file-url-probe.txt",
+            "labels": [],
+            "stats": {
+              "errors": 0,
+              "warnings": 0,
+              "seconds": 0.0,
+              "md5": "740f29e41b62ef33f1a75cc587de5a6d",
+              "sha256": "96210febfa64288b90128f3db1813096094b7eb1e6a748cd4eb58431a1d2bfe0",
+              "bytes": 1040
+            },
+            "warnings": [],
+            "errors": []
+          }
+        ]
+      }
+    }
+  },
+  {
+    "case": "python-create-read-single",
+    "result": {
+      "resource_count": 1,
+      "metadata_bytes": 706,
+      "roles": [
+        "historical planning document"
+      ],
+      "read_bytes": [
+        45358
+      ],
+      "official_2_0_errors": [],
+      "frictionless_validation": {
+        "valid": true,
+        "stats": {
+          "tasks": 1,
+          "errors": 0,
+          "warnings": 0,
+          "seconds": 0.0
+        },
+        "warnings": [],
+        "errors": [],
+        "tasks": [
+          {
+            "name": "artifact-0",
+            "type": "text",
+            "valid": true,
+            "place": "files/PLAN.md",
+            "labels": [],
+            "stats": {
+              "errors": 0,
+              "warnings": 0,
+              "seconds": 0.0,
+              "md5": "49421dd3715aecafe858dd3e7d1c7ee2",
+              "sha256": "2ec52a1e64ca26c4dce7f209b014944e121d571530a7a5d8ea923f3e42a24ec6",
+              "bytes": 45358
+            },
+            "warnings": [],
+            "errors": []
+          }
+        ]
+      }
+    }
+  },
+  {
+    "case": "python-create-read-single-second",
+    "result": {
+      "resource_count": 1,
+      "metadata_bytes": 713,
+      "roles": [
+        "historical planning document"
+      ],
+      "read_bytes": [
+        45358
+      ],
+      "official_2_0_errors": [],
+      "frictionless_validation": {
+        "valid": true,
+        "stats": {
+          "tasks": 1,
+          "errors": 0,
+          "warnings": 0,
+          "seconds": 0.0
+        },
+        "warnings": [],
+        "errors": [],
+        "tasks": [
+          {
+            "name": "artifact-0",
+            "type": "text",
+            "valid": true,
+            "place": "files/PLAN.md",
+            "labels": [],
+            "stats": {
+              "errors": 0,
+              "warnings": 0,
+              "seconds": 0.0,
+              "md5": "49421dd3715aecafe858dd3e7d1c7ee2",
+              "sha256": "2ec52a1e64ca26c4dce7f209b014944e121d571530a7a5d8ea923f3e42a24ec6",
+              "bytes": 45358
+            },
+            "warnings": [],
+            "errors": []
+          }
+        ]
+      }
+    }
+  },
+  {
+    "case": "python-edit",
+    "result": {
+      "custom_fields_retained": true,
+      "native_reexport_errors": [
+        "'file' is not one of ['table']",
+        "'file' is not one of ['table']",
+        "'text' is not one of ['table']"
+      ]
+    }
+  },
+  {
+    "case": "python-negative-missing-resources",
+    "result": {
+      "official_schema_errors": [
+        "'resources' is a required property"
+      ],
+      "frictionless_error": "[package-error] The data package has an error: descriptor is not valid (The data package has an error: 'resources' is a required property)"
+    }
+  },
+  {
+    "case": "python-negative-wrong-title-type",
+    "result": {
+      "official_schema_errors": [
+        "42 is not of type 'string'"
+      ],
+      "frictionless_error": "[package-error] The data package has an error: descriptor is not valid (The data package has an error: 42 is not of type 'string' at property 'title')"
+    }
+  },
+  {
+    "case": "python-negative-wrong-schema-type",
+    "result": {
+      "official_schema_errors": [
+        "42 is not of type 'string'"
+      ],
+      "frictionless_valid": true,
+      "read_result": ";;; doc-01-file-url-probe.el --- Native file URL probe -*- lexical-binding: t; -*-\n(load \"/home/lingyu/Projects/org-texmacs/tests/ert/ert.el\" nil t)\n("
+    }
+  },
+  {
+    "case": "python-negative-wrong-contributor-roles",
+    "result": {
+      "official_schema_errors": [
+        "42 is not of type 'array'"
+      ],
+      "frictionless_valid": true,
+      "read_result": ";;; doc-01-file-url-probe.el --- Native file URL probe -*- lexical-binding: t; -*-\n(load \"/home/lingyu/Projects/org-texmacs/tests/ert/ert.el\" nil t)\n("
+    }
+  },
+  {
+    "case": "python-negative-missing-file",
+    "result": {
+      "official_schema_errors": [],
+      "frictionless_valid": false,
+      "read_error": "[scheme-error] The data source could not be successfully loaded: [Errno 2] No such file or directory: '/build/work/multi/files/not-present.txt' "
+    }
+  },
+  {
+    "case": "python-negative-traversal",
+    "result": {
+      "official_schema_errors": [
+        "'../canary.txt' is not valid under any of the given schemas"
+      ],
+      "frictionless_error": "[package-error] The data package has an error: descriptor is not valid (The data resource has an error: path \"../canary.txt\" is not safe)"
+    }
+  },
+  {
+    "case": "python-negative-absolute",
+    "result": {
+      "official_schema_errors": [
+        "'/build/work/canary.txt' is not valid under any of the given schemas"
+      ],
+      "frictionless_error": "[package-error] The data package has an error: descriptor is not valid (The data resource has an error: path \"/build/work/canary.txt\" is not safe)"
+    }
+  },
+  {
+    "case": "python-negative-dangling-custom-relation",
+    "result": {
+      "official_schema_errors": [],
+      "frictionless_valid": true,
+      "read_result": ";;; doc-01-file-url-probe.el --- Native file URL probe -*- lexical-binding: t; -*-\n(load \"/home/lingyu/Projects/org-texmacs/tests/ert/ert.el\" nil t)\n("
+    }
+  },
+  {
+    "case": "python-negative-remote-resource",
+    "result": {
+      "official_schema_errors": [],
+      "frictionless_valid": false,
+      "read_error": "[scheme-error] The data source could not be successfully loaded: HTTPSConnectionPool(host='example.invalid', port=443): Max retries exceeded with url: /unavailable.txt (Caused by NameResolutionError(\"HTTPSConnection(host='example.invalid', port=443): Failed to resolve 'example.invalid' ([Errno -3] T"
+    }
+  },
+  {
+    "case": "python-broken-json",
+    "error": "FrictionlessException: [package-error] The data package has an error: cannot retrieve metadata \"/build/work/broken.json\" because \"Expecting property name enclosed in double quotes: line 1 column 2 (char 1)\" "
+  },
+  {
+    "case": "python-special-paths",
+    "result": {
+      "paths": [
+        "files/tmp/space name.txt",
+        "files/tmp/中文.txt",
+        "files/tmp/100%.txt",
+        "files/a/same.txt",
+        "files/b/same.txt",
+        "files/tmp/datapackage.json"
+      ],
+      "byte_roundtrip": true
+    }
+  },
+  {
+    "case": "python-symlink-default",
+    "result": {
+      "read": "disposable boundary canary",
+      "boundary_escape": true
+    }
+  },
+  {
+    "case": "python-validation-side-effects",
+    "result": "none in snapshot tree"
+  },
+  {
+    "case": "project-capture-checks",
+    "result": [
+      "exact copy accepted",
+      "truncation detected",
+      "target edit detected",
+      "controlled source mutation detected"
+    ]
+  },
+  {
+    "case": "project-capture-boundary",
+    "result": {
+      "rejected_count": 3,
+      "safe_relative_file": "accepted"
+    }
+  },
+  {
+    "case": "python-adapted-edit-roundtrip",
+    "result": {
+      "add_remove_edit_relations": true,
+      "official_schema_errors": [],
+      "reexport_adapter": "omit legacy type=file/text on every export"
+    }
+  },
+  {
+    "case": "python-r-python-roundtrip",
+    "result": {
+      "paths": [
+        "doc-01-file-url-probe.el",
+        "doc-01-file-url-probe.scm",
+        "doc-01-file-url-probe.txt"
+      ],
+      "relations": [
+        {
+          "source": "artifact-0",
+          "target": "artifact-1"
+        }
+      ],
+      "title": "Edited by R implementation",
+      "official_errors": []
+    }
+  },
+  {
+    "case": "r-custom-type-preservation",
+    "result": {
+      "before": [
+        "not a new experiment"
+      ],
+      "after": "not a new experiment",
+      "same_type": false
+    }
+  },
+  {
+    "case": "cross-tool-payload-integrity",
+    "result": {
+      "multi": "all three original files byte-identical",
+      "r-edited": "all three original files byte-identical",
+      "r-rocrate-multi": "all three original files byte-identical"
+    }
+  }
+]
