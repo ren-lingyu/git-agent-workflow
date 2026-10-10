@@ -11,6 +11,9 @@ ref updates. For deliberate manual recovery, a user may explicitly run a
 native Git command with -c hook.gaw-reference-transaction.enabled=false.
 That bypass does not validate GAW invariants; inspect the result afterward.
 
-An unsupported config version is indeterminate: the hook conservatively
-rejects branch movement even if the config marker would remain unchanged.
+An unsupported number or unrecognized leading config version is
+indeterminate: the hook conservatively rejects branch movement even if the
+config marker would remain unchanged. Future versions must put :version first
+to receive this protection. The released v0.5.0 CLI cannot protect syntax
+that its parser does not understand.
 Role metadata and non-blocking config warnings do not change protection.

@@ -10,6 +10,11 @@ Versions and syntax
 The top level is a keyword/value plist with a required :workspace list and
 an optional non-negative decimal integer :version. Top-level keyword names
 use [a-z][a-z0-9-]*. Duplicate keys and malformed values are rejected.
+Future versions must put :version first after the opening parenthesis,
+apart from whitespace or comments. Existing configs with no leading version
+continue through the original parser, including a later :version 0 or 1.
+That compatibility path cannot protect unknown future syntax; put the
+version first in every new version.
 
 Without :version, the original format is implicit v0:
 
@@ -79,6 +84,10 @@ escaped double quotes and backslashes; path validation still rejects a
 decoded backslash. Invalid UTF-8, a BOM, unsupported escapes and literal ASCII
 control characters in strings are rejected. Limits are 65,536 config bytes,
 16 list levels, 1,024 flattened declarations and 4,096 UTF-8 bytes per path.
+For an unknown leading version, a shared structural scan enforces the byte,
+encoding, nesting, string and single-form limits without decoding its
+version-specific body. Missing or malformed leading versions and structural
+failures remain invalid.
 
 Diagnostics and compatibility
 
@@ -89,9 +98,11 @@ under the relevant branch. Warnings do not invalidate the config or change
 exit status. Other commands and the protection hook do not print them.
 A field changing core protocol semantics needs a new config version.
 
-Unsupported version numbers are not guessed as v0/v1. An unsupported-version
-error makes committed-state inspection indeterminate and protection remains
-conservative; use a compatible CLI. Other syntax/schema errors remain errors.
+Unsupported numbers and unrecognized leading version tokens are not guessed
+as v0/v1. They make committed-state inspection indeterminate, and the hook
+blocks branch movement even if the config marker stays unchanged; use a
+compatible CLI. Other syntax/schema errors remain errors. The released
+v0.5.0 executable cannot protect future syntax it cannot parse.
 New CLIs read supported old configs; older CLIs need not understand v1.
 Each historical checkpoint is interpreted with its own config, not today's
 HEAD config, and no history migration is required.

@@ -3,6 +3,7 @@
 module Gaw.Protocol.Config
   ( Config
   , ConfigError (..)
+  , VersionRecognition (..)
   , ConfigVersion (..)
   , WorkspaceSection (..)
   , ConfigWarning (..)
@@ -11,6 +12,7 @@ module Gaw.Protocol.Config
   , configWarnings
   , renderConfigWarning
   , unsupportedVersionDetail
+  , unrecognizedVersionDetail
   , WorkspaceEntry
   , WorkspaceKind (..)
   , WorkspacePath
@@ -20,6 +22,7 @@ module Gaw.Protocol.Config
   , workspaceEntryPath
   , workspacePathText
   , parseConfig
+  , recognizeConfigVersion
   , decodeConfig
   ) where
 
@@ -35,6 +38,13 @@ data ConfigError
   | InvalidSchema T.Text
   | LimitExceeded T.Text
   | UnsupportedVersion Integer
+  | UnrecognizedVersion BS.ByteString
+  deriving (Eq, Show)
+
+data VersionRecognition
+  = LegacyConfig
+  | NumericVersion Integer
+  | OpaqueVersion BS.ByteString
   deriving (Eq, Show)
 
 data ConfigVersion = ConfigV0 | ConfigV1
@@ -71,13 +81,51 @@ unsupportedVersionDetail :: Integer -> BS.ByteString
 unsupportedVersionDetail version =
   "Unsupported config version " <> TE.encodeUtf8 (T.pack (show version))
 
+unrecognizedVersionDetail :: BS.ByteString -> BS.ByteString
+unrecognizedVersionDetail token =
+  "Unrecognized config version " <> BS.concatMap escape (BS.take 64 token) <>
+  (if BS.length token > 64 then "..." else "")
+  where
+    escape byte
+      | byte >= 33 && byte <= 126 && byte /= 92 = BS.singleton byte
+      | otherwise = TE.encodeUtf8 (T.pack ("\\x" <> hexByte byte))
+    hexByte byte = [hexDigit (byte `div` 16), hexDigit (byte `mod` 16)]
+    hexDigit nibble = "0123456789ABCDEF" !! fromIntegral nibble
+
+recognizeConfigVersion :: BS.ByteString -> Either ConfigError VersionRecognition
+recognizeConfigVersion bytes = do
+  envelope <- either (Left . syntaxError) Right (scanLeadingVersion bytes)
+  case envelope of
+    NoLeadingVersion -> Right LegacyConfig
+    MalformedLeadingVersion -> Left malformedVersion
+    LeadingVersionAtom atom
+      | T.all asciiDigit atom -> Right (NumericVersion (read (T.unpack atom)))
+      | T.head atom == ':' || negativeInteger atom -> Left malformedVersion
+      | otherwise -> Right (OpaqueVersion (TE.encodeUtf8 atom))
+  where
+    asciiDigit c = c >= '0' && c <= '9'
+    negativeInteger atom = case T.uncons atom of
+      Just ('-', rest) -> not (T.null rest) && T.all asciiDigit rest
+      _ -> False
+    malformedVersion = InvalidSchema "Config version must be a non-negative integer"
+
+syntaxError :: SyntaxError -> ConfigError
+syntaxError (SyntaxError detail) = InvalidSyntax detail
+syntaxError (SyntaxLimit detail) = LimitExceeded detail
+
 parseConfig :: BS.ByteString -> Either ConfigError Config
 parseConfig bytes = do
-  form <- either (Left . syntaxError) Right (parseSExpr bytes)
-  decodeConfig form
+  recognition <- recognizeConfigVersion bytes
+  case recognition of
+    LegacyConfig -> decodeKnownConfig
+    NumericVersion 0 -> decodeKnownConfig
+    NumericVersion 1 -> decodeKnownConfig
+    NumericVersion version -> Left (UnsupportedVersion version)
+    OpaqueVersion token -> Left (UnrecognizedVersion token)
   where
-    syntaxError (SyntaxError detail) = InvalidSyntax detail
-    syntaxError (SyntaxLimit detail) = LimitExceeded detail
+    decodeKnownConfig = do
+      form <- either (Left . syntaxError) Right (parseSExpr bytes)
+      decodeConfig form
 
 decodeConfig :: SExpr -> Either ConfigError Config
 decodeConfig form = do

@@ -9,7 +9,7 @@ module Gaw.System.Config
 
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BSC
-import Gaw.Protocol.Config (Config, ConfigError (UnsupportedVersion), parseConfig, unsupportedVersionDetail)
+import Gaw.Protocol.Config (Config, ConfigError (UnsupportedVersion, UnrecognizedVersion), parseConfig, unsupportedVersionDetail, unrecognizedVersionDetail)
 import Gaw.Protocol.Ref (ObjectId, objectIdBytes, parseObjectId)
 import Gaw.System.Git
 import System.OsPath.Posix (PosixPath)
@@ -29,6 +29,7 @@ data ConfigReadError
 -- Keep legacy diagnostics stable while making unsupported versions actionable.
 configReadDetail :: ConfigReadError -> BS.ByteString
 configReadDetail (InvalidConfig (UnsupportedVersion version)) = unsupportedVersionDetail version
+configReadDetail (InvalidConfig (UnrecognizedVersion token)) = unrecognizedVersionDetail token
 configReadDetail _ = "Invalid staged config"
 
 readConfigAtTree :: Monad m => Git m -> PosixPath -> ObjectId

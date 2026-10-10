@@ -126,7 +126,7 @@ main = do
   commitBoundaryTests
   putStrLn "Protocol tests passed"
 
-invalidSyntax :: Either ConfigError Config -> Bool
+invalidSyntax :: Either ConfigError a -> Bool
 invalidSyntax (Left (InvalidSyntax _)) = True
 invalidSyntax _ = False
 
@@ -160,11 +160,11 @@ commitBoundaryTests = do
     mixed (Left (CommitError MixedProtocolChanges _)) = True
     mixed _ = False
 
-invalidSchema :: Either ConfigError Config -> Bool
+invalidSchema :: Either ConfigError a -> Bool
 invalidSchema (Left (InvalidSchema _)) = True
 invalidSchema _ = False
 
-isLimit :: Either ConfigError Config -> Bool
+isLimit :: Either ConfigError a -> Bool
 isLimit (Left (LimitExceeded _)) = True
 isLimit _ = False
 
@@ -215,6 +215,35 @@ versionedConfigTests = do
         _ -> False
     other -> print other >> exitFailure
   assert (parseConfig "(:version 2 :workspace :future-shape)" == Left (UnsupportedVersion 2))
+  assert (parseConfig "(:version 2 :workspace #(:future))" == Left (UnsupportedVersion 2))
+  assert (parseConfig "(:version v2 :workspace #(:future))" == Left (UnrecognizedVersion "v2"))
+  assert (parseConfig "(:workspace () :version 2)" == Left (UnsupportedVersion 2))
+  assert $ case parseConfig "(:workspace () :version 1)" of
+    Right config -> configVersion config == ConfigV1
+    _ -> False
+  assert (invalidSyntax (parseConfig "(:workspace #(:future) :version 2)"))
+  assert (recognizeConfigVersion "(:workspace () :version 1)" == Right LegacyConfig)
+  assert (recognizeConfigVersion " ; comment\n (:version ; comment\n 2 :workspace #(:future))" == Right (NumericVersion 2))
+  assert (recognizeConfigVersion "(:version v2 :workspace #(:future))" == Right (OpaqueVersion "v2"))
+  assert (recognizeConfigVersion "(:version 2.0 :workspace #(:future))" == Right (OpaqueVersion "2.0"))
+  assert (recognizeConfigVersion "(:version #x2 :workspace #(:future))" == Right (OpaqueVersion "#x2"))
+  assert (recognizeConfigVersion "(:version 20abc :workspace ())" == Right (OpaqueVersion "20abc"))
+  assert (unrecognizedVersionDetail "v2\ESC[31m" == "Unrecognized config version v2\\x1B[31m")
+  assert (BS.length (unrecognizedVersionDetail (BS.replicate 100 97)) < 100)
+  assert (recognizeConfigVersion "(:version -1 :workspace ())" == Left (InvalidSchema "Config version must be a non-negative integer"))
+  assert (recognizeConfigVersion "(:version :future :workspace ())" == Left (InvalidSchema "Config version must be a non-negative integer"))
+  assert (recognizeConfigVersion "(:version)" == Left (InvalidSchema "Config version must be a non-negative integer"))
+  assert (recognizeConfigVersion "(:version (:future))" == Left (InvalidSchema "Config version must be a non-negative integer"))
+  assert (invalidSyntax (parseConfig "(:version 1 :workspace #(:future))"))
+  mapM_ (assert . isLimit . recognizeConfigVersion)
+    [BS.replicate 65537 32, "(:version 2 " <> BS.replicate 16 40 <> BS.replicate 16 41 <> ")"]
+  mapM_ (assert . invalidSyntax . recognizeConfigVersion)
+    [ "(:version 2 :workspace #(:future)"
+    , "(:version 2 :workspace #(:future)) (:workspace ())"
+    , "(:version 2 :workspace (\"bad\\n\"))"
+    , BS.pack [0xef, 0xbb, 0xbf, 40, 41]
+    , BS.pack [0xff]
+    ]
   mapM_ (assertCase invalidSchema)
     [ "(:version -1 :workspace ())"
     , "(:version \"1\" :workspace ())"

@@ -153,6 +153,14 @@ values are non-negative decimal integers.  V0 rejects unknown fields; v1
 ignores their meaning and records a warning for each field name.  Unknown
 values must still use the restricted syntax and satisfy its limits.  Their
 values and the full syntax tree are not retained by the decoded Config.
+For future versions, =:version= must be the first item after the opening
+parenthesis, apart from whitespace or comments.  A leading version is read
+before the full v0/v1 parser: an unrecognized version is indeterminate even
+when its body uses syntax that parser does not understand.  Existing configs
+without a leading version continue through the original parser, including
+configs with a later =:version 0= or =:version 1=.  This compatibility path
+does not provide forward protection for unknown syntax in a future config;
+put the version first in every new version.
 =git gaw check= reports HEAD and index warnings separately, and =git gaw status=
 reports them under the relevant branch.  Warnings do not invalidate a config
 or change exit status; other commands and the protection hook remain quiet.
@@ -164,6 +172,10 @@ macros or evaluation.  Limits remain 65,536 UTF-8 bytes per config, 16 list
 levels, 1,024 flattened paths and 4,096 UTF-8 bytes per path.  Invalid UTF-8,
 a BOM, unsupported escapes and literal ASCII control characters in strings
 are rejected.
+For an unknown leading version, a shared structural scan checks the byte,
+encoding, nesting, string and single-form limits without interpreting its
+version-specific body.  Missing or malformed leading version values and
+structural failures remain invalid rather than indeterminate.
 
 Workspace paths are literal repository-root-relative Git paths.  They use
 =/= as their component separator, are not silently normalized, and may not
@@ -179,6 +191,8 @@ reinterpret v0 ancestors.  The new CLI reads old configs, but older CLIs are
 not expected to read v1.  An unsupported version is indeterminate rather
 than ordinary invalid committed state: check/status explain it and the hook
 conservatively blocks branch movement instead of weakening protection.
+The already released v0.5.0 executable cannot apply this new scan to syntax
+it does not understand; future formats need a CLI with this protection.
 
 ** Project Association
 A GAW commit may be associated with zero, one, or multiple project commits.

@@ -32,7 +32,11 @@ configCliTests temporary git = do
     newConfig candidate root
     boundaryChanges candidate root
     migrateLegacy candidate root
-    futureVersion candidate root
+    futureVersion candidate root "future-numeric"
+      "(:version 2 :workspace :future-shape)\n" "Unsupported config version 2"
+    futureVersion candidate root "future-syntax"
+      "(:version v2 :workspace #(:future))\n" "Unrecognized config version v2"
+    invalidRecovery candidate root
     ) (removePathForcibly root)
   where
     invoke directory executable args = do
@@ -286,10 +290,10 @@ configCliTests temporary git = do
       preserved <- gitOk directory ["show", takeWhile (/= '\n') previous ++ ":.gaw/config"]
       parent <- gitOk directory ["rev-parse", "HEAD^1"]
       require (preserved == legacy && parent == previous) "v1 adoption changed its v0 parent"
-    futureVersion candidate root = do
-      directory <- seed root "future"
+    futureVersion candidate root name sourceConfig detail = do
+      directory <- seed root name
       _ <- gitOk directory ["checkout", "-q", "-b", "agents"]
-      config directory "(:version 2 :workspace :future-shape)\n"
+      config directory sourceConfig
       nativeCommit directory "future config"
       executable <- OS.fromBytes (BSC.pack git)
       location <- OS.fromBytes (BSC.pack directory)
@@ -297,10 +301,10 @@ configCliTests temporary git = do
       report <- inspectCommittedState (runGitPosix executable) location source
       require (case classifyCommittedState (stateFindings report) of
         IndeterminateCommittedState _ -> True
-        _ -> False) "unsupported version was classified as determinate"
+        _ -> False) "future version was classified as determinate"
       status <- cliOk candidate directory ["status"]
       require (isInfixOf "indeterminate" status &&
-        isInfixOf "Unsupported config version 2" status) "status hid unsupported branch"
+        isInfixOf detail status) "status hid future-version branch"
       _ <- cliFail candidate directory ["check"]
       _ <- cliFail candidate directory ["deploy", "--branch", "agents"]
       -- Retaining the marker must not allow native Git to move an unknown-version branch.
@@ -312,4 +316,21 @@ configCliTests temporary git = do
       _ <- gitOk directory ["add", "--", "another"]
       _ <- failure directory git ["-c", "commit.gpgsign=false", "commit", "-q", "-m", "must reject"]
       after <- gitOk directory ["rev-parse", "HEAD"]
-      require (before == after) "unsupported-version protection was weakened"
+      require (before == after) "future-version protection was weakened"
+    invalidRecovery candidate root = do
+      directory <- seed root "invalid-recovery"
+      _ <- gitOk directory ["checkout", "-q", "-b", "agents"]
+      let invalid = "(:version 1 :workspace #(:future))\n"
+      config directory invalid
+      nativeCommit directory "invalid config"
+      _ <- gitOk directory ["config", "hook.gaw-reference-transaction.event", "reference-transaction"]
+      _ <- gitOk directory ["config", "hook.gaw-reference-transaction.command", candidate ++ " --reference-transaction"]
+      _ <- gitOk directory ["config", "hook.gaw-reference-transaction.enabled", "true"]
+      before <- gitOk directory ["rev-parse", "HEAD"]
+      writeFile (directory </> "another") "same marker\n"
+      _ <- gitOk directory ["add", "--", "another"]
+      nativeCommit directory "recover while preserving marker"
+      after <- gitOk directory ["rev-parse", "HEAD"]
+      require (before /= after) "invalid-state recovery was blocked"
+      preserved <- gitOk directory ["show", "HEAD:.gaw/config"]
+      require (preserved == invalid) "invalid-state recovery changed the marker"
