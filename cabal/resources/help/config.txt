@@ -101,8 +101,9 @@ A field changing core protocol semantics needs a new config version.
 Unsupported numbers and unrecognized leading version tokens are not guessed
 as v0/v1. They make committed-state inspection indeterminate, and the hook
 blocks branch movement even if the config marker stays unchanged; use a
-compatible CLI. Other syntax/schema errors remain errors. The released
-v0.5.0 executable cannot protect future syntax it cannot parse.
+compatible CLI. Other syntax/schema errors remain errors. Leading-version
+protection is available from v0.6.0; the v0.5.0 executable cannot protect
+future syntax it cannot parse.
 New CLIs read supported old configs; older CLIs need not understand v1.
 Each historical checkpoint is interpreted with its own config, not today's
 HEAD config, and no history migration is required.
