@@ -1,143 +1,221 @@
 # GAW working memory
 
-## Objective
+## Current state and recovery
 
-The v0.6.0 release preparation is committed as project `801fe3b`, with a clean project worktree and index. The sole parent is `a250410`; the complete committed diff matches the reviewed four-file candidate. Cabal's sole program version source and README's current version are 0.6.0. README summarizes the release's versioned workspace roles, config help, leading-version protection, mixed-change rejection and bundled workflow guidance; README and embedded config/hook help explicitly place leading-version protection at v0.6.0 while retaining the v0.5.0 limitation. Linux Nix RC and built CLI version checks passed before submission; post-commit inspection did not rerun them. No tag points at the inspected project HEAD, and publication/system installation have not been verified. Release preparation and project submission are complete; user-managed tagging/publication are the remaining release steps. Issue #7 implementation remains complete as recorded below; external issue state has not been rechecked.
+Main is at v0.6.0 preparation commit `801fe3b`; the ordinary worktree/index
+were clean at this housekeeping review. Release preparation and the previously
+requested implementation nodes are complete. No B0 blocker was identified
+among the follow-up items below. This task organizes memory only; it creates
+no new feature, external issue, release action or cross-project work.
 
-## v0.6.0 release preparation
+The deployed branch is `_agents` at the publicly reported GAW worktree
+`.agents`. The selector and canonical protection hook are valid. Config is
+explicit v1, declaring `archive/`, `skills/` and `memory/` under their
+matching roles. Recovery/check and the native GAW status were clean before
+this edit. Keep the deployment/config/history unchanged.
 
-- Four project files changed: `cabal/git-agent-workflow.cabal`, `README.org`, and embedded config/hook help. CLI version still comes from Cabal's generated `Paths_git_agent_workflow.version`; historical v0.5.0 references describe that older client's protection limit and are intentional.
-- On the uncommitted candidate, Linux `nix flake check -L` ran one package check and passed both Cabal suites. `nix build --rebuild -L .#checks.x86_64-linux.git-agent-workflow` actually rebuilt and reran both suites successfully, with no output mismatch. Packaging checks verified all four skill resources and twelve help resources in the source distribution, plus installed/exposed skill bytes. Existing distribution-metadata/PATH warnings were nonfatal; Darwin/aarch64 execution was not tested.
-- `nix run .# -- --version` exited zero and printed `git-gaw 0.6.0`. `git diff --check` passed. These checks originally covered the release candidate; its earlier memory checkpoint had no additional project parent. Native Cabal remains a complete-environment development path rather than a required RC gate.
-- After the user committed, read-only inspection verified the sole parent, complete four-file diff, subject, clean project worktree/index and absence of a tag at HEAD. The completion checkpoint associates the actual inspected project snapshot; this records post-commit verification, not retroactive test provenance. The matching content does not require another build/test run.
+Use the current host's command mapping rather than copied old Nix paths.
+The user-specified executable actually printed `git-gaw 0.6.0` in this
+review. That verifies the named CLI only, not PATH discovery in every caller
+or default installation selection.
 
-## Issue #7 implementation and provenance
+## Handoff's illustrative levels and activation conditions
 
-- The user adopted a leading `:version` common-structure scan while retaining the original `parseSExpr`/`decodeConfig` path when the version is not first. This preserves accepted nonleading v0/v1 declarations and avoids weakening protection of historical branches. Future versions need the leading envelope; the already released v0.5.0 CLI cannot be retroactively changed.
-- Pure parser and real Git tests passed for unknown-grammar and numeric future versions, legacy nonleading v1, malformed known v1, scanner limits, unchanged-marker hook rejection and marker-preserving invalid-state recovery. The post-commit inspection confirmed `a250410` has sole parent `b4561ee` and exactly the nine reviewed source/test/documentation paths; the project worktree and index are clean. Its `Close #7` footer differs from the earlier draft's `Refs #7`. The build/tests ran on the staged candidate before submission; post-commit verification checked the snapshot and diff, without rerunning them or checking GitHub issue state.
+B0–B3 are illustrative labels internal to the user's handoff note, retained
+here to explain its distinctions. They are not a mandatory GAW convention,
+memory schema, checkpoint rule or required issue-priority system. Other work
+need not adopt them; the actual blocking condition and deferred scope matter.
 
-## Archive semantics adoption
+- **B0 — current blocker:** prevents an already determined task or release.
+  None of these follow-up items is presently established as B0.
+- **B1 — conditional blocker:** relevant only when a particular workflow is
+  entered or an actual failure is triggered; not a current defect by default.
+- **B2 — nonblocking follow-up:** useful independently scheduled work, without
+  blocking current development/Linux release.
+- **B3 — observation/deferred:** no decided implementation need or explicitly
+  postponed; retain only the rationale and activation condition.
 
-- The user decided after reviewing experiments to keep the existing Markdown manifest/file convention as the GAW default. This is a lightweight skill-defined workflow, not a separately published universal archive format or CLI protocol. Data Package/RO-Crate integration, parsers, validators, schemas, compatibility layers and automatic publishers are no longer current work.
-- Every archive operation creates a fresh independent snapshot, even for one file; keep checkpointed snapshots unchanged. Manifest semantics cover title/time/purpose/selection, each source/archive path and role, known context/provenance/limits and historical status. Generic SHA-256, timestamp naming, fixed archive-root name, exact parent count and archive-only commits are not required.
-- Updated bundled archive reference to describe this default, byte capture/verification, fail-closed partial-output handling, source-root/path mapping, snapshot immutability and stable path references. Existing SKILL.md routing and Cabal resource declarations already cover it; no new file or dependency was introduced. Generic project associations remain evidence-based zero/one/several, and coherent mixed workspace checkpoints remain allowed.
-- Updated this GAW worktree's project archive skill and archive overview to remove interim adoption/candidate wording. Preserve local UTC--captured-HEAD naming, full capture HEAD, status/size/SHA-256, exact byte/source-state checks and separate archive-only checkpoints. These stronger conventions remain project-specific.
-- Preparation snapshot remains at archive/2026-10-10T05-24-49Z--d6c675a/. The complete historical experiment report and raw inputs/results remain unchanged at archive/2026-10-10T07-07-01Z--d6c675a/, with report at files/tmp/archive-comparison/run-20261010/report.md. The earlier DP2 recommendation was conditional and authentic at the time; do not retroactively rewrite it as a Markdown decision or copy the full report into current memory.
-- Reevaluate external standards only for a concrete new need, such as programmatic bulk metadata access, indexing/exchange, relationships too complex for Markdown or a proven tool improvement. This is not a standing TODO to monitor package versions.
-- Manual semantic review covered single/multi snapshots, missing single-project context, cross-source path mappings, sanitized derivatives, capture failures, immutable old snapshots, optional generic hashes, zero/one/several project parents and coherent mixed workspace checkpoints. Skill metadata validation, Markdown/whitespace and existing route/Cabal resource-reference checks passed. No build, runtime archive experiment, source-distribution generation or installation check was rerun for this documentation-only change; resource inventory and packaging are unchanged.
-- The user committed the staged single-file change with subject `feat(skill): standardize archive snapshot workflow`. Polling detected the HEAD update; read-only inspection verified the exact single parent, sole archive-reference path, 9009-byte content and SHA-256 d5855e76e5e701fa26cf0076eef1a34a00fd3204a6fe81187b10aca1f7d34c58 against the reviewed candidate. Committed and working bytes match, and the ordinary worktree/index are clean. GAW adoption remains checkpointed in the project skill/overview/memory; no original archive or protocol path changed.
-- The completion checkpoint associates the actual project snapshot inspected after submission, not retroactive provenance for earlier candidate checks. Those were semantic/metadata/resource-reference/whitespace checks before the project commit; no package build or installation validation was rerun. Unchanged bytes do not warrant repeating those checks. Implementation and project submission are complete; released/installed availability and other-project transplantation are not claimed or current automatic tasks.
-- The final user-adopted PLAN.md is preserved byte-exact as a single-file decision-input snapshot at `archive/2026-10-10T10-07-16Z--d6c675a/`. Source type/size, pre/post state, exact bytes, size/SHA-256 and captured HEAD checks passed. It has a separate archive-only checkpoint associated with its inspected capture context; the manifest explicitly distinguishes ignored PLAN.md and the uncommitted generic archive-reference candidate from tracked HEAD blobs. Earlier experiment and preparation snapshots remain unchanged.
+| Item | Level | Recovery decision |
+| --- | --- | --- |
+| Canonical hook executable discovery | B2; B1 for a reproducibly failing supported deployment | Hook command is `git-gaw --reference-transaction`, so its caller needs PATH discovery. No general failure is established. Investigate shell/GUI/noninteractive/Nix boundaries or diagnostics only for a concrete need; portable deployment/installation fixes may suffice. No absolute-path solution or protocol change is adopted. |
+| Default init branch/templates | B3 | CLI requires explicit `--branch` and emits `(:version 1 :workspace ())`. This deliberately avoids a universal directory layout or memory template. Reconsider only if repeated project initialization cost establishes a need; not a defect or automatic issue. |
+| Non-Linux/platform execution | B2; B1 only when undertaking the relevant platform's formal support/release | Main evidence is x86_64-linux. Declared aarch64-linux/aarch64-darwin outputs do not prove execution. User explicitly chose not to open an issue for non-Linux verification now; keep claimed support separate from actual tested platforms. |
+| Bare/native Cabal environment | B3 | Complete-environment development option, not an unconditional Linux RC gate. Historical missing dependencies are not a current release failure. Reevaluate only for an explicit independent-of-Nix build-support goal. |
+| Historical packaging warnings | B3 | Distribution metadata, dependency upper bounds and PATH warnings were nonfatal in recorded checks. Investigate for concrete packaging needs; do not reopen completed configuration/help/resource work or infer failure from an old warning. |
+| Release/installation status checks | B1 when publishing/installing | Recheck tags, GitHub Release and the intended installed executable at that time. Committed version, RC evidence, tags, publication and installation are distinct states. No release audit is required by this housekeeping task. |
 
-## Current skill follow-up
+No new issue is required for hook discovery until an actual reproducible
+deployment problem justifies one. Do not turn speculative portability risk
+into a current blocker or silently broaden this work into environment tests.
 
-- Node 1 is committed with the planned feat(skill) subject. Its exact parent, sole changed memory-reference path, file size and SHA-256 matched the tested candidate, and the project worktree/index were clean before node 2. A prior completion checkpoint associates that inspected commit; original tests ran on its candidate, not retroactively on the commit. Motivation, tracking, implementation and verification are distinct; useful associations and next actions are maintained, and completed progress can leave current memory when no longer useful.
-- Node 2 is committed with the planned feat(skill) subject and changes only the bundled skills reference, adding project-to-general and general-to-project transplantation/adaptation. It preserves operational detail/local constraints and useful duplicated/self-contained guidance, distinguishes source/release/installed availability, checks names/triggers/callers/resources/dependencies, and maintains authorization and old-snapshot boundaries. Org-texmacs archive is only a conceptual example of integrating capture/origin provenance, evidence-based parents and redacted-derivative distinctions into complete local archive procedures; no fresh cross-project read, mutation or actual transplantation occurred.
-- For both nodes, all original respective reference text was verified preserved verbatim after removing the inserted sections/headings. Skill metadata and whitespace checks passed. Manual semantic review covered absent external issues, implementation versus verification/tracking completion, changed motivation, current-memory cleanup, both transplantation directions, useful repetition, unavailable capabilities and unauthorized target projects. These were instruction reviews, not independent behavioral tests or live external operations.
-- Each node's normal x86_64-linux Nix package check exited zero, actually ran both Cabal suites (PASS), generated a real sdist and byte-verified all four skill resources in sdist/installed data/Nix-exposed layout, including negative resource-check cases and all 12 help resources in sdist. Existing publication-quality and output-directory-not-in-PATH warnings were nonfatal; no compiler warnings were observed. Other architectures were not tested. No differential test, extra forced rebuild or system installation was performed.
-- Post-commit inspection verified node two's exact single parent, sole skills-reference path, file size and SHA-256 against the tested candidate; the project worktree and index are clean. This completion checkpoint associates the actual inspected snapshot, while the prior candidate checkpoint remains unchanged. Original package checks ran on byte-identical candidates before submission; this association records later snapshot verification, not retroactive test provenance. Unchanged content warrants no repeated build. Both requested nodes are complete, with no blocker or remaining submission step; temporary artifacts are not needed to recover these conclusions.
-- No new CLI/config/schema, external issue actions, automatic workflow sync/self-maintenance, cross-project changes or history rewrite. Main skill routing, archive reference, resource inventory/packaging, node-one motivation text, config, version and lockfile are unchanged. Normal GAW memory maintenance remains separate from configuration and ordinary project staging/commit, which the user performs.
+## Existing issue references
 
-## Current development nodes
+These identities/positions come from the user's handoff plus established
+memory; live GitHub open/closed state was not queried. Use stable issue links
+for detailed requirements rather than copying complete issue text here.
 
-- Node 1 is committed with the planned subject. Its actual parent, eight changed paths and all candidate hashes were verified exactly before node 2. A prior node-one completion checkpoint associates that inspected snapshot; the original tests ran on its candidate before the project commit. The new byte-safe, rename-disabled first-parent transition check rejects mixed `.gaw/` changes before commit-object/ref writes and fails closed on diff errors. Pure, injected-adapter and real CLI tests passed, preserving root init, v0/v1, history, empty commits and unchanged-tree project associations.
-- Node 2 is committed with the planned subject; its actual parent, six paths and all candidate hashes were checked and matched exactly: main bundled skill, three memory/archive/skills references, Cabal data-files and Nix resource checks. The main skill owns shared snapshot self-explanation, role, reference, provenance and checkpoint constraints and routes detailed workflows on demand. Original memory/reconstruction and exact-parent safeguards were checked as preserved verbatim. Archive guidance separates capture context from original provenance; project-specific layout, cardinality and OID requirements were not promoted to universal rules. Project-skill references distinguish bundled resources, named skills, rooted workspace data and external dependencies.
-- Final x86_64-linux package validation ran and passed both Cabal suites, generated a real sdist and byte-verified all four routed files in sdist, installed data and the existing Nix-exposed layout. Negative resource checks reject missing, changed and out-of-root symlink targets. Frontmatter validation passed. Manual scenario review covered incomplete historical evidence, unknown artifact origins, skill renaming/reference roots, archived instruction authority and v0/custom roles; it did not execute live archival/lifecycle operations. Existing Cabal distribution quality warnings about metadata and dependency upper bounds remain outside scope; no compiler warnings occurred.
-- Org-texmacs archive/governance skills and bootstrap assets were examined under directed read-only permission only. No changes or execution there. Optional AGENTS coordination evaluation is complete for node 3, with no new template, script or CLI. No history rewriting, OID lint, workflow self-maintenance, differential reproduction, extra config/role semantics or issue #7 changes are included. Project index, config, version, lockfile and system installation remain unchanged.
-- Node 3 is committed with the planned subject, `feat(help): add configuration reference topic`. Its actual single parent, seven changed paths and every file size/SHA-256 were checked against the validated candidate and matched exactly; the project worktree and index are clean. Its scope is embedded config topic, overview/usage/init/README discovery, real CLI help tests, and source-distribution help checks. The CLI retains config/hooks/recovery as help-only topics, all existing overview/command aliases, unknown-topic and extra-argument failure behavior. Three published implicit-v0/explicit-v0/v1 examples were decoded by the real parser. No config command or protocol semantics were added.
-- Node-three normal build and forced rebuild passed both Cabal suites, all 12 help-file source-distribution byte checks and all four skill-resource sdist/data/exposed checks, with no compiler warnings or rebuild mismatch. Flake evaluation passed but reported running 0 checks, so it is not claimed as test-rerun evidence. Other architectures were omitted; x86_64-linux is the actual tested host. Existing Cabal publication-quality warnings remain outside scope.
-- Node-two actual snapshot verification is associated by its prior completion checkpoint. The prior completion checkpoint associates the original node-three snapshot inspected after the user committed it. Original tests ran on the byte-identical candidate before submission; the new association records post-commit verification, not retroactive test provenance. No further build was warranted by unchanged content. All three nodes and the requested evaluation are complete, with no remaining blocker. The agent did not stage or commit ordinary project files; config, version, lockfile and system installation remain unchanged.
+| Issue | Position and current boundary |
+| --- | --- |
+| [#3](https://github.com/ren-lingyu/git-agent-workflow/issues/3) | Restricted GAW-aware rebase, later design/implementation; not routine memory maintenance. |
+| [#4](https://github.com/ren-lingyu/git-agent-workflow/issues/4) | Exploratory interactive DAG visualization, no current release gate. |
+| [#5](https://github.com/ren-lingyu/git-agent-workflow/issues/5) | Cross-session/agent knowledge integration, separate workflow work. |
+| [#6](https://github.com/ren-lingyu/git-agent-workflow/issues/6) | Optional checker deferred; bundled OID semantic guidance is complete. |
+| [#9](https://github.com/ren-lingyu/git-agent-workflow/issues/9) | Long-term history-model evaluation, not a decided split/fusion feature. |
+| [#10](https://github.com/ren-lingyu/git-agent-workflow/issues/10) | Optional explicit bidirectional AGENTS maintenance research. |
 
-- The user subsequently rebased only the latest project commit message to append `Close: #8`. Read-only comparison confirmed identical complete trees, parent lists and author metadata; only the message and committer timestamp changed. Issue #8's configuration-help requirements are covered by node 3; the installed executable was also observed successfully serving help config. The footer is not evidence that GitHub has closed the issue. This new checkpoint associates the rewritten snapshot actually compared, without rewriting earlier GAW history or changing its original project-parent association. Candidate-test provenance remains unchanged, and no build/test rerun was needed. Both project and memory worktrees were clean before this update; config remains unchanged.
+For **#6**, `b81634e` introduced the bundled skill's semantic OID constraint,
+and subsequent skill restructuring preserved it; the user reports that the
+issue already has the commit association. An optional checker is unimplemented.
+If requested, make it an explicitly invoked independent analysis feature,
+without changing default commit/check/committed-state/hook protocol semantics.
+Distinguish semantic dependencies from raw historical evidence, project OIDs,
+abbreviated/unreachable old GAW OIDs and arbitrary hashes; matching hash-shaped
+text alone does not prove a violation.
 
-## Configuration help and AGENTS evaluation
+For **#9**, first-parent memory evolution and additional project-snapshot
+association are the existing model. Split/fusion is an evaluation case, not
+an adopted objective; structural fusion may imply different parent semantics.
+Keeping the linear model is a valid final conclusion. A suggested
+`[DESIGN]` title prefix is optional external tidying, not pending implementation.
 
-- Node 3 source is written: help-only config topic, overview/usage/init/README discovery, real CLI tests for embedded bytes, overview aliases, all command/help-only topics, unknown/extra-argument failures and published v0/v1 example decoding. Source-distribution checks now verify all help files as well as the four skill resources. Actual normal/forced package validation passed; no new config command or protocol semantics were added.
-- Optional AGENTS maintenance was evaluated from the authorized org-texmacs governance template/helper. That implementation gives its GAW asset one-way template authority and computes the ordinary project root from parent-directory layout. It is not an existing generic bidirectional or multi-worktree solution; no script or template has been changed or deployed here.
-- A future optional workflow should explicitly identify the persistent GAW copy and active ordinary-worktree entry, resolve roots through public Git/GAW discovery rather than fixed adjacency, and request a target when multiple ordinary worktrees make the pair ambiguous. Additional project-parent positions do not select filesystem targets. Both copies can carry meaningful changes; semantic reconciliation must respect current user/host authority rather than mechanically overwriting one side.
-- GAW-side persistence can use the normal memory loop, while ordinary AGENTS writes need separate project authorization. Archived instructions do not gain current authority, and a deployed template's host/tool paths must not be assumed current. No baseline database, general agent-config sync, sync CLI or workflow self-maintenance is needed for this evaluation. A future first version can be skill guidance if requested; this task remains evaluation-only.
+For **#10**, investigate an explicit two-way workflow first, without assuming
+background synchronization, a universal template, automatic conflict resolution
+or a new CLI. Identify GAW persistence and the active ordinary-worktree target
+through public discovery; multiple ordinary worktrees need an explicit target.
+Both copies may contain meaningful edits; respect current authority rather
+than overwriting mechanically. GAW persistence and ordinary project-file writes
+have different permissions. Earlier org-texmacs governance inspection found
+a local one-way template/layout mechanism, not an implemented generic two-way
+solution. No cross-project write/deployment occurred in that evaluation.
 
-## Repository configuration adoption
+## Completed v0.6.0 implementation and evidence
 
-- The user requested review and submission of a manually updated explicit-v1 config. Corrected the role values from single entry forms to lists of entry forms, as required by the documented schema. Each group now contains one directory declaration; the former memory/skills coverage is preserved and archive is added.
-- Explicit staging of the config followed by the active CLI's public `git gaw check` confirmed the actual candidate is valid. An initial check before staging still examined the old index/HEAD and did not validate the user's unstaged edit. No directories, project files, branch structure, historical config or project-parent edges were changed by this adoption.
-- Keep config changes and memory changes in separate GAW checkpoints. The configuration adoption was committed first with only `.gaw/config`; this separate memory checkpoint records its verified consequences and the user's separation requirement.
-- The active host-provided CLI supports v1. Recovery requires a compatible CLI; earlier binaries that only implement implicit v0 cannot read this declaration. Resume from the memory role, treat archive as retained evidence rather than current instructions, and use the skills role for reusable workflows.
+Completed work, not backlog:
 
-## Versioned configuration implementation
+- Versioned v0/v1 workspace configuration, optional role groups and role-aware
+  recovery; configuration help `git gaw help config`.
+- Conservative protection of unknown leading versions (Issue #7 implementation
+  at `a250410`), with compatibility for accepted historical nonleading v0/v1.
+  Future versions require a leading envelope. v0.5.0 cannot retroactively gain
+  this protection.
+- First-parent transition rejection of mixed `.gaw/` and other workspace
+  changes, before commit-object/ref writes.
+- Routed bundled memory/archive/skills workflows, Cabal/Nix resource inventory
+  and byte consistency checks, motivation/tracking separation and bidirectional
+  workflow transplantation guidance.
+- Independent immutable archive snapshots with `MANIFEST.md + files/`,
+  formally adopted in bundled guidance at `b4561ee`.
+- v0.6.0 version preparation at `801fe3b`: Cabal version, README and embedded
+  config/hook help. Cabal remains the program-version source.
 
-- Adopted rules: missing version is v0, explicit v0/v1 supported; v1 permits direct entries mixed with role groups and repeated role groups in source order. Roles use `[a-z][a-z0-9-]*`, reserving `file` and `directory`; unknown legal roles are accepted silently. Flattening retains existing duplicate-path, nesting, object-kind and project-parent rules.
-- v0 rejects unknown top-level fields; v1 ignores their semantics with field-name warnings shown only by check/status. Preserve version, sections, role metadata and diagnostics, not the full AST or unknown values. Unsupported versions classify committed state as indeterminate and must not weaken hook protection. Init emits explicit v1 with empty workspace and no fixed directories.
-- The implementation originally kept the repository config at implicit v0; the user's subsequent explicit configuration-adoption request superseded that choice. Current workspace paths are `archive`, `skills` and `memory`, grouped under their matching v1 roles. The former backup and differential-test local branch refs are absent; do not try to restore them as routine memory maintenance. The historical differential snapshot still resolves and is associated by a retained GAW project-parent edge. Do not reproduce or merge that harness. Validate with the existing protocol and Git-adapter suites plus isolated CLI fixtures using the newly built executable. Package version, lockfile and system installation stay unchanged.
-- Phases 1 and 2 separated Workspace data and Git validation from configuration: types live in `Gaw.Protocol.Workspace.Types`; workspace/project-parent/commit validation consumes Workspace via `effectiveWorkspace`. `Gaw.Protocol.SExpr` handles restricted syntax independently of Config decoding. Config re-exports the prior path accessors; library validation/planning interfaces now take Workspace.
-- The refactor candidate passed a fresh Linux Nix package build with both existing Cabal suites. Git flake inputs omit new untracked modules, so validation uses a local `path:` input without staging project files. `--rebuild` cannot run before a new derivation has a valid output; the first successful check used `nix build --no-link --no-write-lock-file -L path:/home/lingyu/Projects/git-agent-workflow#checks.x86_64-linux.git-agent-workflow` with a 120-second timeout. Initial sandbox/cache and no-output rebuild failures occurred before tests. No differential test was run.
-- Phase 3 passed a fresh package build with both expanded suites, including actual CLI fixtures using the candidate executable. Verified v0-to-v1 append preserves the historical parent/config, HEAD/index warning separation, non-blocking status diagnostics, role-based project conflicts, wrong object kinds, rejected candidate ref stability, branch rename, unsupported-version indeterminate classification and hook refusal even when the marker is retained. Fixtures resolve Cabal's relative candidate and PATH entries before changing subprocess working directories; no compiler warnings remained.
-- Phase 4 is complete: README version/schema/normalization/compatibility rules, init/check/status/commit/hooks help and bundled role-aware resume guidance. Final `nix flake check -L --no-write-lock-file path:/home/lingyu/Projects/git-agent-workflow` executed one x86_64-linux check and passed, including both suites. `nix build --no-link --no-write-lock-file --rebuild -L path:/home/lingyu/Projects/git-agent-workflow#checks.x86_64-linux.git-agent-workflow` passed with both suites rerun and no output mismatch. Other architectures were omitted by the host-specific flake check, not claimed tested. Compiler warnings and diff whitespace errors are absent.
-- The user committed both stages with the prepared subjects: `refactor(config): separate workspace model and syntax decoding`, then `feat(config): support versioned workspace roles`. A read-only comparison checked the full relevant file inventories and bytes in each actual commit against the validated stage snapshots: both matched exactly, including all new modules/tests. Existing tests ran before project commits; the new project-parent association records this post-commit verification of the final snapshot, not a retroactive assertion that the original tests ran against a commit. No further builds were warranted by unchanged content.
-- Validation used local path inputs to include new files without staging. The temporary ten-command Nix allowance was used five times; the user subsequently lifted that quota for this task. During implementation, no lockfile, package version, system installation, GAW config or old branch was changed by the agent. Subsequent discovery found the former local branch refs absent. No differential test was run.
-- Split preparation: the first commit extracts Workspace types and effective-workspace consumers, separates restricted syntax from the unchanged v0 schema and updates the corresponding callers/tests; it keeps v0-only acceptance and the old init default. The second adds explicit v0/v1, integer syntax, role metadata, diagnostics and conservative version classification, v1 init, CLI fixtures and all matching documentation. This is a semantic split, not a source/docs/tests split.
-- Split preparation supplied exact sequential patches, messages and complete temporary stage snapshots. The first patch passed Git's read-only cached applicability check; the second passed a read-only check against the first-stage snapshot and produced files byte-identical to the final worktree when applied inside a task-created temporary copy. No real project state changed during preparation. The reconstructed first-stage package independently passed both original Cabal suites on x86_64-linux with no compiler warnings; the second-stage final candidate passed full tests and rebuild. These stage boundaries and findings remain recoverable without the temporary artifacts.
-- Handoff: implementation and the user's two project commits are complete, with no remaining blocker. Keep the current deployment and earlier history in place. Future changes should start from the clean committed project state; do not repeat completed checks solely because this session ended or attach speculative project parents.
+Recorded Linux release-candidate validation ran one package check and both
+Cabal suites through `nix flake check -L`; forced Nix rebuild reran both suites
+without output mismatch. Checks verified all four skill resources and twelve
+help resources in the source distribution and installed/exposed skill bytes.
+The built CLI printed 0.6.0. Nonfatal metadata/PATH warnings were recorded.
+Other architectures were not executed; a flake evaluation reporting zero checks
+is not runtime test evidence.
 
-## Durable references and checkpoint organization
+The user committed a byte-identical reviewed four-file release candidate,
+with sole parent `a250410`. Earlier completion memory associates the actual
+post-commit inspected snapshot; original tests ran before submission. The
+same distinction applies to the prior archive/config/help/skill nodes:
+post-commit equality inspections do not retroactively change test provenance.
 
-- README `Project Association` and `History Semantics`, and bundled skill `Maintain current memory` and `Ground and checkpoint selectively`, now explain the adopted boundaries: first-parent edges express checkpoint evolution, additional parents associate exact project snapshots, and workspace trees hold memory whose content explains goals, evidence, causality, and results.
-- Additional-parent positions do not encode based-on, resulting state, or other business roles. Keep associations within a checkpoint as homogeneous as practical; prefer separate checkpoints for different phases only when each has independent recovery value. Multiple project parents remain supported, and not every project commit needs a checkpoint. Exact-snapshot provenance requirements remain unchanged; never guess parents to complete a structure.
-- GAW checkpoint OIDs are not durable semantic identifiers. Prefer Git relationships and stable workspace paths; omit redundant project OIDs when parent edges already provide the needed precision, but retain project OIDs for independent historical lookup or reproducibility. Historical evidence, diagnostics, and other hashes are not automatically violations.
-- Persist the actionable content of untracked temporary inputs directly in memory. Their filenames do not provide reproducible context and must not substitute for goals, decisions, evidence, or next actions needed to resume work. Incidental temporary filenames may remain as source context when the necessary content is explicitly described as incorporated into a checkpoint and that incorporation is verified; such mentions alone do not warrant rewriting earlier history. The earlier maintenance checkpoint contains the substantive design decisions independently of its temporary task-source filename, so the user decided to retain that history.
-- Removed the redundant GAW checkpoint OID from the differential-test association note below while retaining the relationship fact. Documentation maintenance introduced no CLI, parent-role metadata, config, stable checkpoint ID, or automated GAW-aware rebase changes.
-- Issue #6 enforcement remains deferred, with no mechanism chosen or implemented. Future investigation must distinguish semantic dependency from historical evidence, abbreviated or unreachable old GAW OIDs, project OIDs, and other hashes; simple hash matching is insufficient, and blocking would require mechanically reliable detection. Issue #3 remains separate history-curation work.
-- The user committed the earlier README and bundled-skill changes as `fix(skill): avoid OID-dependent memory references` on `main`. That committed two-file diff was inspected with a clean project worktree and associated through an earlier project-parent edge, not used as provenance for earlier reconstructed states. At that handoff no build or test had run for the documentation-only task.
+This housekeeping pass read local HEAD/history, existing guidance, config
+and the specified CLI version. It did not rerun builds/tests, inspect live
+GitHub issue/release status or audit tag/installation selection. Earlier
+absence-of-tag observations are historical, not proof of today's state.
+Do not automatically list tagging/publication as still pending or infer them
+complete from preparation. Recheck only when the release workflow is active.
 
-## Clean-history reconstruction and handoff
+## Archive practice and retired directions
 
-- During reconstruction, the user retained the original history as `_agents_old`, created `_agents_clean` at the differential-test association checkpoint before the identified hardcoded reference was introduced, and selected the clean branch for deployment. The user later renamed the clean branch to `_agents`; its GAW worktree is `.agents`, and selector and protection hook are valid. The old backup ref is now absent.
-- Reconstructed the complete four-checkpoint suffix in original first-parent order: Haskell release-check cleanup, 0.5.0 candidate validation, exact release-project association, and durable-reference principles. All four source states were available and examined; no evidence gap was found in this requested interval. Earlier history is shared unchanged; this was a targeted cleanup of the identified reference, not an audit of every historical hash.
-- Used explicit memory staging and public `git gaw commit`, without native rebase, direct ref mutation, or hook bypass. The first three reconstructed states differ from their sources only by replacing the hardcoded GAW checkpoint reference with a description of the Git relationship; the fourth has an identical tree. Verified each reconstructed message, first-parent order, project-parent list and order, config, and complete tree against its source. Original project associations were retained; no speculative parents or backdated timestamps were used.
-- `_agents_old` and `main` remained unchanged during reconstruction. Current memory separately records the later documentation commit and reconstruction result, leaving the four historical states intact. GAW checks and whitespace checks passed during reconstruction. The subsequent rename and local-ref cleanup superseded that review-stage branch inventory. No reconstruction work remains; lifecycle changes still require an explicit user request.
+The default is a lightweight skill-defined archive convention, not a universal
+published metadata standard or CLI format. Every capture, including one file,
+creates a new snapshot. Checkpointed files/manifests remain unchanged; later
+material or alternative descriptions go into a new snapshot, or corrected
+current understanding into memory. Record purpose/selection, source and archive
+paths/roots, file roles, context/provenance/limits and historical status.
+Preserve source bytes and meaningful relative paths; reject unauthorized
+capture, verify byte equality and handle failures before checkpointing.
 
-## Haskell rewrite progress
+Generic SHA-256, timestamp naming, exact project-parent count and archive-only
+checkpoints are not protocol requirements. This repository deliberately keeps
+UTC--captured-HEAD naming, full capture HEAD, statuses/sizes/SHA-256 and separate
+archive-only checkpoints in `skills/git-agent-workflow-gaw-archive/SKILL.md`;
+`archive/README.md` explains that local convention. Historical archived
+instructions do not become active instructions merely by being read.
 
-- For the 0.5.0 release preparation, project commit `79d64fdda6328c4fbe647121b8f30115298cca57` updates the Cabal version and README current-version statement from 0.4.0 to 0.5.0. At that handoff, the project worktree and index were clean and no 0.5.0 tag had been created. The README's v0.4.0 differential oracle reference remains historical and unchanged. Cabal metadata remains the program version source; Nix derives the package version from it. On Linux, `nix flake check -L` and `nix build --rebuild -L .#checks.x86_64-linux.git-agent-workflow` both passed for the same two-file candidate, with both Cabal suites running in the package build. The rebuilt executable prints `git-gaw 0.5.0`.
-- The Haskell implementation replacement was committed as project commit `f6b0ce5` on `main`. The complete differential test was committed on the former `haskell_differential_test` branch (`test(gaw): add fixed v0.4.0 differential checks`); its exact snapshot remains reachable through a retained non-first-parent edge in GAW history although the local branch ref is now absent. Post-rewrite cleanup on `main` is complete in three project commits: `34b9a33` derives CLI version from Cabal metadata, `bd03e7d` removes Lisp-specific bundled-skill wording, and `a21fb17` documents Nix as the supported Linux Release Check while keeping native Cabal as a complete-environment development path. Native `cabal build all` and `cabal test` could not resolve `file-embed` on this bare host because its Hackage package list is unavailable; they are not release requirements. Before the 0.5.0 edits, `nix flake check -L` and `nix build --rebuild -L .#checks.x86_64-linux.git-agent-workflow` passed with both Cabal suites; the rebuilt executable printed `git-gaw 0.4.0`. No dependency update was performed.
-- In the retained differential-test snapshot, `tests/default.nix` aggregates the checks, `tests/oracle/` contains the fixed v0.4.0 archive and Nix derivation, and `cabal/differential/` contains the test-only Haskell harness. `.gitignore`, `flake.nix`, and `README.org` include the necessary exposure, check wiring, and instructions. The oracle archive SHA-256 is `fed2f16650ac286ab794fdb09b0ac0a1b185dbf95a4ce1fa59832784339d3620`, corresponding to baseline project tree `df2d1d36c2aa690bbcb01baa191fdfcbbc58316c`. Nix passes explicit oracle/candidate executable paths to the harness, which compares CLI bytes, refs, worktrees, and structural commit semantics in isolated fixtures.
-- The direct Nix build of `tests/default.nix`'s `haskell-cli-differential` passed, including both native Cabal suites and the CLI/help/show/check/status/commit/deploy/undeploy/branch/init/hook differential. `nix flake check -L --no-write-lock-file path:/home/lingyu/Projects/git-agent-workflow` evaluated package, oracle, and differential derivations successfully but printed `running 0 flake checks`; a separate explicit `nix build` of `checks.x86_64-linux.haskell-cli-differential` exited 0. These builds preceded the project commit but tested the same candidate files that were committed.
-- `package.nix` uses GHC 9.12 via `callCabal2nix`, requires Git >= 2.54, passes `GIT = lib.getExe git` at build time, and installs the Cabal-declared agent skill from installed data. Ordinary Cabal builds use `git` from `PATH`.
+Stable GAW-worktree-relative historical evidence:
 
-## Established state
+- `archive/2026-10-10T05-24-49Z--d6c675a/`: original comparison preparation.
+- `archive/2026-10-10T07-07-01Z--d6c675a/`: complete comparison inputs/results;
+  report at `files/tmp/archive-comparison/run-20261010/report.md`.
+- `archive/2026-10-10T10-07-16Z--d6c675a/`: final user-adopted semantics plan.
 
-- GAW uses an independent commit tree for its declared workspace. First parent is the preceding GAW checkpoint; optional additional project parents provide exact snapshot association and reachability, never merged content. The bootstrap `.gaw/config` remains unversioned, strictly parsed from a fixed immutable commit and exact UTF-8 blob bytes.
-- Ordinary branch history, `.gaw/config`, and workspace state are portable. The only canonical `refs/gaw/*` ref is clone-local `refs/gaw/HEAD -> refs/heads/<name>`; it selects a valid local GAW branch but does not define identity or choose the branch for `git gaw commit`. Old `refs/gaw/heads/*` registrations are no longer used. Malformed local metadata is reported, not silently rebuilt.
-- `git gaw commit` uses the complete current index, not unstaged or untracked files. Normal commits and merge-shaped checkpoints retain only the GAW first-parent tree; project parents are checked for path conflict but their trees are not merged. Git invocation ignores inherited user/system identity and signing settings and records `Git Agent Workflow <gaw@invalid>`.
-- `git gaw show` exposes first-parent history and first-parent patches while retaining ordinary `git show` formatting options. `git gaw check` reports current-worktree readiness; independent UTF-8 help files are embedded at build time. Native `git status`, `git diff`, and explicit `git add` remain part of the daily loop.
-- The v0.4.0 Lisp baseline used `api → runtime → core` layering. The current Haskell source instead separates `Gaw.Protocol.*`, `Gaw.Application.*`, and `Gaw.System.*`; its two Cabal test suites cover protocol behavior and the Git adapter, including failure-injection cases. The former Lisp test suite remains available only in the fixed oracle archive.
+**B3, selection ended:** Data Package/RO-Crate/BagIt integration is not a TODO.
+The old conditional DP2 recommendation stays authentic in historical evidence,
+not current memory's objective. Reevaluate only for concrete machine-readable
+metadata, exchange/indexing or sufficiently complex relationship needs.
+Do not migrate old archives or introduce parsers/validators/schema/toolchains.
 
-## Lifecycle and protection
+**B3, no automatic transplantation:** the bundled skill provides adaptation
+and release/installed-availability guidance; that does not mean every related
+project has been updated. Act only in a named project with concrete need and
+authorization, preserving local operational detail instead of mechanical
+deduplication. There is no implicit all-project traversal/sync task.
 
-- `init` writes initial objects before atomically creating source branch and selector; it fails on existing valid or ambiguous GAW-like history. `deploy` validates an existing local source branch, uses `.gaw/config` only as discovery prefilter, and reconciles selector, optional worktree, and hook without fetching or repairing corruption. `undeploy` removes local selector and GAW hook keys, retaining branch, history, marker, and worktree contents; recognizable exact legacy registrations may be cleaned, with residual damage reported.
-- `branch -m`, `-d`, and `-D` preserve native Git rename and deletion constraints. `-D` skips only mergedness/safe-delete, not GAW validation or worktree constraints. A selected branch cannot be deleted until local deployment changes.
-- The configured hook guards `refs/gaw/*`. It rejects movement/deletion of a branch whose current tip is valid GAW state. If a tip is invalid but has a `.gaw/config` marker, it preserves that marker entry unchanged while other content may move. First introduction of the marker is allowed. The hook is a local accident guard, not a security boundary.
-- `git gaw status` inventories branch classification, selector, hook, and worktrees through Git-native ref commands. Its default zero exit means a report was produced, not that all findings are healthy. `--diagnose` additionally forwards repository-wide `git fsck` output and fails if either GAW status or fsck fails. `git gaw check` is current-worktree readiness and permits a missing selector as a warning.
+## Durable protocol and recovery boundaries
 
-## Agent memory workflow now bundled
+- Missing config version is v0; explicit v0/v1 work. V1 supports direct entries,
+  mixed/repeated role groups in order, and unknown legal roles. Roles follow
+  `[a-z][a-z0-9-]*`, reserving file/directory. Flattening preserves duplicate,
+  nesting, object-kind and project-parent constraints. V1 unknown top-level
+  fields are ignored semantically with check/status field-name warnings; v0
+  rejects them. Unsupported versions are indeterminate, not a protection bypass.
+- GAW's independent workspace tree is retained through its first-parent chain;
+  additional parents associate evidenced exact project snapshots without merging
+  their trees. Parent positions do not encode based-on/result business roles.
+  Choose zero/one/several only from actual evidence, not current HEAD by habit.
+- Clone-local `refs/gaw/HEAD` selects the deployed local branch, not global
+  identity or the filesystem target of a project association. Malformed state
+  is reported, not silently repaired.
+- `git gaw commit` consumes the complete index, not unstaged/untracked files,
+  from the GAW root. Explicitly stage only intended declared workspace paths,
+  review the full candidate and run check. Keep config/protocol-path changes
+  separate from other workspace transitions. Ordinary project writes/commits
+  and lifecycle/history work require their own authority.
+- A checkpoint needs independent recovery value; a session boundary or new
+  project commit alone does not justify it. Maintain current memory promptly;
+  check consistency at handoff rather than first writing it then.
+- Use stable archive paths and Git relationships, not GAW checkpoint OIDs as
+  durable semantic locators. Relevant project OIDs and raw diagnostic hashes
+  may have independent evidence value.
+- If reconstructing old sessions, establish the complete requested evidence
+  horizon, distinguish persisted/examined/unrecoverable intervals, reconstruct
+  only supported selective states in order and never guess historical parents.
+  Later checks cannot establish original uncertain provenance. Earlier targeted
+  clean-history reconstruction is complete; do not restore absent backup refs
+  or repeat/rewrite it as routine upkeep.
 
-- Unknown lifecycle state starts with `git gaw status` and reading its report, not assuming exit 0 means health. Enter the actual GAW worktree and use `git gaw check` for readiness; `check` and repository-wide `status` serve different scopes. `status --diagnose` is exceptional repository-wide diagnosis, not the normal session start.
-- Recover from current declared workspace first, then relevant recent `git gaw show` checkpoints, older first-parent history, or associated project snapshots only as needed. Distill goals, verified findings, adopted decisions and reasons, unresolved questions, provenance, and the next action. Correct stale current content instead of preserving an ever-growing progress log or transcript.
-- For a checkpoint, inspect `git status`, unstaged diff, and the entire staged diff; explicitly stage intended workspace paths, inspect the complete index again, and run `git gaw check`. `git gaw commit` runs from the GAW worktree root and includes the full index, not untracked or unstaged files. A session boundary or project commit alone never requires a memory checkpoint.
-- Additional project parents identify the exact snapshots against which relevant work, observations, tests, or comparisons were actually performed. Zero parents are normal; do not use current branch tip or every intervening commit by habit. An unchanged GAW tree plus a real new project-parent association can still be meaningful.
-- In a validated GAW memory worktree, editing declared memory, explicit staging, and `git gaw commit` are the intended autonomous loop, subject to higher-priority host policy. Maintain current memory promptly when substantive findings, decisions, blockers, or next actions change; handoff checks already-maintained memory rather than serving as the first update. Checkpoints remain selective. This does not authorize native project-worktree commits, ref mutation, merge/rebase/reset, or network transport.
-- Use `init` only without GAW or GAW-like state to preserve; use `deploy` for existing valid local GAW history, not as corruption repair; `undeploy` and branch lifecycle are not ordinary session-end steps.
+## Historical implementation lookup and next action
 
-## Existing-session reconstruction rule
+The active implementation is Haskell, separated into Protocol/Application/System
+layers, with protocol and Git-adapter suites. The fixed v0.4.0 Lisp differential
+oracle/harness is historical and retained through a GAW project-parent
+association; its former local branch is absent. Do not merge/reproduce it
+as routine maintenance. Earlier detailed rewrite/config/split/reconstruction
+stage evidence remains in first-parent memory history, not as pending phases
+or expired command allowances in current memory.
 
-- Treat the existing conversation and tool trace as evidence, not as memory or a transcript to import. Extract only future-useful state: current objective/progress, verified findings, adopted decisions and reasons, unresolved questions, relevant project provenance, and the next action. Merge it into the declared workspace; newer evidence should correct stale current content. No new durable signal permits a no-op.
-- Dogfooding exposed a flaw in the initial one-state rule: a long session can contain distinct, durable states whose evolution has independent recovery value. When evidence supports each state's content and relative order, reconstruct full workspace states as selective first-parent checkpoints in that order. Use semantic transitions, not turns, tool calls, minor edits, or a fabricated chronology. If only the final state is supportable, use one checkpoint; if nothing durable is new, do nothing. Do not backdate commits or rewrite existing GAW history during routine consolidation.
-- Reopened Issue #2 exposed a second flaw: allowing multiple checkpoints did not prevent an agent from silently treating the visible conversation tail or existing GAW history as the beginning of the requested session. Before choosing retrospective checkpoints, establish the full evidence horizon, honor explicit user boundaries, and survey it coarsely. Account for each substantive interval as already persisted, examined, or lacking recoverable evidence. If a gap might hide durable states or their order, seek evidence before the first checkpoint. Once confirmed unrecoverable, reconstruct only supported evolution, identify the gap in current memory when checkpointing, report it explicitly, and check coverage of the original horizon before declaring completion.
-- Assess each retrospective checkpoint's project parents independently of its first-parent position. Attach an exact project commit only when existing evidence unambiguously identifies the snapshot against which that checkpoint's relevant work occurred. Current `HEAD`, nearby commits, timestamps, and likely intervals do not establish original provenance. Unknown original provenance means no project parent. Later revalidation may ground the revalidated state at the actual checked snapshot, never the old session retroactively.
+The bootstrap config is the historical fixed immutable unversioned input;
+the current repository config and new init output are explicit v1. Do not
+confuse the bootstrap or old init example with current behavior.
 
-## Evidence and handoff
-
-- The earlier local `tmp/PLAN.md` and `tmp/QUESTIONS.md` are config-phase material from 2026-09-29. Their substantive parser, schema, path, byte, error, and layering decisions were incorporated into the first checkpoint; this memory does not depend on those temporary files surviving.
-- Project commits `1e1f54a` and `578a813` first introduced recoverable session evolution; `371b1e1` and `fd3eb1c` then added full-horizon coverage and explicit gap reporting. The current project snapshot `fd3eb1c15d76e8322407a9946a01573c2cfd40ba` was inspected with a clean worktree for this memory update. Earlier project-parent edges ground only their own checked snapshots, not the original session's uncertain provenance.
-- Project commit `60532ba` adds ongoing current-memory maintenance to the skill and README; `df2d1d3` sets the 0.4.0 version and documents its agent-memory focus. User-run `nix flake check` exited 0 but reported `running 0 flake checks`, so it did not demonstrate that the test derivations ran. `nix build -v -L --rebuild` executed the package build and reported an output mismatch against the existing derivation result; `nix build -v -L --repair --rebuild` subsequently checked existing store paths without showing a new build. The user considers the current SBCL-based executable build method a likely cause and decided to investigate reproducibility after 0.4.0, not as an RC requirement; the exact cause remains unconfirmed. The proposed `memory`/`skills` initial config and template-style `init` option were deferred; `init` still generates `(:workspace ())`.
-- The 0.4.0 RC and earlier forced-rebuild mismatch notes above are historical context. The committed Haskell rewrite has no `git-gaw-hs` or Lisp fallback. The fixed Lisp implementation is now a differential-test oracle only, exposed through a branch-local flake check rather than the default user executable.
+No loose feature is activated by this handoff. Next action is whichever concrete
+workflow the user selects; reassess actual conditional risks and permissions
+then. Any future release step needs fresh state checks, not assumptions from
+this note. This memory change only consolidates recoverable facts/decisions;
+it leaves source files, GitHub state, config, project history, archives and
+other projects untouched.
