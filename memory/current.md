@@ -3,10 +3,17 @@
 ## Current state and recovery
 
 The v0.6.0 release preparation and earlier implementation nodes are complete.
-Current work is planning the Auxiliary GAW capability against the v0.6.0
-baseline `801fe3b`, including the user's adopted branch-deletion revision.
-Only root PLAN.md and GAW memory are being maintained; no Auxiliary feature
-implementation, external issue action or release operation has started.
+The user authorized Auxiliary GAW implementation against the v0.6.0 baseline
+`801fe3b`, including the adopted generic branch-deletion semantics. Work starts
+with N1 shared history layout and committed-state checks, then follows N2–N5
+in order with targeted verification. No release or external issue action is
+authorized by this implementation task.
+
+The exact ignored root PLAN.md implementation input was byte-verified and
+archived at `archive/2026-10-14T18-18-51Z--801fe3b/` (MANIFEST.md + files/PLAN.md).
+Its archive-only checkpoint associates the inspected baseline as capture
+context, not as the ignored document's original provenance. Preserve that
+snapshot unchanged; root PLAN.md remains the active working plan.
 
 The deployed branch is `_agents` at the publicly reported GAW worktree
 `.agents`. The selector and canonical protection hook are valid. Config is
@@ -65,16 +72,19 @@ The user replaced the earlier dedicated-retire proposal:
   selector/formal/Auxiliary ref races and invalid type renames. All references
   in the plan's goals/CLI/lifecycle/nodes/acceptance were adjusted consistently.
 
-Other plan boundaries remain: `check --branch` checks only committed state;
-existing commit deployment requirements are unchanged; undeploy preserves
-branches/worktrees while reporting protection removal. N1–N5 remain the
-planned development sequence, not completed implementation. Previous review
-also asked for a concrete source-recovery example after branch/worktree
-deletion; this deletion-policy change does not itself settle that guidance.
-Static consistency and whitespace review of this edit passed; no build or
-runtime deletion test was run. Do not claim the new deletion behavior or race
-handling has been implemented/tested. Root PLAN.md is ignored/untracked, so
-the adopted semantics above are retained here independently of that file.
+Implementation progress (uncommitted ordinary project changes): N1 now adds
+HistoryLayout, UUID-relative config/workspace checks with full-tree boundary
+validation, physical additional-parent conflict checks, and committed-only
+`check --branch`. Nix isolated x86_64-linux build passed both protocol and Git
+adapter suites plus distribution/installed resource checks. New real-repository
+tests cover a valid Auxiliary without a worktree and invalid outer paths /
+missing config; the first fixture run failed during orphan-index setup and was
+corrected before the successful rerun. Tested output:
+`/nix/store/ahn8amaaraj29dy3mgf07fnjj2mdhzb9-git-agent-workflow-0.6.0`.
+Next is N2 hook protection and reserved naming/rename bounds, followed by
+N3–N5. No Auxiliary lifecycle or safe deletion implementation is complete yet.
+Keep existing commit deployment requirements unchanged. The concrete retained
+source recovery example after branch/worktree deletion remains an N5 item.
 
 ## Handoff's illustrative levels and activation conditions
 
