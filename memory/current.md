@@ -4,10 +4,10 @@
 
 The v0.6.0 release preparation and earlier implementation nodes are complete.
 The user authorized Auxiliary GAW implementation against the v0.6.0 baseline
-`801fe3b`, including the adopted generic branch-deletion semantics. Work starts
-with N1 shared history layout and committed-state checks, then follows N2–N5
-in order with targeted verification. No release or external issue action is
-authorized by this implementation task.
+`801fe3b`, including the adopted generic branch-deletion semantics. N1–N5 are
+implemented and verified, including the final review additions. Ordinary source changes
+are not staged or committed. No release, installation, external issue update
+or other-project action is part of this task.
 
 The exact ignored root PLAN.md implementation input was byte-verified and
 archived at `archive/2026-10-14T18-18-51Z--801fe3b/` (MANIFEST.md + files/PLAN.md).
@@ -26,7 +26,7 @@ The user-specified executable actually printed `git-gaw 0.6.0` in this
 review. That verifies the named CLI only, not PATH discovery in every caller
 or default installation selection.
 
-## Auxiliary GAW planning: adopted deletion revision
+## Auxiliary GAW implementation and adopted deletion semantics
 
 The source plan is root PLAN.md, associated with Issues #5 and #9. Its design
 is distinct from historical split/fusion proposals: formal GAW stays the sole
@@ -72,37 +72,54 @@ The user replaced the earlier dedicated-retire proposal:
   selector/formal/Auxiliary ref races and invalid type renames. All references
   in the plan's goals/CLI/lifecycle/nodes/acceptance were adjusted consistently.
 
-Implementation progress (uncommitted ordinary project changes): N1 now adds
-HistoryLayout, UUID-relative config/workspace checks with full-tree boundary
-validation, physical additional-parent conflict checks, and committed-only
-`check --branch`. Nix isolated x86_64-linux build passed both protocol and Git
-adapter suites plus distribution/installed resource checks. New real-repository
-tests cover a valid Auxiliary without a worktree and invalid outer paths /
-missing config; the first fixture run failed during orphan-index setup and was
-corrected before the successful rerun. Tested output:
-`/nix/store/ahn8amaaraj29dy3mgf07fnjj2mdhzb9-git-agent-workflow-0.6.0`.
-N2 hook protection and reserved naming/rename bounds are in progress. The
-native deletion fixture exposed a zero/zero no-op misclassification: Git can
-report an unchecked delete with zero old AND new values in preparing input.
-The earlier ref-visibility explanation was not established. Git 2.55 refs.c
-confirmed the input encoding. Reserved refs now allow only a nonzero new value
-matching the actually observed existing tip; deletion/creation are protected
-independently of config visibility. Controlled GAW mutations retain the bypass.
-The corrected N2 rerun passed both suites and resource checks (output
-`/nix/store/hj8404czmfkkdn5ajxax6w1fxldrnwza-git-agent-workflow-0.6.0`).
-Native update/delete/rename of damaged Auxiliary state and formal rename into
-the reserved range are tested. N3 now passes both suites and packaging checks
-at `/nix/store/z9slvslfy6531f17c078bf4lcd9nkki0-git-agent-workflow-0.6.0`:
-secure UUIDv4 generation, config-only independent roots with exact committed
-v0/v1 config blobs, unchanged selector, shared deploy/worktree compensation,
-and shared commit/check using UUID-relative boundaries. Tests include multiple
-histories, rejecting formal deploy/rename of Auxiliary, mixed protocol changes,
-foreign root entries, wrong invocation root and inherited committed vs staged
-config. A test literal needed a type annotation before the successful run.
-N4 structured deletion checks/transactions is next; safe deletion and N5
-diagnostics/help/skill/full lifecycle acceptance are not implemented yet.
-Keep existing commit deployment requirements unchanged. The concrete retained
-source recovery example after branch/worktree deletion remains an N5 item.
+Implementation is in the ordinary working tree, not a new project commit:
+
+- N1: shared HistoryLayout, exact config reads, UUID-relative workspace checks
+  with full-tree boundary validation, physical parent conflicts, committed-only
+  `check --branch` without worktree readiness claims.
+- N2: canonical UUIDv4/reserved naming, conservative shared hook protection
+  independent of config presence, formal rename/init/deploy type bounds.
+  Git preparing input can encode unchecked deletion as zero old AND new;
+  only a nonzero new value matching observed existing tip is a genuine no-op.
+  New branch imports retain normal creation behavior; active ref changes are
+  protected. The earlier ref-visibility diagnosis was unsubstantiated.
+- N3: secure random UUIDs with collision retries, exact committed v0/v1 config
+  blob inheritance into independent config-only roots, unchanged selector,
+  shared deploy/worktree compensation, shared commit/check logical boundaries.
+  Final review also regenerates a UUID overlapping formal workspace paths.
+- N4: shared structured Auxiliary deletion reports; `branch -d` verifies the
+  sole formal selector target, formal tip and Auxiliary tip in one conditional
+  ref transaction. `-D` is abandonment with conditional deletion, valid state
+  and no-worktree constraints, warning for unretained/unknown retention.
+  Worktree registrations are not ref-locked: independent pre/post checks and
+  create-if-absent restoration handle detected races, reporting partial failure
+  if compensation fails. Serialize worktree activity with deletion; do not
+  claim an atomic ref transaction freezes registrations.
+- N5: separate status groups, pre-cleanup undeploy inventory (unknown inventory
+  does not block cleanup), accurate hook-removal warning, updated help/README,
+  bundled Auxiliary reference with formal integration and ancestry/path-based
+  source recovery after safe deletion. No extra deletion command or executable.
+
+The full isolated Nix x86_64-linux check has passed both protocol/Git adapter
+suites, 13 embedded-help source-distribution checks, and 5 bundled skill files
+in source distribution/Cabal installation/Nix exposure. Final successful output:
+`/nix/store/c8jswrd7gqvmbghxh3mqa4xn7pqir82d-git-agent-workflow-0.6.0`.
+Command: `timeout 120s nix build --no-link --no-write-lock-file -L
+path:/home/lingyu/Projects/git-agent-workflow#checks.x86_64-linux.git-agent-workflow`.
+Tests cover config byte fidelity, multiple Auxiliaries, invalid trees/markers,
+wrong invocation root, mixed changes, formal and Auxiliary deletion, wrong
+upstream/caller HEAD, selector/formal/Auxiliary ref races, worktree races,
+forced abandonment, init compensation and residues, UUID collisions,
+undeploy preservation, commit after undeploy, protection restoration, inventory
+query failure and bundled resources. The final run passed forced worktree races,
+accurate Auxiliary-selector diagnosis and direct byte recovery through formal
+first-parent path history after source branch deletion.
+
+Next: archive the completed PLAN record as a fresh immutable snapshot, then hand off the
+unstaged source diff for user review/commit. Keep the existing real GAW
+deployment/config/history; no real Auxiliary lifecycle action was performed.
+Build warnings about Cabal metadata/bounds and install PATH remain nonfatal.
+Non-Linux runtime verification was not performed.
 
 ## Handoff's illustrative levels and activation conditions
 
@@ -143,7 +160,7 @@ for detailed requirements rather than copying complete issue text here.
 | --- | --- |
 | [#3](https://github.com/ren-lingyu/git-agent-workflow/issues/3) | Restricted GAW-aware rebase, later design/implementation; not routine memory maintenance. |
 | [#4](https://github.com/ren-lingyu/git-agent-workflow/issues/4) | Exploratory interactive DAG visualization, no current release gate. |
-| [#5](https://github.com/ren-lingyu/git-agent-workflow/issues/5) | Cross-session/agent knowledge integration; Auxiliary GAW plan is active design work, not implemented behavior. |
+| [#5](https://github.com/ren-lingyu/git-agent-workflow/issues/5) | Cross-session/agent knowledge integration; Auxiliary implementation and workflow are now in the uncommitted working tree, with isolated tests. This does not establish issue closure or release availability. |
 | [#6](https://github.com/ren-lingyu/git-agent-workflow/issues/6) | Optional checker deferred; bundled OID semantic guidance is complete. |
 | [#9](https://github.com/ren-lingyu/git-agent-workflow/issues/9) | Long-term history-model evaluation, not a decided split/fusion feature. |
 | [#10](https://github.com/ren-lingyu/git-agent-workflow/issues/10) | Optional explicit bidirectional AGENTS maintenance research. |
@@ -298,9 +315,9 @@ The bootstrap config is the historical fixed immutable unversioned input;
 the current repository config and new init output are explicit v1. Do not
 confuse the bootstrap or old init example with current behavior.
 
-Next action is review of the revised Auxiliary plan and any unresolved
-recovery/race-handling detail before separately authorized implementation.
-Existing follow-up labels remain note-local examples, not mandatory priorities
-for this design. Any future release step still needs fresh state checks.
-This task changes the plan and current memory only, leaving implementation,
-GitHub state, config, project history, archives and other projects untouched.
+Next action is complete PLAN archival, then review the unstaged
+Auxiliary source diff for a user-managed project commit. Existing follow-up
+labels remain note-local examples, not mandatory priorities. Release/tag,
+installed version and GitHub issue state need separate fresh checks when that
+work is requested. This task does not mutate ordinary project history, GitHub
+state, the real deployment/config or other projects.
