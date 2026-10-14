@@ -81,8 +81,26 @@ tests cover a valid Auxiliary without a worktree and invalid outer paths /
 missing config; the first fixture run failed during orphan-index setup and was
 corrected before the successful rerun. Tested output:
 `/nix/store/ahn8amaaraj29dy3mgf07fnjj2mdhzb9-git-agent-workflow-0.6.0`.
-Next is N2 hook protection and reserved naming/rename bounds, followed by
-N3–N5. No Auxiliary lifecycle or safe deletion implementation is complete yet.
+N2 hook protection and reserved naming/rename bounds are in progress. The
+native deletion fixture exposed a zero/zero no-op misclassification: Git can
+report an unchecked delete with zero old AND new values in preparing input.
+The earlier ref-visibility explanation was not established. Git 2.55 refs.c
+confirmed the input encoding. Reserved refs now allow only a nonzero new value
+matching the actually observed existing tip; deletion/creation are protected
+independently of config visibility. Controlled GAW mutations retain the bypass.
+The corrected N2 rerun passed both suites and resource checks (output
+`/nix/store/hj8404czmfkkdn5ajxax6w1fxldrnwza-git-agent-workflow-0.6.0`).
+Native update/delete/rename of damaged Auxiliary state and formal rename into
+the reserved range are tested. N3 now passes both suites and packaging checks
+at `/nix/store/z9slvslfy6531f17c078bf4lcd9nkki0-git-agent-workflow-0.6.0`:
+secure UUIDv4 generation, config-only independent roots with exact committed
+v0/v1 config blobs, unchanged selector, shared deploy/worktree compensation,
+and shared commit/check using UUID-relative boundaries. Tests include multiple
+histories, rejecting formal deploy/rename of Auxiliary, mixed protocol changes,
+foreign root entries, wrong invocation root and inherited committed vs staged
+config. A test literal needed a type annotation before the successful run.
+N4 structured deletion checks/transactions is next; safe deletion and N5
+diagnostics/help/skill/full lifecycle acceptance are not implemented yet.
 Keep existing commit deployment requirements unchanged. The concrete retained
 source recovery example after branch/worktree deletion remains an N5 item.
 
