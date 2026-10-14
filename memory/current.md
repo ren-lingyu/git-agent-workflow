@@ -13,7 +13,10 @@ The exact ignored root PLAN.md implementation input was byte-verified and
 archived at `archive/2026-10-14T18-18-51Z--801fe3b/` (MANIFEST.md + files/PLAN.md).
 Its archive-only checkpoint associates the inspected baseline as capture
 context, not as the ignored document's original provenance. Preserve that
-snapshot unchanged; root PLAN.md remains the active working plan.
+snapshot unchanged. The completed plan and N1–N5 acceptance record are separately
+byte-verified at `archive/2026-10-14T18-44-09Z--801fe3b/`; root PLAN.md is retained
+as the completed working record. Both manifests distinguish capture HEAD from
+ignored document provenance and from the uncommitted implementation.
 
 The deployed branch is `_agents` at the publicly reported GAW worktree
 `.agents`. The selector and canonical protection hook are valid. Config is
@@ -115,8 +118,8 @@ query failure and bundled resources. The final run passed forced worktree races,
 accurate Auxiliary-selector diagnosis and direct byte recovery through formal
 first-parent path history after source branch deletion.
 
-Next: archive the completed PLAN record as a fresh immutable snapshot, then hand off the
-unstaged source diff for user review/commit. Keep the existing real GAW
+Next: hand off the unstaged source diff for user review/commit. PLAN archival
+and the final recovery-state check are complete. Keep the existing real GAW
 deployment/config/history; no real Auxiliary lifecycle action was performed.
 Build warnings about Cabal metadata/bounds and install PATH remain nonfatal.
 Non-Linux runtime verification was not performed.
@@ -315,8 +318,9 @@ The bootstrap config is the historical fixed immutable unversioned input;
 the current repository config and new init output are explicit v1. Do not
 confuse the bootstrap or old init example with current behavior.
 
-Next action is complete PLAN archival, then review the unstaged
-Auxiliary source diff for a user-managed project commit. Existing follow-up
+Next action is review the unstaged Auxiliary source diff for a user-managed
+project commit. PLAN implementation input and completion record are preserved
+in separate immutable snapshots. Existing follow-up
 labels remain note-local examples, not mandatory priorities. Release/tag,
 installed version and GitHub issue state need separate fresh checks when that
 work is requested. This task does not mutate ordinary project history, GitHub
