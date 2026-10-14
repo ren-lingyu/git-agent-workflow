@@ -2,11 +2,11 @@
 
 ## Current state and recovery
 
-Main is at v0.6.0 preparation commit `801fe3b`; the ordinary worktree/index
-were clean at this housekeeping review. Release preparation and the previously
-requested implementation nodes are complete. No B0 blocker was identified
-among the follow-up items below. This task organizes memory only; it creates
-no new feature, external issue, release action or cross-project work.
+The v0.6.0 release preparation and earlier implementation nodes are complete.
+Current work is planning the Auxiliary GAW capability against the v0.6.0
+baseline `801fe3b`, including the user's adopted branch-deletion revision.
+Only root PLAN.md and GAW memory are being maintained; no Auxiliary feature
+implementation, external issue action or release operation has started.
 
 The deployed branch is `_agents` at the publicly reported GAW worktree
 `.agents`. The selector and canonical protection hook are valid. Config is
@@ -18,6 +18,63 @@ Use the current host's command mapping rather than copied old Nix paths.
 The user-specified executable actually printed `git-gaw 0.6.0` in this
 review. That verifies the named CLI only, not PATH discovery in every caller
 or default installation selection.
+
+## Auxiliary GAW planning: adopted deletion revision
+
+The source plan is root PLAN.md, associated with Issues #5 and #9. Its design
+is distinct from historical split/fusion proposals: formal GAW stays the sole
+project-current-memory authority. Auxiliary histories are independent roots
+with UUIDv4 branches `refs/heads/_gaw_aux_<uuid>` and a single matching UUID
+subtree containing `.gaw/config` and declared workspace paths. Init copies
+only the selected formal GAW's committed config, without workspace content
+or a formal-history parent. Logical workspace paths are UUID-relative;
+actual Git tree paths govern snapshot/parent conflicts. Shared checks/commit
+and hook logic should be reused, not duplicated. No extra selector, registry,
+executable or automatic knowledge integration is planned.
+
+The user replaced the earlier dedicated-retire proposal:
+
+- New Auxiliary commands are only `aux init`, `aux deploy`, `aux check`.
+  Delete formal and Auxiliary branches through existing `branch -d/-D`;
+  do not add `aux retire`, `aux abort`, `aux discard` or another deletion CLI.
+- Formal GAW `-d/-D` keeps existing behavior and constraints. Auxiliary `-d`
+  requires its current tip to be an ancestor of the valid formal tip selected
+  by `refs/gaw/HEAD`, the sole integration target. Do not use native Git's
+  upstream/caller-HEAD merge test as a substitute.
+- Auxiliary `-D` is explicit abandonment and skips integration reachability,
+  not committed-state validity or the no-associated-worktree requirement.
+  Warn when discarding a source not retained in formal history; continued
+  reachability is not guaranteed. Neither mode removes worktrees or cleans
+  other historical references.
+- `aux check` and Auxiliary `branch -d` share structured safe-deletion checks.
+  Report structural validity separately from deletion readiness; unintegrated
+  history is not damaged history. Reports include observed target/tip and
+  selector/formal-tip observations needed by deletion.
+- Safe deletion must verify selector target, formal tip and Auxiliary tip
+  within the same Git ref transaction. Forced Auxiliary deletion still needs
+  expected-old-OID conditional deletion. Worktree associations require their
+  own checks/race handling; ref transactions alone do not stabilize them.
+- `branch -m` remains limited to the currently selected formal branch and
+  cannot rename into the Auxiliary reserved naming range. No Auxiliary
+  rename mode is added; shared hook protection must coexist with these
+  controlled branch operations.
+- N2 covers naming/rename bounds and shared protection. N4 is now Auxiliary
+  safe-deletion checks plus generic branch lifecycle extension. N5 updates
+  branch/aux help and skill guidance and tests formal/Auxiliary `-d/-D`,
+  integrated/unintegrated tips, invalid structure, associated worktrees,
+  selector/formal/Auxiliary ref races and invalid type renames. All references
+  in the plan's goals/CLI/lifecycle/nodes/acceptance were adjusted consistently.
+
+Other plan boundaries remain: `check --branch` checks only committed state;
+existing commit deployment requirements are unchanged; undeploy preserves
+branches/worktrees while reporting protection removal. N1–N5 remain the
+planned development sequence, not completed implementation. Previous review
+also asked for a concrete source-recovery example after branch/worktree
+deletion; this deletion-policy change does not itself settle that guidance.
+Static consistency and whitespace review of this edit passed; no build or
+runtime deletion test was run. Do not claim the new deletion behavior or race
+handling has been implemented/tested. Root PLAN.md is ignored/untracked, so
+the adopted semantics above are retained here independently of that file.
 
 ## Handoff's illustrative levels and activation conditions
 
@@ -58,7 +115,7 @@ for detailed requirements rather than copying complete issue text here.
 | --- | --- |
 | [#3](https://github.com/ren-lingyu/git-agent-workflow/issues/3) | Restricted GAW-aware rebase, later design/implementation; not routine memory maintenance. |
 | [#4](https://github.com/ren-lingyu/git-agent-workflow/issues/4) | Exploratory interactive DAG visualization, no current release gate. |
-| [#5](https://github.com/ren-lingyu/git-agent-workflow/issues/5) | Cross-session/agent knowledge integration, separate workflow work. |
+| [#5](https://github.com/ren-lingyu/git-agent-workflow/issues/5) | Cross-session/agent knowledge integration; Auxiliary GAW plan is active design work, not implemented behavior. |
 | [#6](https://github.com/ren-lingyu/git-agent-workflow/issues/6) | Optional checker deferred; bundled OID semantic guidance is complete. |
 | [#9](https://github.com/ren-lingyu/git-agent-workflow/issues/9) | Long-term history-model evaluation, not a decided split/fusion feature. |
 | [#10](https://github.com/ren-lingyu/git-agent-workflow/issues/10) | Optional explicit bidirectional AGENTS maintenance research. |
@@ -213,9 +270,9 @@ The bootstrap config is the historical fixed immutable unversioned input;
 the current repository config and new init output are explicit v1. Do not
 confuse the bootstrap or old init example with current behavior.
 
-No loose feature is activated by this handoff. Next action is whichever concrete
-workflow the user selects; reassess actual conditional risks and permissions
-then. Any future release step needs fresh state checks, not assumptions from
-this note. This memory change only consolidates recoverable facts/decisions;
-it leaves source files, GitHub state, config, project history, archives and
-other projects untouched.
+Next action is review of the revised Auxiliary plan and any unresolved
+recovery/race-handling detail before separately authorized implementation.
+Existing follow-up labels remain note-local examples, not mandatory priorities
+for this design. Any future release step still needs fresh state checks.
+This task changes the plan and current memory only, leaving implementation,
+GitHub state, config, project history, archives and other projects untouched.
