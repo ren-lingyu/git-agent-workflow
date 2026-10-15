@@ -3,6 +3,7 @@
 module Gaw.Application.Deploy
   ( DeployError (..)
   , deploy
+  , deployAuxiliary
   , renderDeployError
   ) where
 
@@ -16,7 +17,7 @@ import Gaw.Application.State (inspectCommittedState)
 import Gaw.Application.Status (parseWorktrees)
 import Gaw.Protocol.Check (checkReady)
 import Gaw.Protocol.Deploy
-import Gaw.Protocol.Layout (auxiliaryReserved)
+import Gaw.Protocol.Layout (auxiliaryReserved, auxiliaryUuid)
 import Gaw.Protocol.Ref
 import Gaw.Protocol.State
 import Gaw.System.FileSystem (FileSystem (..))
@@ -34,10 +35,20 @@ renderDeployError (DeployError reason detail) =
 deploy :: Monad m => Git m -> FileSystem m -> PosixPath
   -> Maybe BS.ByteString -> Maybe BS.ByteString
   -> m (Either DeployError DeployResult)
-deploy git fs directory requestedBranch requestedPath = runExceptT $ do
+deploy = deployWith False
+
+deployAuxiliary :: Monad m => Git m -> FileSystem m -> PosixPath
+  -> BS.ByteString -> Maybe BS.ByteString -> m (Either DeployError DeployResult)
+deployAuxiliary git fs directory branch = deployWith True git fs directory (Just branch)
+
+deployWith :: Monad m => Bool -> Git m -> FileSystem m -> PosixPath
+  -> Maybe BS.ByteString -> Maybe BS.ByteString -> m (Either DeployError DeployResult)
+deployWith auxiliary git fs directory requestedBranch requestedPath = runExceptT $ do
   probe <- command ["rev-parse", "--git-dir"] Nothing
   requireSuccess "git-failure" "Git failed while locating the repository: " probe
   existingHook <- inspectHook
+  if auxiliary && existingHook /= HookCanonical then throwE (DeployError "hook-required"
+    "Auxiliary deployment requires the existing canonical protection hook") else pure ()
   case existingHook of
     HookConflict -> throwE (DeployError "hook-conflict"
       "The gaw-reference-transaction hook configuration is incomplete or divergent")
@@ -56,7 +67,7 @@ deploy git fs directory requestedBranch requestedPath = runExceptT $ do
     Just branch -> do
       validateBranch branch
       sourceRef <- parseSource ("refs/heads/" <> branch)
-      checkOldSelection selector
+      if auxiliary then validSelected selector >>= requireValid else checkOldSelection selector
       requireValid sourceRef
       pure (sourceRef, [])
     Nothing -> case selector of
@@ -79,7 +90,7 @@ deploy git fs directory requestedBranch requestedPath = runExceptT $ do
   let oldTarget = case selector of
         RefSymbolic target -> Just target
         _ -> Nothing
-      selectionChanged = oldTarget /= Just source
+      selectionChanged = not auxiliary && oldTarget /= Just source
       failed failure created = do
         rollbackFailures <- compensate selectionChanged oldTarget source mode created
         if null rollbackFailures then throwE failure else throwE (DeployError "partial-failure"
@@ -118,7 +129,8 @@ deploy git fs directory requestedBranch requestedPath = runExceptT $ do
       pure (filter (not . BS.null) (BS.split 10 (gitStdout result)))
 
     parseSource bytes = case parseSourceRef bytes of
-      Right ref | not (auxiliaryReserved ref) -> pure ref
+      Right ref | if auxiliary then auxiliaryUuid ref /= Nothing
+                              else not (auxiliaryReserved ref) -> pure ref
       _ -> throwE (DeployError "invalid-branch"
         ("Invalid local branch name " <> quoted (BS.drop (BS.length "refs/heads/") bytes)))
 
@@ -261,7 +273,7 @@ deploy git fs directory requestedBranch requestedPath = runExceptT $ do
         else pure []
       pure (worktreeErrors ++ selectorErrors)
 
-data HookConfiguration = HookAbsent | HookCanonical | HookConflict
+data HookConfiguration = HookAbsent | HookCanonical | HookConflict deriving (Eq)
 
 hookKeys :: [BS.ByteString]
 hookKeys = ["hook.gaw-reference-transaction.event",

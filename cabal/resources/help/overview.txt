@@ -1,5 +1,5 @@
 usage: git gaw <command> [<args>]
-   or: git gaw help [init|deploy|undeploy|branch|commit|show|check|status|config|hooks|recovery]
+   or: git gaw help [aux|init|deploy|undeploy|branch|commit|show|check|status|config|hooks|recovery]
    or: git gaw --help
    or: git gaw --version
    or: git gaw version
@@ -11,7 +11,8 @@ Commands:
    init      create initial GAW history and local deployment state
    deploy    materialize local GAW state for an existing branch
    undeploy  remove local GAW deployment state
-   branch    rename or delete a valid GAW branch
+   aux       create and deploy Auxiliary GAW source histories
+   branch    rename or delete a valid formal GAW branch
    commit    create a GAW commit from the current index
    show      show canonical GAW history through git show
    check     check current worktree readiness or named committed state

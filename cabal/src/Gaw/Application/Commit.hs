@@ -11,11 +11,12 @@ import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BSC
 import Gaw.Application.State (inspectCommittedState)
 import Gaw.Protocol.Commit
+import Gaw.Protocol.Layout
 import Gaw.Protocol.Ref
 import Gaw.Protocol.State (CommittedState (..), classifyCommittedState, stateFindings)
 import Gaw.System.Clock (Clock (..))
 import Gaw.Protocol.Config (effectiveWorkspace)
-import Gaw.System.Config (readConfigAtTree, configReadDetail)
+import Gaw.System.Config (readConfigAtPath, configReadDetail)
 import Gaw.System.FileSystem (FileSystem (..))
 import Gaw.System.Git
 import Gaw.System.Repository (readTreeRecords, readChangedPaths)
@@ -37,6 +38,7 @@ createCommit git fs clock directory request = runExceptT $ do
   source <- case parseSourceRef (trimLine sourceBytes) of
     Right value -> pure value
     Left _ -> throwE (CommitError DetachedHead "The worktree HEAD is not a local branch")
+  let layout = layoutForRef source
   states <- operationStates
   case states of
     name : _ -> throwE (CommitError OperationInProgress
@@ -56,7 +58,7 @@ createCommit git fs clock directory request = runExceptT $ do
     ValidCommittedState _ -> pure ()
     _ -> throwE (CommitError CommitInvalidCommittedState
       "The current branch is not valid GAW committed state")
-  stagedConfigResult <- lift (readConfigAtTree git directory stagedTree)
+  stagedConfigResult <- lift (readConfigAtPath git directory stagedTree (configPath layout))
   config <- either (throwE . CommitError InvalidWorkspace . configReadDetail) pure stagedConfigResult
   projects <- forM (requestProjectRevisions request) $ \revision -> do
     oid <- resolveOid (revision <> "^{commit}") InvalidProjectCommit
@@ -71,8 +73,8 @@ createCommit git fs clock directory request = runExceptT $ do
     queried <- lift (readChangedPaths git directory firstTree stagedTree)
     either (const (throwE (CommitError GitFailure "Cannot read the tree change paths")))
       pure queried
-  either throwE pure (validateChangeBoundary changedPaths)
-  plan <- either throwE pure (planCommit request source firstParent firstTree stagedTree
+  either throwE pure (validateChangeBoundary (logicalPaths layout changedPaths))
+  plan <- either throwE pure (planCommitAt layout request source firstParent firstTree stagedTree
     (effectiveWorkspace config) entries projects)
   timestamp <- lift (unixTimestamp clock)
   let date = "@" <> BSC.pack (show timestamp) <> " +0000"

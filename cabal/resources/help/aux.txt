@@ -1,0 +1,16 @@
+usage: git gaw aux init [--worktree-path <path>]
+   or: git gaw aux deploy --branch <name> [--worktree-path <path>]
+
+Create or deploy independent Auxiliary GAW source history with UUIDv4 branch
+_gaw_aux_<uuid> and a single matching UUID subtree. Init reuses only the valid
+formal selector's exact committed config blob in an independent root; no
+workspace content, index config or formal-history parent is copied.
+
+Init/deploy require the existing canonical shared protection hook and valid
+formal selector. They do not change the selector, install/repair hooks, fetch
+or add a registry. Deployment reuses ordinary worktree selection/compensation;
+without a requested path it may remain repository-only.
+
+Run ordinary commit/check at the Auxiliary Git worktree root. Config/workspace
+paths and protocol-change isolation are UUID-relative; parent conflicts use
+physical tree paths. Existing commit deployment requirements are unchanged.

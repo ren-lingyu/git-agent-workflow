@@ -113,3 +113,7 @@ Unstaged edits are not included in check or commit. A new checkpoint cannot
 change paths both inside and outside .gaw/: stage and commit those changes
 separately while keeping each candidate valid. check does not replace this
 commit-transition rule. See git gaw help check and git gaw help commit.
+
+For Auxiliary GAW, the same config versions and declarations apply relative to
+<uuid>/, with the config at <uuid>/.gaw/config. The complete Git tree must stay
+within that matching UUID directory; physical paths still govern parent conflicts.

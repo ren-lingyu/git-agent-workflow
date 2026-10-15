@@ -29,6 +29,7 @@ configCliTests temporary git = do
   createDirectory root
   finally (do
     helpTopics candidate root
+    auxiliaryLifecycle candidate root
     layoutChecks candidate root
     newConfig candidate root
     boundaryChanges candidate root
@@ -78,7 +79,7 @@ configCliTests temporary git = do
       nativeCommit directory "project"
       pure directory
     helpTopics candidate root = do
-      let commands = ["init", "deploy", "undeploy", "branch", "commit", "show", "check", "status"]
+      let commands = ["aux", "init", "deploy", "undeploy", "branch", "commit", "show", "check", "status"]
           helpOnly = ["config", "hooks", "recovery"]
       overview <- readFile "resources/help/overview.txt"
       forM_ [["help"], ["--help"], ["-h"]] $ \args -> do
@@ -118,6 +119,58 @@ configCliTests temporary git = do
         (exampleBlocks (lines source))
       require (map configVersion decoded == [ConfigV0, ConfigV0, ConfigV1])
         "published v0/v1 configuration examples do not decode"
+    auxiliaryLifecycle candidate root = forM_ [0 :: Int, 1] $ \version -> do
+      directory <- seed root ("auxiliary-" ++ show version)
+      let agent = root </> ("formal-" ++ show version)
+          aux = root </> ("aux-" ++ show version)
+          other = root </> ("aux-other-" ++ show version)
+          sourceConfig = "; exact committed config bytes\n(:version " ++ show version ++
+            " :workspace ((:directory \"memory\")))\n"
+      _ <- cliFail candidate directory ["aux", "init"]
+      before <- gitOk directory ["for-each-ref", "refs/heads/_gaw_aux_"]
+      require (null before) "failed init left a branch"
+      _ <- cliOk candidate directory ["init", "--branch", "agents", "--worktree-path", agent]
+      config agent sourceConfig
+      _ <- cliOk candidate agent ["commit", "-m", "source config"]
+      config agent "(:version 1 :workspace ())\n"
+      -- Uncommitted config in the formal index must not be inherited.
+      _ <- cliOk candidate directory ["aux", "init", "--worktree-path", aux]
+      branch <- takeWhile (/= '\n') <$> gitOk aux ["branch", "--show-current"]
+      let uuid = drop (length ("_gaw_aux_" :: String)) branch
+          logical = aux </> uuid
+      inherited <- readFile (logical </> ".gaw/config")
+      require (inherited == sourceConfig) "Auxiliary init changed config bytes or copied the index"
+      tracked <- gitOk aux ["ls-tree", "-r", "--name-only", "HEAD"]
+      require (tracked == uuid ++ "/.gaw/config\n") "Auxiliary root copied workspace content"
+      parents <- words <$> gitOk aux ["rev-list", "--parents", "-n", "1", "HEAD"]
+      require (length parents == 1) "Auxiliary root acquired a formal parent"
+      _ <- cliOk candidate aux ["check"]
+      _ <- cliOk candidate directory ["aux", "deploy", "--branch", branch]
+      _ <- cliFail candidate directory ["deploy", "--branch", branch]
+      _ <- cliFail candidate aux ["branch", "-m", "renamed-aux"]
+      _ <- cliOk candidate directory ["aux", "init", "--worktree-path", other]
+      otherBranch <- gitOk other ["branch", "--show-current"]
+      require (otherBranch /= branch ++ "\n") "Auxiliary UUIDs collided"
+      createDirectory (logical </> "memory")
+      writeFile (logical </> "memory/current.md") "source evidence\n"
+      _ <- gitOk aux ["add", "--", uuid ++ "/memory/current.md"]
+      _ <- cliOk candidate aux ["commit", "-m", "source checkpoint", "--", "agents"]
+      writeFile (logical </> ".gaw/meta") "protocol\n"
+      writeFile (logical </> "memory/current.md") "changed source\n"
+      _ <- gitOk aux ["add", "--", uuid ++ "/.gaw/meta", uuid ++ "/memory/current.md"]
+      mixed <- cliFail candidate aux ["commit", "-m", "mixed"]
+      require (isInfixOf "MIXED-PROTOCOL-CHANGES" mixed) "Auxiliary lost the logical protocol boundary"
+      _ <- gitOk aux ["restore", "--staged", "--", uuid ++ "/.gaw/meta"]
+      _ <- cliOk candidate aux ["commit", "-m", "workspace checkpoint"]
+      _ <- cliFail candidate logical ["commit", "--allow-empty", "-m", "wrong root"]
+      _ <- failure aux git ["update-ref", "refs/heads/" ++ branch, "main"]
+      writeFile (aux </> "foreign") "outside UUID\n"
+      _ <- gitOk aux ["add", "--", "foreign"]
+      _ <- cliFail candidate aux ["check"]
+      _ <- cliFail candidate aux ["commit", "-m", "foreign root"]
+      _ <- gitOk aux ["restore", "--staged", "--", "foreign"]
+      _ <- cliOk candidate directory ["check", "--branch", branch]
+      pure ()
     layoutChecks candidate root = do
       directory <- seed root "layout"
       let uuid = "01234567-89ab-4cde-8fab-0123456789ab"

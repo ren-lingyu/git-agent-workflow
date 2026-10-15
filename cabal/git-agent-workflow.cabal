@@ -28,6 +28,8 @@ library
     , Gaw.Application.Branch
     , Gaw.Application.Init
     , Gaw.Protocol.Layout
+    , Gaw.Application.Auxiliary
+    , Gaw.System.Entropy
     , Gaw.Protocol.Check
     , Gaw.Protocol.Commit
     , Gaw.Protocol.Config

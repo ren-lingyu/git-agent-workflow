@@ -9,7 +9,7 @@ import qualified Data.ByteString as BS
 import Gaw.Application.State (inspectCommittedState)
 import Gaw.Protocol.Config (effectiveWorkspace, configWarnings, renderConfigWarning)
 import Gaw.Protocol.Check
-import Gaw.Protocol.Layout (auxiliaryReserved)
+import Gaw.Protocol.Layout
 import Gaw.Protocol.Ref
 import Gaw.Protocol.State
 import Gaw.Protocol.Workspace
@@ -42,7 +42,7 @@ inspectCheck git fs directory = do
         Left _ -> pure (map (\name -> finding name CheckSkipped
           "Skipped because no local branch is available")
           ["head", "head-config", "head-workspace", "project-parents"])
-      indexFindings <- inspectIndex
+      indexFindings <- inspectIndex (either (const Formal) layoutForRef branchResult)
       operationFinding <- inspectOperationState
       hookFinding <- inspectHook
       let branchFinding = case branchResult of
@@ -84,7 +84,7 @@ inspectCheck git fs directory = do
       where invalidSelector = finding "selector" CheckError
               "GAW selector points to a non-valid GAW branch"
 
-    inspectIndex = do
+    inspectIndex layout = do
       query <- readIndexRecords git directory
       case query of
         Left _ -> pure [finding "index" CheckError "Cannot read the Git index"]
@@ -92,7 +92,7 @@ inspectCheck git fs directory = do
           let entries = synthesizeIndexDirectories rawEntries
           case validateSnapshot entries of
             Left problem -> pure (indexError (workspaceDetail problem))
-            Right () -> case filter ((== ".gaw/config") . entryPath) entries of
+            Right () -> case filter ((== configPath layout) . entryPath) entries of
               [] -> pure (indexError "The staged candidate has no .gaw/config")
               entry : _
                 | entryStage entry /= 0 || entryMode entry /= "100644"
@@ -105,7 +105,7 @@ inspectCheck git fs directory = do
                       pure $ case config of
                         Left problem -> indexError (configReadDetail problem)
                         Right parsed ->
-                          (case validateWorkspace (effectiveWorkspace parsed) entries of
+                          (case validateWorkspaceAt layout (effectiveWorkspace parsed) entries of
                             Left problem -> indexError (workspaceDetail problem)
                             Right () -> [finding "index" CheckOk
                               "The staged candidate satisfies its workspace declaration"])

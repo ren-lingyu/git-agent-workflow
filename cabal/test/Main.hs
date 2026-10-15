@@ -12,6 +12,7 @@ import Gaw.Protocol.Deploy
 import Gaw.Protocol.Hook
 import Gaw.Protocol.Ref
 import Gaw.Protocol.Workspace
+import Gaw.System.Entropy (uuidV4)
 import Gaw.Protocol.Layout
 import Gaw.Protocol.Show
 import Gaw.Protocol.Status (StatusWorktree (..))
@@ -123,6 +124,8 @@ main = do
     == Left (BranchAlreadyAttached "refs/heads/gaw" "/tmp/agent")
   assert $ planWorktree "refs/heads/gaw" (Just "/tmp/new") True []
     == Left (PathOccupied "/tmp/new")
+  assert (uuidV4 (BS.replicate 16 255) == Just "ffffffff-ffff-4fff-bfff-ffffffffffff")
+  assert (uuidV4 "short" == Nothing)
   layoutTests
   versionedConfigTests
   commitBoundaryTests

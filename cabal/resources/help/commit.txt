@@ -12,7 +12,7 @@ Options:
        --allow-empty          allow an unchanged tree without project parents
        --allow-empty-message  allow an empty commit message
 
-Additional project commits become parents after the previous GAW commit.
+Additional external commits (project snapshots or Auxiliary checkpoints) become parents after the previous GAW commit.
 Their trees are checked for conflicts but are not merged into the GAW tree.
 
 HEAD and staged configs are decoded independently. A valid v0 checkpoint may
@@ -26,3 +26,8 @@ mode changes and cross-boundary moves, compared with the first-parent tree.
 Mixed changes fail with :MIXED-PROTOCOL-CHANGES before a commit object or ref
 update is created. Unchanged-tree commits retain the existing rules above.
 Existing history and root initialization are not checked retroactively.
+
+A canonical Auxiliary branch uses <uuid>/.gaw/config and UUID-relative workspace
+paths, but invocation stays at the Git worktree root. Protocol-change isolation
+is relative to that UUID root. Parent conflicts use actual Git tree paths.
+The selector and hook remain optional for commit, including after undeploy.

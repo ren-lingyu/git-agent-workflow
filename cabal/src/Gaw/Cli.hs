@@ -9,9 +9,11 @@ import Data.Version (showVersion)
 import Control.Exception (try)
 import System.IO.Error (isDoesNotExistError)
 import Data.FileEmbed (embedFile)
+import Gaw.Application.Auxiliary (initializeAuxiliary, renderAuxiliaryError)
+import Gaw.System.Entropy (secureUuidV4)
 import Gaw.Application.Check (inspectCheck, inspectBranchCheck)
 import Gaw.Application.Commit (createCommit)
-import Gaw.Application.Deploy (deploy, renderDeployError)
+import Gaw.Application.Deploy (deploy, deployAuxiliary, renderDeployError)
 import Gaw.Application.Branch (renameBranch, deleteBranch, renderBranchError)
 import Gaw.Application.Init (initialize, renderInitError)
 import Gaw.Application.Hook (evaluateTransaction)
@@ -43,6 +45,7 @@ version = BS.concat ["git-gaw ", BSC.pack (showVersion Package.version), "\n"]
 
 helpText :: BS.ByteString -> Maybe BS.ByteString
 helpText topic = case topic of
+  "aux" -> Just $(embedFile "resources/help/aux.txt")
   "overview" -> Just $(embedFile "resources/help/overview.txt")
   "config" -> Just $(embedFile "resources/help/config.txt")
   "commit" -> Just $(embedFile "resources/help/commit.txt")
@@ -69,6 +72,7 @@ run args = case args of
     | topic == "overview" -> unknownHelp topic
     | otherwise -> printHelp topic
   [command, "--help"] | command `elem` helpCommands -> printHelp command
+  "aux" : options -> runAuxiliary options
   "show" : options -> runShow options
   "check" : options -> runCheck options
   "status" : options -> runStatus options
@@ -79,11 +83,12 @@ run args = case args of
   "undeploy" : options -> runUndeploy options
   _ -> BS.hPut stderr usageText >> pure (ExitFailure 1)
   where
-    helpCommands = ["commit", "show", "check", "status", "deploy", "undeploy", "init", "branch"]
+    helpCommands = ["aux", "commit", "show", "check", "status", "deploy", "undeploy", "init", "branch"]
 
 usageText :: BS.ByteString
 usageText = BS.concat
   [ "git-gaw: Usage:\n"
+  , "  git gaw aux init [--worktree-path <path>] | deploy --branch <name> [--worktree-path <path>]\n"
   , "  git gaw init --branch <name> [--worktree-path <path>]\n"
   , "  git gaw deploy [--branch <name>] [--worktree-path <path>]\n"
   , "  git gaw undeploy\n"
@@ -92,7 +97,7 @@ usageText = BS.concat
   , "  git gaw show [options] [object...] [-- path...]\n"
   , "  git gaw check [--branch <name>]\n"
   , "  git gaw status [--diagnose]\n"
-  , "  git gaw help [init|deploy|undeploy|branch|commit|show|check|status|config|hooks|recovery]\n"
+  , "  git gaw help [aux|init|deploy|undeploy|branch|commit|show|check|status|config|hooks|recovery]\n"
   ]
 
 runBranch :: [BS.ByteString] -> IO ExitCode
@@ -413,3 +418,31 @@ runShow arguments = case prepareShowArguments arguments of
 
 main :: IO ()
 main = Env.getArgs >>= run >>= exitWith
+
+runAuxiliary :: [BS.ByteString] -> IO ExitCode
+runAuxiliary arguments = do
+  executable <- OS.fromBytes gitExecutable
+  directory <- OS.fromBytes "."
+  cwd <- Directory.getWorkingDirectory
+  let git = runGitPosix executable
+      bad detail = BS.hPut stderr ("git-gaw: " <> detail <> "\n") >> pure (ExitFailure 1)
+  case arguments of
+    operation:options | operation `elem` ["init", "deploy"] ->
+      case parseDeploymentArguments ("aux " <> operation) options of
+        Left detail -> bad detail
+        Right (branch, path) -> do
+          let target = fmap (absoluteRequested cwd) path
+          case (operation, branch) of
+            ("init", Nothing) -> do
+              result <- initializeAuxiliary git posixFileSystem secureUuidV4 directory target
+              case result of
+                Left problem -> BS.hPut stderr (renderAuxiliaryError problem) >> pure (ExitFailure 1)
+                Right report -> BS.hPut stdout ("Initialized Auxiliary GAW branch " <>
+                  initializedBranch report <> " at " <> objectIdBytes (initializedCommit report) <> "\n") >> pure ExitSuccess
+            ("deploy", Just name) -> do
+              result <- deployAuxiliary git posixFileSystem directory name target
+              case result of
+                Left problem -> BS.hPut stderr (renderDeployError problem) >> pure (ExitFailure 1)
+                Right report -> BS.hPut stdout (renderDeployResult report) >> pure ExitSuccess
+            _ -> bad "aux init accepts only --worktree-path; aux deploy requires --branch"
+    _ -> bad "Usage: git gaw aux init [--worktree-path <path>] | deploy --branch <name> [--worktree-path <path>]"

@@ -2,6 +2,7 @@
 
 module Gaw.Application.Init
   ( InitError (..)
+  , createInitialRoot
   , initialize
   , renderInitError
   ) where
@@ -11,9 +12,9 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (runExceptT, throwE)
 import qualified Data.ByteString as BS
 import Gaw.Application.Deploy (deploy, renderDeployError)
-import Gaw.Application.State (inspectCommittedObject, inspectCommittedState)
+import Gaw.Application.State (inspectCommittedObjectAt, inspectCommittedState)
 import Gaw.Protocol.Init
-import Gaw.Protocol.Layout (auxiliaryReserved)
+import Gaw.Protocol.Layout (HistoryLayout (..), auxiliaryReserved)
 import Gaw.Protocol.Ref
 import Gaw.Protocol.State
 import Gaw.System.FileSystem (FileSystem (..))
@@ -60,22 +61,8 @@ initialize git fs directory branch requestedPath = runExceptT $ do
     Nothing -> pure ()
   blob <- writeObject ["hash-object", "-w", "--stdin"] (Just initialConfig)
     "writing the initial config blob"
-  gawTree <- writeObject ["mktree", "-z"]
-    (Just (initialTreeEntry "100644 blob" blob "config"))
-    "writing the initial .gaw tree"
-  rootTree <- writeObject ["mktree", "-z"]
-    (Just (initialTreeEntry "040000 tree" gawTree ".gaw"))
-    "writing the initial root tree"
-  commit <- writeObject
-    ["-c", "user.name=Git Agent Workflow", "-c", "user.email=gaw@invalid",
-     "-c", "commit.gpgSign=false", "commit-tree", objectIdBytes rootTree,
-     "-m", initialMessage]
-    Nothing "writing the initial root commit"
-  report <- lift (inspectCommittedObject git directory commit)
-  case classifyCommittedState (stateFindings report) of
-    ValidCommittedState _ -> pure ()
-    _ -> throwE (InitError "invalid-initial-state"
-      "The generated initial commit failed validation")
+  rootResult <- lift (createInitialRoot git directory Formal blob)
+  commit <- either throwE pure rootResult
   let createInput = "create " <> refNameBytes source <> "\0" <> objectIdBytes commit <>
         "\0option no-deref\0symref-create refs/gaw/HEAD\0" <> refNameBytes source <> "\0"
   created <- command (disabledHook ++ ["update-ref", "-m", "git-gaw init", "--stdin", "-z"])
@@ -180,3 +167,31 @@ trimSlash = BS.dropWhileEnd (== 47)
 trailingSlash :: BS.ByteString -> BS.ByteString
 trailingSlash path | BS.null path || BS.last path == 47 = path
                    | otherwise = path <> "/"
+
+-- Config blob identity preserves every original byte, including comments.
+createInitialRoot :: Monad m => Git m -> PosixPath -> HistoryLayout -> ObjectId
+  -> m (Either InitError ObjectId)
+createInitialRoot git directory layout blob = runExceptT $ do
+  gawTree <- writeObject ["mktree", "-z"]
+    (Just (initialTreeEntry "100644 blob" blob "config")) "writing the .gaw tree"
+  logicalTree <- writeObject ["mktree", "-z"]
+    (Just (initialTreeEntry "040000 tree" gawTree ".gaw")) "writing the logical tree"
+  rootTree <- case layout of
+    Formal -> pure logicalTree
+    Auxiliary uuid -> writeObject ["mktree", "-z"]
+      (Just (initialTreeEntry "040000 tree" logicalTree uuid)) "writing the UUID tree"
+  commit <- writeObject
+    ["-c", "user.name=Git Agent Workflow", "-c", "user.email=gaw@invalid",
+     "-c", "commit.gpgSign=false", "commit-tree", objectIdBytes rootTree,
+     "-m", initialMessage] Nothing "writing the independent root commit"
+  report <- lift (inspectCommittedObjectAt git directory layout commit)
+  case classifyCommittedState (stateFindings report) of
+    ValidCommittedState _ -> pure commit
+    _ -> throwE (InitError "invalid-initial-state" "The generated root failed validation")
+  where
+    writeObject args input operation = do
+      result <- lift (runGit git (GitInvocation directory args input []))
+      if gitExitCode result /= 0 then throwE (InitError "git-failure"
+        (operation <> ": " <> trimLine (gitStderr result))) else
+        either (const (throwE (InitError "git-failure" "Malformed object ID"))) pure
+          (parseObjectId (trimLine (gitStdout result)))
