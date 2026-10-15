@@ -8,8 +8,9 @@ The user authorized Auxiliary GAW implementation against the v0.6.0 baseline
 implemented and verified, including the final review additions. The user committed
 N1 as `130dfe0`; its tree/parent/empty index match the independently tested N1
 snapshot. N2 is now committed as `396c7ed`, with its exact tested tree and sole
-parent `130dfe0` verified. N3 passed isolated validation and is staged awaiting
-the user's commit; N4–N5 remain outside the index. No release, installation, external issue update
+parent `130dfe0` verified. N3 is committed as `d7958f5`, with its exact tested
+tree, sole parent `396c7ed` and empty index verified. N4 validation is running;
+N4–N5 remain outside the index. No release, installation, external issue update
 or other-project action is part of this task.
 
 The user now requests organizing N1–N5 into sequential project commits:
@@ -18,7 +19,7 @@ draft each message from the actual staged diff, then poll for at most three
 minutes per item until timeout or a verified expected HEAD move. Native project
 commits remain user-managed. Verify parent, committed tree, branch and index,
 not merely a changed HEAD; only then update GAW and proceed to the next item.
-Current main HEAD is `396c7ed`, and its index contains only approved N3. Shared CLI,
+Current main HEAD is `d7958f5`, and its index is empty after N3. Shared CLI,
 manifest and test files need partial staging. UUID parsing must accompany N1's
 layout/branch inspection; N2 adds protection/lifecycle policy. Existing PLAN
 input/completion snapshots already retain the needed raw evidence, so this
@@ -75,9 +76,11 @@ expected tree and an empty index. N1's expected full tree
 N2's earlier 180-second window expired, then the user committed it and requested
 continuation. Verified `396c7ed` is a sole-parent child of `130dfe0` with exact
 tested tree `99f6452065c46f72890e7c770bfb3932036c19a7` and empty index.
-N3's actual staged message is ready in tmp/commit.md. Next: poll for a sole-parent
-child of `396c7ed` with full tree
-`9b313801c1682eb9f1a10e1e92a2bfdc291779c7`. Items 1–6 remain authorized.
+N3 was observed within its polling window as `d7958f5`, with tested tree
+`9b313801c1682eb9f1a10e1e92a2bfdc291779c7` and sole parent `396c7ed`.
+Next: validate/stage N4, draft its actual staged message, then poll for a
+sole-parent child of `d7958f5` with full tree
+`bda85acbd995a1813c5dc9d9290e8f4bd9dac9b1`. Items 1–6 remain authorized.
 On unexpected movement or timeout stop, preserve the candidate, and record the
 pending node. On a verified commit associate only its actually tested/inspected
 snapshot with the GAW update, then proceed within the granted staging scope.
