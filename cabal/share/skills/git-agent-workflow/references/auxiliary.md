@@ -9,9 +9,12 @@ Do not create a source history for every message or ordinary small edit.
 
 ## Availability and discovery
 
-Confirm the available CLI supports `git gaw help aux`; a source checkout,
+Auxiliary history requires GAW 0.7.0 or newer. Confirm the available CLI supports
+`git gaw help aux`; a source checkout,
 published package and installed executable/skill are different states. Old
 CLIs cannot interpret this layout and must not be used to repair or bypass it.
+Upgrade the executable used by the shared hook as well as interactive commands
+before creating or importing Auxiliary history; keep the skill compatible.
 Run `git gaw status`, recover formal current memory first, and identify existing
 Auxiliary branches and worktrees before choosing any lifecycle action. Lifecycle
 creation/deployment/deletion still needs host authorization; the normal memory

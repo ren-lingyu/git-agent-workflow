@@ -11,7 +11,7 @@ context as the primary store of working state, GAW keeps selected agent state
 in Git and lets Git provide its history and reachability model.
 
 * Status
-The current version is =0.6.0=.  The bundled agent-memory skill maintains
+The current source version is =0.7.0=.  The bundled agent-memory skill maintains
 current workspace state as substantive work evolves, recovers relevant
 history across sessions, and creates selective, evidence-backed checkpoints.
 Formal GAW branch identity follows validated branch content rather than local
@@ -22,15 +22,17 @@ without removing history or worktrees.  =git gaw branch= handles
 selected formal branch rename and deletion of valid formal/Auxiliary branches.  The
 =check=, edit, stage, =commit=, and =show= loop remains the daily interface.
 
-Version 0.6.0 adds versioned workspace configuration with optional role groups,
-a configuration help topic, and protection for unknown leading
-config versions.  It rejects checkpoints that mix protocol and workspace
-changes.  The bundled skill also defines memory, archive and project-skill
-workflows, including independent archive snapshots and workflow adaptation.
+Version 0.7.0 adds independent Auxiliary source histories through =aux init=,
+=aux deploy= and =aux check=, committed-state inspection through =check --branch=,
+and Auxiliary deletion through =branch -d/-D=. Status separates formal,
+Auxiliary and ordinary branches; undeploy reports its pre-cleanup inventory
+and shared protection removal. The bundled skill guides cross-session/agent
+source reconstruction, formal knowledge integration and retained-source recovery.
 
-The current development checkout also implements Auxiliary source histories;
-this does not imply a new release, tag or installed executable. See the Auxiliary
-section below and verify =git gaw help aux= in the CLI actually being used.
+Versioned v0/v1 workspace configuration, protocol-change isolation, and the
+memory, archive and project-skill workflows introduced in 0.6.0 remain available.
+Source version, published release and installed executable are separate states;
+verify =git gaw --version= and =git gaw help aux= in the CLI actually being used.
 
 The repository protocol and user-facing interface may still change before a
 stable release.  Remote-side enforcement, automatic fetching, arbitrary
@@ -71,6 +73,24 @@ cd cabal
 cabal build git-gaw
 cabal run git-gaw -- --help
 #+end_src
+
+** Upgrading to 0.7.0
+Existing formal GAW history and v0/v1 configuration remain supported without
+migration or history rewriting. Formal =branch -d/-D= semantics are unchanged.
+
+Auxiliary histories require GAW 0.7.0 or newer. Upgrade the executable used by
+both interactive commands and the shared Git hook before creating or importing
+Auxiliary history; older executables cannot validate or protect its UUID layout.
+Keep the bundled skill and executable compatible.
+
+The =_gaw_aux_= branch-name range is reserved, including malformed names.
+Review existing branches in that range before upgrading: they are no longer
+ordinary or formal GAW branch names, and the hook protects existing branches
+there by name even when their configuration is missing or damaged.
+
+Human-readable =status= and =undeploy= output now includes additional groups,
+inventory and protection notices. Hook rejection wording also changes. Consumers
+that match these messages should be reviewed when upgrading.
 
 * Design
 ** Separate GAW History
