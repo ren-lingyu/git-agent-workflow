@@ -9,8 +9,9 @@ implemented and verified, including the final review additions. The user committ
 N1 as `130dfe0`; its tree/parent/empty index match the independently tested N1
 snapshot. N2 is now committed as `396c7ed`, with its exact tested tree and sole
 parent `130dfe0` verified. N3 is committed as `d7958f5`, with its exact tested
-tree, sole parent `396c7ed` and empty index verified. N4 validation is running;
-N4–N5 remain outside the index. No release, installation, external issue update
+tree, sole parent `396c7ed` and empty index verified. N4 passed isolated validation
+and is staged awaiting the user's commit; N5 remains outside the index.
+No release, installation, external issue update
 or other-project action is part of this task.
 
 The user now requests organizing N1–N5 into sequential project commits:
@@ -19,7 +20,7 @@ draft each message from the actual staged diff, then poll for at most three
 minutes per item until timeout or a verified expected HEAD move. Native project
 commits remain user-managed. Verify parent, committed tree, branch and index,
 not merely a changed HEAD; only then update GAW and proceed to the next item.
-Current main HEAD is `d7958f5`, and its index is empty after N3. Shared CLI,
+Current main HEAD is `d7958f5`, and its index contains only approved N4. Shared CLI,
 manifest and test files need partial staging. UUID parsing must accompany N1's
 layout/branch inspection; N2 adds protection/lifecycle policy. Existing PLAN
 input/completion snapshots already retain the needed raw evidence, so this
@@ -43,7 +44,11 @@ Its approved 12-path patch, full staged tree and unchanged final source bytes
 were verified. N3 passed both suites, 13 help and 4 skill resource/distribution
 checks, output `/nix/store/9hzgrryf3qixf1w54j70im2nwi3j4vfx-git-agent-workflow-0.6.0`.
 Its approved 16-path patch and full staged tree match the tested snapshot;
-final worktree source bytes are unchanged. N4–N5 split snapshots are not tested yet.
+final worktree source bytes are unchanged. N4 passed both suites, 13 help and
+4 skill resource/distribution checks, output
+`/nix/store/7d1m2ll5j77jbs85iyf8a4wm97xdg2jc-git-agent-workflow-0.6.0`.
+Its approved 12-path patch and full staged tree match the tested snapshot;
+final source bytes are unchanged. N5's split snapshot has not been tested yet.
 N5 equals the accepted final source bytes.
 
 Proposed commit boundaries (each carries its available tests/help):
@@ -78,7 +83,7 @@ continuation. Verified `396c7ed` is a sole-parent child of `130dfe0` with exact
 tested tree `99f6452065c46f72890e7c770bfb3932036c19a7` and empty index.
 N3 was observed within its polling window as `d7958f5`, with tested tree
 `9b313801c1682eb9f1a10e1e92a2bfdc291779c7` and sole parent `396c7ed`.
-Next: validate/stage N4, draft its actual staged message, then poll for a
+N4's actual staged message is ready in tmp/commit.md. Next: poll for a
 sole-parent child of `d7958f5` with full tree
 `bda85acbd995a1813c5dc9d9290e8f4bd9dac9b1`. Items 1–6 remain authorized.
 On unexpected movement or timeout stop, preserve the candidate, and record the
@@ -151,7 +156,8 @@ The user replaced the earlier dedicated-retire proposal:
   selector/formal/Auxiliary ref races and invalid type renames. All references
   in the plan's goals/CLI/lifecycle/nodes/acceptance were adjusted consistently.
 
-Implementation is in the ordinary working tree, not a new project commit:
+Implementation is complete; per-node commit and validation progress is tracked
+above. Remaining changes stay in the ordinary working tree:
 
 - N1: shared HistoryLayout, exact config reads, UUID-relative workspace checks
   with full-tree boundary validation, physical parent conflicts, committed-only
@@ -194,8 +200,8 @@ query failure and bundled resources. The final run passed forced worktree races,
 accurate Auxiliary-selector diagnosis and direct byte recovery through formal
 first-parent path history after source branch deletion.
 
-Next: hand off the unstaged source diff for user review/commit. PLAN archival
-and the final recovery-state check are complete. Keep the existing real GAW
+Next: continue the authorized sequential staging and user-commit verification
+described above. PLAN archival is complete. Keep the existing real GAW
 deployment/config/history; no real Auxiliary lifecycle action was performed.
 Build warnings about Cabal metadata/bounds and install PATH remain nonfatal.
 Non-Linux runtime verification was not performed.
@@ -239,7 +245,7 @@ for detailed requirements rather than copying complete issue text here.
 | --- | --- |
 | [#3](https://github.com/ren-lingyu/git-agent-workflow/issues/3) | Restricted GAW-aware rebase, later design/implementation; not routine memory maintenance. |
 | [#4](https://github.com/ren-lingyu/git-agent-workflow/issues/4) | Exploratory interactive DAG visualization, no current release gate. |
-| [#5](https://github.com/ren-lingyu/git-agent-workflow/issues/5) | Cross-session/agent knowledge integration; Auxiliary implementation and workflow are now in the uncommitted working tree, with isolated tests. This does not establish issue closure or release availability. |
+| [#5](https://github.com/ren-lingyu/git-agent-workflow/issues/5) | Cross-session/agent knowledge integration; Auxiliary implementation and workflow are complete with isolated tests, undergoing the per-node commit sequence above. This does not establish issue closure or release availability. |
 | [#6](https://github.com/ren-lingyu/git-agent-workflow/issues/6) | Optional checker deferred; bundled OID semantic guidance is complete. |
 | [#9](https://github.com/ren-lingyu/git-agent-workflow/issues/9) | Long-term history-model evaluation, not a decided split/fusion feature. |
 | [#10](https://github.com/ren-lingyu/git-agent-workflow/issues/10) | Optional explicit bidirectional AGENTS maintenance research. |
