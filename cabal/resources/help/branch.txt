@@ -2,22 +2,28 @@ usage: git gaw branch -m <new-name>
    or: git gaw branch -d <name>
    or: git gaw branch -D <name>
 
-Coordinate native Git branch lifecycle operations with local GAW protocol
-metadata.  Rename operates on the GAW branch checked out by the current
-worktree selected by refs/gaw/HEAD.  Both delete forms accept only an
-unselected local direct branch with valid GAW committed state.  -d retains
-native git branch -d safe-delete checks; -D skips only those checks.  Neither
-form bypasses GAW validation or Git's worktree constraints.
+Rename only the current valid formal GAW branch selected by refs/gaw/HEAD.
+Names beginning _gaw_aux_ are reserved; Auxiliary branches cannot be renamed.
+Native rename maintains Git metadata, then selector update/verification uses
+best-effort compensation. Partial failures are reported.
 
-The native operation selectively disables only the GAW configured protection
-hook.  During rename, failures in the following selector update use best-effort
-compensation; incomplete compensation is reported as a partial failure.
+Both delete forms require a direct local branch with valid committed state
+and no associated worktree. Neither removes worktrees or other history refs.
+For formal GAW, the selected branch cannot be deleted; -d retains native Git
+safe-delete checks and -D skips only those checks, as before.
 
-Options:
-   -m <new-name> rename the current GAW branch
-   -d <name>     safely delete an unselected valid GAW branch
-   -D <name>     delete an unselected valid GAW branch without safe-delete check
-   --help        show this help
+For Auxiliary GAW, -d requires its current tip to be an ancestor of the valid
+formal tip selected by refs/gaw/HEAD, the sole integration target. Git upstream
+and caller HEAD are irrelevant. Selector target, formal tip and Auxiliary tip
+are verified in one ref transaction. Aux check shares these readiness checks.
 
-Formal GAW lifecycle operations cannot enter the reserved _gaw_aux_ range.
-Rename is limited to the currently selected formal GAW branch.
+Auxiliary -D explicitly abandons history without requiring integration.
+It still requires valid state, no worktree and an expected-old-tip deletion.
+Unretained/unknown retention produces an abandonment warning: continued
+reachability after deletion is not guaranteed.
+
+Worktree registrations are checked independently before and after Auxiliary
+deletion. A detected association/query race attempts conditional branch
+restoration and reports failure; ref locks do not lock worktree registration.
+Do not run worktree lifecycle changes concurrently with branch deletion.
+Controlled operations disable only GAW's configured hook for ref changes.

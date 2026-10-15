@@ -19,6 +19,9 @@ Config v0 and v1 are supported. Unknown top-level v1 fields produce separate
 HEAD and index warnings without making the check fail. Unsupported config
 versions are reported explicitly and prevent readiness.
 
---branch checks only the named local branch's committed state, without a
-worktree, index or operation readiness check. Formal and canonical Auxiliary
-UUID layouts are supported. This mode does not claim worktree readiness.
+--branch checks only that local branch's committed state, without requiring a
+worktree or examining the caller's index/operation state. It never reports
+worktree readiness. Formal and canonical Auxiliary branches are supported.
+Current Auxiliary worktrees use <uuid>/.gaw/config and UUID-relative workspace
+paths; entries outside that UUID directory are invalid. Aux check adds safe
+deletion readiness, without treating lack of integration as structural damage.

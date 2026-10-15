@@ -9,6 +9,9 @@ import Data.Version (showVersion)
 import Control.Exception (try)
 import System.IO.Error (isDoesNotExistError)
 import Data.FileEmbed (embedFile)
+import Gaw.Application.AuxiliaryCheck (inspectAuxiliary)
+import Gaw.Protocol.Auxiliary (auxiliaryValid, renderAuxiliaryReport)
+import Gaw.Protocol.Branch (branchWarnings)
 import Gaw.Application.Auxiliary (initializeAuxiliary, renderAuxiliaryError)
 import Gaw.System.Entropy (secureUuidV4)
 import Gaw.Application.Check (inspectCheck, inspectBranchCheck)
@@ -88,7 +91,7 @@ run args = case args of
 usageText :: BS.ByteString
 usageText = BS.concat
   [ "git-gaw: Usage:\n"
-  , "  git gaw aux init [--worktree-path <path>] | deploy --branch <name> [--worktree-path <path>]\n"
+  , "  git gaw aux init [--worktree-path <path>] | deploy --branch <name> [--worktree-path <path>] | check [--branch <name>]\n"
   , "  git gaw init --branch <name> [--worktree-path <path>]\n"
   , "  git gaw deploy [--branch <name>] [--worktree-path <path>]\n"
   , "  git gaw undeploy\n"
@@ -110,7 +113,8 @@ runBranch arguments = case arguments of
       else deleteBranch (runGitPosix executable) directory name (operation == "-D")
     case result of
       Left problem -> BS.hPut stderr (renderBranchError problem) >> pure (ExitFailure 1)
-      Right _ -> do
+      Right report -> do
+        mapM_ (\warning -> BS.hPut stderr ("Warning: " <> warning <> "\n")) (branchWarnings report)
         BS.hPut stdout (if operation == "-m"
           then "Renamed GAW branch to " <> name <> ".\n"
           else "Deleted GAW branch " <> name <> ".\n")
@@ -427,6 +431,22 @@ runAuxiliary arguments = do
   let git = runGitPosix executable
       bad detail = BS.hPut stderr ("git-gaw: " <> detail <> "\n") >> pure (ExitFailure 1)
   case arguments of
+    "check":options -> do
+      sourceResult <- case options of
+        [] -> do
+          current <- runGit git (GitInvocation directory ["symbolic-ref", "--quiet", "HEAD"] Nothing [])
+          pure (if gitExitCode current == 0 then parseSourceRef (trimLine (gitStdout current))
+            else parseSourceRef "")
+        ["--branch", name] -> pure (parseSourceRef ("refs/heads/" <> name))
+        _ -> pure (parseSourceRef "")
+      case sourceResult of
+        Left _ -> bad "aux check requires --branch <name> or a current Auxiliary worktree"
+        Right source -> do
+          result <- inspectAuxiliary git directory source
+          case result of
+            Left problem -> BS.hPut stderr (renderAuxiliaryError problem) >> pure (ExitFailure 1)
+            Right report -> BS.hPut stdout (renderAuxiliaryReport report) >>
+              pure (if auxiliaryValid report then ExitSuccess else ExitFailure 1)
     operation:options | operation `elem` ["init", "deploy"] ->
       case parseDeploymentArguments ("aux " <> operation) options of
         Left detail -> bad detail
@@ -445,4 +465,7 @@ runAuxiliary arguments = do
                 Left problem -> BS.hPut stderr (renderDeployError problem) >> pure (ExitFailure 1)
                 Right report -> BS.hPut stdout (renderDeployResult report) >> pure ExitSuccess
             _ -> bad "aux init accepts only --worktree-path; aux deploy requires --branch"
-    _ -> bad "Usage: git gaw aux init [--worktree-path <path>] | deploy --branch <name> [--worktree-path <path>]"
+    _ -> bad "Usage: git gaw aux init [--worktree-path <path>] | deploy --branch <name> [--worktree-path <path>] | check [--branch <name>]"
+
+trimLine :: BS.ByteString -> BS.ByteString
+trimLine = BS.dropWhileEnd (\byte -> byte == 10 || byte == 13)

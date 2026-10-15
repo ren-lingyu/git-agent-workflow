@@ -30,6 +30,8 @@ library
     , Gaw.Protocol.Layout
     , Gaw.Application.Auxiliary
     , Gaw.System.Entropy
+    , Gaw.Application.AuxiliaryCheck
+    , Gaw.Protocol.Auxiliary
     , Gaw.Protocol.Check
     , Gaw.Protocol.Commit
     , Gaw.Protocol.Config

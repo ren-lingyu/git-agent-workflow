@@ -10,6 +10,9 @@ module Gaw.Application.Branch
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (ExceptT, runExceptT, throwE)
 import qualified Data.ByteString as BS
+import Gaw.Application.Auxiliary (renderAuxiliaryError)
+import Gaw.Application.AuxiliaryCheck (inspectAuxiliary, associatedWorktrees)
+import Gaw.Protocol.Auxiliary
 import Gaw.Application.State (inspectCommittedState)
 import Gaw.Protocol.Branch
 import Gaw.Protocol.Layout (auxiliaryReserved)
@@ -73,7 +76,7 @@ renameBranch git fs directory newName = runExceptT $ do
       "refs/gaw/HEAD was not renamed") else pure ()
     requireValid root (newSource plan)
   case verification of
-    Right () -> pure (BranchResult Rename (oldSource plan) (Just (newSource plan)))
+    Right () -> pure (BranchResult Rename (oldSource plan) (Just (newSource plan)) [])
     Left failure -> do
       selectorRollback <- lift $ runExceptT
         (renameSelector root (newSource plan) (oldSource plan))
@@ -111,8 +114,16 @@ renameBranch git fs directory newName = runExceptT $ do
 
 deleteBranch :: Monad m => Git m -> PosixPath -> BS.ByteString -> Bool
   -> m (Either BranchError BranchResult)
-deleteBranch git directory name force = runExceptT $ do
-  source <- validatedBranch git directory name
+deleteBranch git directory name force = do
+  parsed <- runExceptT (validatedBranch git directory name)
+  case parsed of
+    Left problem -> pure (Left problem)
+    Right source | auxiliaryReserved source -> deleteAuxiliaryBranch git directory source force
+                 | otherwise -> deleteFormalBranch git directory source name force
+
+deleteFormalBranch :: Monad m => Git m -> PosixPath -> RefName -> BS.ByteString -> Bool
+  -> m (Either BranchError BranchResult)
+deleteFormalBranch git directory source name force = runExceptT $ do
   directSource git directory source
   validSource git directory source
   selector <- inspect git directory selectorRef
@@ -126,9 +137,38 @@ deleteBranch git directory name force = runExceptT $ do
       else pure ()
   result <- invoke git directory
     (disabledHook ++ ["branch", if force then "-D" else "-d", name]) Nothing
-  if gitExitCode result == 0 then pure (BranchResult Delete source Nothing)
+  if gitExitCode result == 0 then pure (BranchResult Delete source Nothing [])
   else throwE (BranchError "native-failure"
     ("Git failed while deleting the branch: " <> trimLine (gitStderr result)))
+
+-- Worktree registrations are not protected by ref locks. Recheck independently,
+-- then inspect again after deletion and compensate by create-if-absent if a
+-- registration raced the transaction. Never remove a worktree automatically.
+deleteAuxiliaryBranch :: Monad m => Git m -> PosixPath -> RefName -> Bool
+  -> m (Either BranchError BranchResult)
+deleteAuxiliaryBranch git directory source force = runExceptT $ do
+  report <- lift (inspectAuxiliary git directory source) >>= either auxFailure pure
+  case deletionProblems force report of
+    [] -> pure ()
+    problems -> throwE (BranchError "not-ready" (BS.intercalate "; " problems))
+  before <- lift (associatedWorktrees git directory source) >>= either auxFailure pure
+  if null before then pure () else throwE (BranchError "worktree-race" "A worktree became associated before deletion")
+  deleted <- invoke git directory (disabledHook ++ ["update-ref", "-m",
+    "git-gaw auxiliary delete", "--stdin", "-z"]) (Just (deletionInput force report))
+  if gitExitCode deleted == 0 then pure () else throwE (BranchError "ref-changed"
+    ("Deletion transaction failed: " <> trimLine (gitStderr deleted)))
+  after <- lift (associatedWorktrees git directory source)
+  case after of
+    Right [] -> pure (BranchResult Delete source Nothing (abandonmentWarning force report))
+    _ -> do
+      restored <- invoke git directory (disabledHook ++ ["update-ref", "--stdin", "-z"])
+        (Just ("option no-deref\0create " <> refNameBytes source <> "\0" <>
+          objectIdBytes (auxiliaryTip report) <> "\0"))
+      throwE (BranchError (if gitExitCode restored == 0 then "worktree-race" else "partial-failure")
+        (if gitExitCode restored == 0
+          then "Worktree association changed or became unreadable; branch restored, retry after resolving worktree activity"
+          else "Worktree association changed or became unreadable and branch restoration failed; inspect branch and worktrees"))
+  where auxFailure = throwE . BranchError "auxiliary-check" . renderAuxiliaryError
 
 invoke :: Monad m => Git m -> PosixPath -> [BS.ByteString]
   -> Maybe BS.ByteString -> ExceptT BranchError m GitResult
@@ -159,8 +199,6 @@ directSource git at source = do
 
 validSource :: Monad m => Git m -> PosixPath -> RefName -> ExceptT BranchError m ()
 validSource git at source = do
-  if auxiliaryReserved source then throwE (BranchError "invalid-state"
-    "Auxiliary lifecycle requires dedicated validation") else pure ()
   report <- lift (inspectCommittedState git at source)
   case classifyCommittedState (stateFindings report) of
     ValidCommittedState _ -> pure ()

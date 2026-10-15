@@ -167,15 +167,19 @@ parseWorktrees :: BS.ByteString -> Either StatusError [StatusWorktree]
 parseWorktrees input
   | BS.null input = Right []
   | BS.last input /= 0 = Left (StatusMalformed "Unterminated worktree output")
-  | otherwise = Right (go (BS.split 0 input) Nothing [])
+  | otherwise = go (BS.split 0 input) Nothing []
   where
-    go [] current records = reverse (maybe records (: records) current)
+    go [] current records = Right (reverse (maybe records (: records) current))
     go (field:rest) current records
       | BS.null field = go rest Nothing (maybe records (: records) current)
-      | "worktree " `BS.isPrefixOf` field =
-          let saved = maybe records (: records) current
-          in go rest (Just (StatusWorktree (BS.drop 9 field) Nothing False False False)) saved
-      | otherwise = go rest (fmap (update field) current) records
+      | "worktree " `BS.isPrefixOf` field = case current of
+          Just _ -> Left (StatusMalformed "Missing worktree record separator")
+          Nothing | BS.null (BS.drop 9 field) -> Left (StatusMalformed "Empty worktree path")
+                  | otherwise -> go rest
+                      (Just (StatusWorktree (BS.drop 9 field) Nothing False False False)) records
+      | otherwise = case current of
+          Nothing -> Left (StatusMalformed "Worktree field outside a record")
+          Just tree -> go rest (Just (update field tree)) records
     update field tree
       | "branch " `BS.isPrefixOf` field = tree { worktreeBranch = Just (BS.drop 7 field) }
       | field == "detached" = tree { worktreeDetached = True }

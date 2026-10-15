@@ -18,6 +18,7 @@ data BranchResult = BranchResult
   { branchOperation :: BranchOperation
   , previousSource :: RefName
   , resultingSource :: Maybe RefName
+  , branchWarnings :: [BS.ByteString]
   } deriving (Eq, Show)
 
 data RenamePlan = RenamePlan RefName RefName deriving (Eq, Show)

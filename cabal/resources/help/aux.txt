@@ -1,16 +1,29 @@
 usage: git gaw aux init [--worktree-path <path>]
    or: git gaw aux deploy --branch <name> [--worktree-path <path>]
+   or: git gaw aux check [--branch <name>]
 
-Create or deploy independent Auxiliary GAW source history with UUIDv4 branch
-_gaw_aux_<uuid> and a single matching UUID subtree. Init reuses only the valid
-formal selector's exact committed config blob in an independent root; no
-workspace content, index config or formal-history parent is copied.
+Auxiliary GAW holds an independent temporary source history. Formal GAW remains
+project-current-memory authority. Init creates a secure UUIDv4 branch named
+_gaw_aux_<uuid>, with only <uuid>/.gaw/config in an independent root commit.
+It copies the selected formal branch's committed config bytes, not its index,
+worktree content, or history. Config/workspace paths are UUID-relative.
 
-Init/deploy require the existing canonical shared protection hook and valid
-formal selector. They do not change the selector, install/repair hooks, fetch
-or add a registry. Deployment reuses ordinary worktree selection/compensation;
-without a requested path it may remain repository-only.
+Init and deploy require a valid formal refs/gaw/HEAD selector and the existing
+canonical shared hook. They do not change the selector, install/repair hooks,
+fetch, or create registries. Deploy requires an existing Auxiliary branch.
+Worktree selection and failure compensation follow normal GAW deployment.
+Without --worktree-path, deployment may remain repository-only.
 
-Run ordinary commit/check at the Auxiliary Git worktree root. Config/workspace
-paths and protocol-change isolation are UUID-relative; parent conflicts use
-physical tree paths. Existing commit deployment requirements are unchanged.
+Run ordinary git gaw commit/check at the Auxiliary Git worktree root, not
+inside its UUID directory. Existing commit deployment requirements are unchanged.
+
+Aux check reports committed history structure separately from safe-deletion
+readiness. Without --branch it requires a current Auxiliary worktree. Valid
+but unintegrated history returns success; query or structural errors fail.
+Use check --branch for committed-state checks without deletion readiness.
+
+Use branch -d for a tip retained in the formal history selected by refs/gaw/HEAD.
+Use branch -D to abandon history explicitly; it does not guarantee continued
+reachability. Both require valid committed state and no associated worktree.
+Neither removes worktrees or other history refs. See git gaw help branch.
+There is no aux retire, abort, discard, rename or separate executable.

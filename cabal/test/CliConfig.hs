@@ -3,9 +3,11 @@
 module CliConfig (configCliTests) where
 
 import Control.Exception (finally)
-import Control.Monad (unless, forM_)
+import Control.Monad (unless, forM_, filterM)
 import qualified Data.ByteString.Char8 as BSC
 import Data.List (isInfixOf, intercalate)
+import Gaw.Application.Branch (deleteBranch)
+import Data.IORef (newIORef, readIORef, writeIORef, modifyIORef')
 import Gaw.Application.State (inspectCommittedState)
 import Gaw.Protocol.Config (parseConfig, configVersion, ConfigVersion (..))
 import Gaw.Protocol.Ref (parseSourceRef)
@@ -55,6 +57,10 @@ configCliTests temporary git = do
     failure directory executable args = do
       (code, out, err) <- invoke directory executable args
       unless (code /= ExitSuccess) $ fail (show args ++ " unexpectedly succeeded")
+      pure (out ++ err)
+    cliOkCombined candidate directory args = do
+      (code,out,err) <- invoke directory candidate args
+      require (code == ExitSuccess) (show args ++ " failed: " ++ out ++ err)
       pure (out ++ err)
     gitOk directory = success directory git
     cliOk candidate directory = success directory candidate
@@ -119,6 +125,67 @@ configCliTests temporary git = do
         (exampleBlocks (lines source))
       require (map configVersion decoded == [ConfigV0, ConfigV0, ConfigV1])
         "published v0/v1 configuration examples do not decode"
+    deletionRaces directory branch = do
+      executable <- OS.fromBytes (BSC.pack git)
+      location <- OS.fromBytes (BSC.pack directory)
+      let capability = runGitPosix executable
+          controlled args = gitOk directory (["-c", "hook.gaw-reference-transaction.enabled=false"] ++ args)
+          source = "refs/heads/" ++ branch
+          failDelete wrapped force = do
+            result <- deleteBranch wrapped location (BSC.pack branch) force
+            require (case result of Left _ -> True; _ -> False) "raced deletion unexpectedly succeeded"
+          atDelete action = do
+            done <- newIORef False
+            pure (Git $ \request -> do
+              fired <- readIORef done
+              if not fired && "git-gaw auxiliary delete" `elem` gitArguments request then
+                writeIORef done True >> action else pure ()
+              runGit capability request)
+      old <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", branch]
+      formal <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", "agents"]
+      _ <- gitOk directory ["branch", "alternate-formal", "agents"]
+      selectorRace <- atDelete $ do
+        _ <- controlled ["symbolic-ref", "refs/gaw/HEAD", "refs/heads/alternate-formal"]
+        pure ()
+      failDelete selectorRace False
+      _ <- controlled ["symbolic-ref", "refs/gaw/HEAD", "refs/heads/agents"]
+      tree <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", "agents^{tree}"]
+      future <- takeWhile (/= '\n') <$> gitOk directory ["commit-tree", tree, "-p", formal, "-m", "formal race"]
+      formalRace <- atDelete $ do
+        _ <- controlled ["update-ref", "refs/heads/agents", future, formal]
+        pure ()
+      failDelete formalRace False
+      _ <- controlled ["update-ref", "refs/heads/agents", formal, future]
+      auxTree <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", branch ++ "^{tree}"]
+      auxFuture <- takeWhile (/= '\n') <$> gitOk directory ["commit-tree", auxTree, "-p", old, "-m", "aux race"]
+      forM_ [False, True] $ \force -> do
+        auxRace <- atDelete $ do
+          _ <- controlled ["update-ref", source, auxFuture, old]
+          pure ()
+        failDelete auxRace force
+        actual <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", branch]
+        require (actual == auxFuture) "raced delete removed or restored over the new Auxiliary tip"
+        _ <- controlled ["update-ref", source, old, auxFuture]
+        pure ()
+      forM_ ([(2,False),(2,True),(3,False),(3,True)] :: [(Int,Bool)]) $ \(stage,force) -> do
+        count <- newIORef (0 :: Int)
+        let path = directory ++ "-worktree-race-" ++ show stage ++ show force
+            raced = Git $ \request -> do
+              if gitArguments request == ["worktree", "list", "--porcelain", "-z"] then do
+                modifyIORef' count (+1)
+                observed <- readIORef count
+                if observed == stage then do
+                  _ <- controlled ["worktree", "add", "--quiet", "--detach", path, old]
+                  _ <- gitOk path ["-c", "hook.gaw-reference-transaction.enabled=false", "symbolic-ref", "HEAD", source]
+                  pure ()
+                else pure ()
+              else pure ()
+              runGit capability request
+        failDelete raced force
+        actual <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", branch]
+        require (actual == old) "worktree race lost the Auxiliary branch"
+        _ <- gitOk directory ["worktree", "remove", path]
+        pure ()
     auxiliaryLifecycle candidate root = forM_ [0 :: Int, 1] $ \version -> do
       directory <- seed root ("auxiliary-" ++ show version)
       let agent = root </> ("formal-" ++ show version)
@@ -170,6 +237,60 @@ configCliTests temporary git = do
       _ <- cliFail candidate aux ["commit", "-m", "foreign root"]
       _ <- gitOk aux ["restore", "--staged", "--", "foreign"]
       _ <- cliOk candidate directory ["check", "--branch", branch]
+      _ <- cliFail candidate directory ["aux", "check"]
+      checkReport <- cliOk candidate aux ["aux", "check"]
+      require (isInfixOf "History structure: valid" checkReport &&
+        isInfixOf "Safe deletion: not ready" checkReport) "aux check conflated structure and retention"
+      forM_ ["-d", "-D"] $ \mode -> do
+        _ <- cliFail candidate directory ["branch", mode, branch]
+        pure ()
+      _ <- gitOk agent ["restore", "--staged", "--worktree", "--", ".gaw/config"]
+      createDirectory (agent </> "memory")
+      writeFile (agent </> "memory/current.md") ("Adopted intermediate source: " ++ uuid ++ "/memory/current.md\n")
+      _ <- gitOk agent ["add", "--", "memory/current.md"]
+      _ <- cliOk candidate agent ["commit", "-m", "integrate intermediate", "--", branch ++ "~1"]
+      removeFile (logical </> ".gaw/meta")
+      removeFile (aux </> "foreign")
+      _ <- gitOk directory ["worktree", "remove", aux]
+      _ <- cliOk candidate directory ["aux", "check", "--branch", branch]
+      _ <- gitOk directory ["branch", "retainer", branch]
+      _ <- gitOk directory ["branch", "--set-upstream-to=retainer", branch]
+      _ <- gitOk directory ["checkout", "retainer"]
+      unretained <- cliFail candidate directory ["branch", "-d", branch]
+      require (isInfixOf "not retained" unretained) "safe delete used upstream or caller HEAD"
+      _ <- gitOk directory ["checkout", "main"]
+      writeFile (agent </> "memory/current.md") ("Adopted current source: " ++ uuid ++ "/memory/current.md\n")
+      _ <- gitOk agent ["add", "--", "memory/current.md"]
+      _ <- cliOk candidate agent ["commit", "-m", "integrate tip", "--", branch]
+      -- Inject ref and worktree changes after report collection.
+      deletionRaces directory branch
+      ready <- cliOk candidate directory ["aux", "check", "--branch", branch]
+      require (isInfixOf "Safe deletion: ready" ready) "integrated tip is not deletion-ready"
+      oldTip <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", branch]
+      _ <- cliOk candidate directory ["branch", "-d", branch]
+      _ <- gitOk directory ["merge-base", "--is-ancestor", oldTip, "agents"]
+      integration <- takeWhile (/= '\n') <$> gitOk directory
+        ["log", "--first-parent", "-n", "1", "--format=%H", "agents", "--", "memory/current.md"]
+      parentList <- words <$> gitOk directory ["show", "--no-patch", "--format=%P", integration]
+      let sourcePath = uuid ++ "/memory/current.md"
+      sourceParents <- filterM (\parent -> do
+        trackedPath <- gitOk directory ["ls-tree", "--name-only", parent, "--", sourcePath]
+        pure (trackedPath == sourcePath ++ "\n")) parentList
+      sourceParent <- case sourceParents of
+        [parent] -> pure parent
+        _ -> fail "could not discover the retained source through formal path history"
+      recovered <- gitOk directory ["show", sourceParent ++ ":" ++ sourcePath]
+      require (recovered == "changed source\n") "retained source recovery lost its bytes"
+
+      _ <- gitOk directory ["branch", branch, oldTip]
+      _ <- failure directory git ["branch", "-D", branch]
+      _ <- cliOk candidate directory ["branch", "-d", branch]
+      let discarded = takeWhile (/= '\n') otherBranch
+      _ <- gitOk directory ["worktree", "remove", other]
+      _ <- cliFail candidate directory ["branch", "-d", discarded]
+      warning <- cliOkCombined candidate directory ["branch", "-D", discarded]
+      require (isInfixOf "Active abandonment" warning && isInfixOf "not guaranteed" warning)
+        "forced deletion hid abandonment consequences"
       pure ()
     layoutChecks candidate root = do
       directory <- seed root "layout"
@@ -200,6 +321,7 @@ configCliTests temporary git = do
       _ <- gitOk directory ["config", "hook.gaw-reference-transaction.enabled", "true"]
       _ <- failure directory git ["update-ref", "refs/heads/" ++ branch, "main"]
       _ <- gitOk directory ["checkout", "main"]
+      _ <- cliFail candidate directory ["branch", "-D", branch]
       _ <- failure directory git ["branch", "-D", branch]
       _ <- failure directory git ["branch", "-m", branch, "renamed-aux"]
       _ <- gitOk directory ["branch", "ordinary", "main"]

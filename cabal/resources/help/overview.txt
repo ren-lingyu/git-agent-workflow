@@ -11,8 +11,8 @@ Commands:
    init      create initial GAW history and local deployment state
    deploy    materialize local GAW state for an existing branch
    undeploy  remove local GAW deployment state
-   aux       create and deploy Auxiliary GAW source histories
-   branch    rename or delete a valid formal GAW branch
+   aux       create, deploy and inspect Auxiliary GAW source histories
+   branch    rename formal GAW or delete formal/Auxiliary branches
    commit    create a GAW commit from the current index
    show      show canonical GAW history through git show
    check     check current worktree readiness or named committed state
