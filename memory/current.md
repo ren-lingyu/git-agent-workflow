@@ -5,8 +5,9 @@
 The v0.6.0 release preparation and earlier implementation nodes are complete.
 The user authorized Auxiliary GAW implementation against the v0.6.0 baseline
 `801fe3b`, including the adopted generic branch-deletion semantics. N1–N5 are
-implemented and verified, including the final review additions. N1 is now staged
-for a user-managed commit; N2–N5 remain outside the index. No release, installation, external issue update
+implemented and verified, including the final review additions. The user committed
+N1 as `130dfe0`; its tree/parent/empty index match the independently tested N1
+snapshot. N2 validation is in progress; N2–N5 remain outside the index. No release, installation, external issue update
 or other-project action is part of this task.
 
 The user now requests organizing N1–N5 into sequential project commits:
@@ -15,7 +16,7 @@ draft each message from the actual staged diff, then poll for at most three
 minutes per item until timeout or a verified expected HEAD move. Native project
 commits remain user-managed. Verify parent, committed tree, branch and index,
 not merely a changed HEAD; only then update GAW and proceed to the next item.
-Current main HEAD is still `801fe3b`, and its index contains only N1. Shared CLI,
+Current main HEAD is `130dfe0`, and its index is empty after N1. Shared CLI,
 manifest and test files need partial staging. UUID parsing must accompany N1's
 layout/branch inspection; N2 adds protection/lifecycle policy. Existing PLAN
 input/completion snapshots already retain the needed raw evidence, so this
@@ -30,8 +31,11 @@ than guessing at a previously approved patch. N1's isolated Nix snapshot passed
 both test suites and resource/distribution checks, output
 `/nix/store/qkmqk3gz65a1wckirqhd4wxw09542kpw-git-agent-workflow-0.6.0`.
 Its 12-path staged diff and full index tree match the reviewed N1 patch and
-tested snapshot; final working source bytes remain unchanged. N2–N5 split
-snapshots have not been built yet. N5 equals the accepted final source bytes.
+tested snapshot; final working source bytes remain unchanged. The user-created
+N1 commit has the expected sole parent `801fe3b` and exact tested tree. Its GAW
+project association records this verified snapshot, not the remaining worktree.
+N2's isolated check is running; N3–N5 split snapshots have not been built yet.
+N5 equals the accepted final source bytes.
 
 Proposed commit boundaries (each carries its available tests/help):
 
@@ -58,12 +62,12 @@ do not ask again for an unchanged approved item. Validate each cumulative node b
 earlier final-tree test as proof that every split snapshot builds. After actual
 staged review write tmp/commit.md, then poll main HEAD every 10 seconds for at
 most 180 seconds. Accept only a single-parent child of the prior HEAD with the
-expected tree and an empty index. N1 currently expects full project tree
-`80f55437fdbb43468d25cd93a3608725b8422b12` from baseline `801fe3b`.
-N1's actual staged commit message is prepared in ordinary `tmp/commit.md`,
-subject `feat(check): validate auxiliary history layouts and named branches`.
-The next action is bounded polling for the user's N1 commit, then verifying
-the actual commit before updating its GAW project association and starting N2.
+expected tree and an empty index. N1's expected full tree
+`80f55437fdbb43468d25cd93a3608725b8422b12` is now verified in `130dfe0`.
+Next: validate/stage N2 and prepare its actual staged message in tmp/commit.md,
+then poll for a sole-parent child of `130dfe0` with expected full project tree
+`99f6452065c46f72890e7c770bfb3932036c19a7`. N1 was observed within its
+180-second polling window. Items 1–6 remain authorized for this sequence.
 On unexpected movement or timeout stop, preserve the candidate, and record the
 pending node. On a verified commit associate only its actually tested/inspected
 snapshot with the GAW update, then proceed within the granted staging scope.
