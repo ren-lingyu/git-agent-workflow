@@ -2,14 +2,14 @@
 
 ## Current state and recovery
 
-The user requested the 0.7.0 release preparation commit. Three paths are staged:
+The 0.7.0 release preparation is committed by the user as `db2f013`:
 README.org, cabal/git-agent-workflow.cabal and the bundled references/auxiliary.md.
 They set source version 0.7.0, summarize Auxiliary features and explain upgrade
 availability, reserved names, diagnostics and interactive/shared-hook executable
-compatibility. No feature expansion or lock change. Ordinary HEAD is still
-`c0c9f01`, and worktree equals the staged candidate, full tree
-`58f05784023951a6bb7cfc1c8719a5d508f79ac3`. Native project commit remains
-user-managed. The actual staged message is ready in tmp/commit.md, subject
+compatibility. No feature expansion or lock change. Ordinary HEAD is `db2f013`,
+with verified sole parent `c0c9f01`, exact tested candidate tree
+`58f05784023951a6bb7cfc1c8719a5d508f79ac3`, empty index and clean worktree.
+The user-created commit subject is
 `chore(release): prepare version 0.7.0`; no Issue closure is introduced by this
 metadata/documentation commit. Draft release notes are in tmp/release-0.7.0.md.
 
@@ -26,10 +26,13 @@ before building: --rebuild requires existing valid outputs, absent at that point
 Do not report it as passing or as a failed source test. No automatic retry was
 made; the successful first build above actually ran the required validation.
 
-Next: user commits the reviewed staged candidate. Verify its sole parent is
-`c0c9f01`, full tree matches the recorded tested candidate and index is empty
-before associating that commit in GAW. Do not associate the 0.7.0 tests with
-the old 0.6.0 HEAD. No tag, push, Release or installation has been performed.
+The actual user commit matches the tested candidate, so its GAW association
+grounds the recorded 0.7.0 validation in `db2f013`, not the old 0.6.0 baseline.
+Release preparation is complete. Await explicit publishing/installation work;
+do not create tags, push or publish merely because preparation is committed.
+Local main is one commit ahead of the locally recorded origin/main; no fresh
+remote query was made in this confirmation. No tag, push, Release or installation
+was performed by this agent.
 Existing PLAN snapshots suffice; no duplicate archive was created. Last release
 review observed published v0.6.0 and no v0.7.0 tag/Release; recheck before publishing.
 
@@ -395,8 +398,8 @@ the current repository config and new init output are explicit v1. Do not
 confuse the bootstrap or old init example with current behavior.
 
 No pending action remains from the Auxiliary implementation/commit sequence.
-The 0.7.0 release preparation candidate is now staged as described at the top;
-verify the user's eventual commit and continue release work only within its
+The 0.7.0 release preparation is committed and verified as described at the top;
+continue release work only within its
 separate authorization. Do not repeat completed N1–N5 staging or polling.
 PLAN implementation input and completion record are preserved
 in separate immutable snapshots. Existing follow-up
