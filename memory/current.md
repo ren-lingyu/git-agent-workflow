@@ -9,6 +9,57 @@ implemented and verified, including the final review additions. Ordinary source 
 are not staged or committed. No release, installation, external issue update
 or other-project action is part of this task.
 
+The user now requests organizing N1–N5 into sequential project commits:
+prepare reviewable partial-staging boundaries, request staging authorization,
+draft each message from the actual staged diff, then poll for at most three
+minutes per item until timeout or a verified expected HEAD move. Native project
+commits remain user-managed. Verify parent, committed tree, branch and index,
+not merely a changed HEAD; only then update GAW and proceed to the next item.
+Current main HEAD is still `801fe3b`, and its index is empty. Shared CLI,
+manifest and test files need partial staging. UUID parsing must accompany N1's
+layout/branch inspection; N2 adds protection/lifecycle policy. Existing PLAN
+input/completion snapshots already retain the needed raw evidence, so this
+commit-organization phase needs distilled current memory, not duplicate archives.
+
+Five cumulative snapshots/patches are prepared under ordinary-worktree-relative
+`tmp/auxiliary-commit-split-20261015/`; REVIEW.md lists exact paths, commands,
+patch digests and expected full project trees, and sequence.json is operational
+verification data. These are temporary review inputs, not a durable workflow
+registry. If absent/changed, regenerate and obtain fresh staging approval rather
+than guessing at a previously approved patch. No real project staging or split
+snapshot build has run yet; only read-only patch application checks and internal
+module/help dependency checks passed. N5 equals the accepted final source bytes.
+
+Proposed commit boundaries (each carries its available tests/help):
+
+1. N1: HistoryLayout/UUID parser, subtree config and physical parent conflicts,
+   committed-only check --branch, pure and real-repository layout tests. A
+   temporary formal-only lifecycle validator prevents generic deletion from
+   treating newly recognized Auxiliary state as formal history before N4.
+2. N2: shared hook/name protection, malformed reserved-name committed-state
+   rejection, formal selector/init/deploy/rename bounds and native-ref tests.
+3. N3: secure UUID creation and collision handling, independent roots/config
+   blob inheritance, shared init/deploy/commit/index readiness and v0/v1/multi-
+   Auxiliary tests. The temporary lifecycle guard remains until N4.
+4. N4: structured aux check, generic branch -d/-D dispatch, expected-state
+   transactions and independent worktree race handling, deletion/race/source
+   recovery tests. This replaces the temporary formal-only lifecycle guard;
+   strict worktree-list parsing accompanies the deletion checks that need it.
+5. N5: status classification, undeploy inventory/protection reporting, complete
+   lifecycle/failure-compensation tests, README/help and bundled skill/resources.
+
+Approval is pending for the five explicit index-only patch commands and repeated
+use of the five exact 120-second isolated Nix build/check commands listed in
+REVIEW.md. Validate each cumulative node before staging it; do not treat the
+earlier final-tree test as proof that every split snapshot builds. After actual
+staged review write tmp/commit.md, then poll main HEAD every 10 seconds for at
+most 180 seconds. Accept only a single-parent child of the prior HEAD with the
+expected tree and an empty index. N1 currently expects full project tree
+`80f55437fdbb43468d25cd93a3608725b8422b12` from baseline `801fe3b`.
+On unexpected movement or timeout stop, preserve the candidate, and record the
+pending node. On a verified commit associate only its actually tested/inspected
+snapshot with the GAW update, then proceed within the granted staging scope.
+
 The exact ignored root PLAN.md implementation input was byte-verified and
 archived at `archive/2026-10-14T18-18-51Z--801fe3b/` (MANIFEST.md + files/PLAN.md).
 Its archive-only checkpoint associates the inspected baseline as capture
