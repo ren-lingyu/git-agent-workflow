@@ -19,7 +19,14 @@ import Gaw.System.Repository
 import System.OsPath.Posix (PosixPath)
 
 inspectCommittedState :: Monad m => Git m -> PosixPath -> RefName -> m StateReport
-inspectCommittedState git directory source = do
+inspectCommittedState git directory source
+  | auxiliaryReserved source && auxiliaryUuid source == Nothing = pure
+      (StateReport (Just source) Nothing Nothing Nothing
+        [finding HeadConfig FindingError Determinate "Invalid reserved Auxiliary branch name"])
+  | otherwise = inspectSource git directory source
+
+inspectSource :: Monad m => Git m -> PosixPath -> RefName -> m StateReport
+inspectSource git directory source = do
   commitResult <- command git directory ["rev-parse", "--verify", "--end-of-options",
     refNameBytes source <> "^{commit}"]
   case completeOid commitResult of

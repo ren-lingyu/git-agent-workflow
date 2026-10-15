@@ -379,7 +379,7 @@ renderHookError problem = case problem of
   InvalidPhase phase -> "Invalid reference-transaction phase: " <> phase
   InvalidInput detail -> "Invalid reference-transaction input: " <> detail
   ProtectedProtocolRef ref -> "Refusing to modify GAW protocol ref: " <> ref
-  ProtectedRef ref -> "Refusing to modify valid GAW branch: " <> ref
+  ProtectedRef ref -> "Refusing to modify protected GAW branch: " <> ref
   ProtectedMarker ref -> "Refusing to change .gaw/config marker on: " <> ref
   IndeterminateSource ref -> "Cannot determine GAW branch state for " <> ref <> ": state query failed"
 

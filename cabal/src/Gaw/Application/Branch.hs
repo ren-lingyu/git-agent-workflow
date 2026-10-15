@@ -37,6 +37,9 @@ renameBranch git fs directory newName = runExceptT $ do
   current <- currentHead root
   selected <- currentSelected root
   destination <- branchRef root newName
+  if any auxiliaryReserved [current, selected, destination]
+    then throwE (BranchError "reserved-branch" "Only formal GAW branches can be renamed; Auxiliary names are reserved")
+    else pure ()
   plan <- case planRename current selected destination of
     Right value -> pure value
     Left detail -> throwE (BranchError "not-current-gaw-branch" detail)
@@ -168,7 +171,7 @@ selectedRef :: Monad m => Git m -> PosixPath -> ExceptT BranchError m RefName
 selectedRef git at = do
   selector <- inspect git at selectorRef
   case selector of
-    RefSymbolic target | isSourceRef target -> do
+    RefSymbolic target | isSourceRef target && not (auxiliaryReserved target) -> do
       state <- inspect git at target
       case state of
         RefDirect _ -> pure target

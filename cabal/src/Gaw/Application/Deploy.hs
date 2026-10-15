@@ -16,6 +16,7 @@ import Gaw.Application.State (inspectCommittedState)
 import Gaw.Application.Status (parseWorktrees)
 import Gaw.Protocol.Check (checkReady)
 import Gaw.Protocol.Deploy
+import Gaw.Protocol.Layout (auxiliaryReserved)
 import Gaw.Protocol.Ref
 import Gaw.Protocol.State
 import Gaw.System.FileSystem (FileSystem (..))
@@ -117,8 +118,8 @@ deploy git fs directory requestedBranch requestedPath = runExceptT $ do
       pure (filter (not . BS.null) (BS.split 10 (gitStdout result)))
 
     parseSource bytes = case parseSourceRef bytes of
-      Right ref -> pure ref
-      Left _ -> throwE (DeployError "invalid-branch"
+      Right ref | not (auxiliaryReserved ref) -> pure ref
+      _ -> throwE (DeployError "invalid-branch"
         ("Invalid local branch name " <> quoted (BS.drop (BS.length "refs/heads/") bytes)))
 
     checkProtocol name
@@ -146,7 +147,7 @@ deploy git fs directory requestedBranch requestedPath = runExceptT $ do
       _ -> validSelected state >>= requireValid
 
     validSelected state = case state of
-      RefSymbolic target | isSourceRef target -> do
+      RefSymbolic target | isSourceRef target && not (auxiliaryReserved target) -> do
         sourceState <- refState target
         case sourceState of
           RefDirect _ -> pure target
@@ -164,7 +165,7 @@ deploy git fs directory requestedBranch requestedPath = runExceptT $ do
           " is not valid GAW history: " <> firstStateError report))
 
     discover names = do
-      observations <- mapM inspectCandidate names
+      observations <- mapM inspectCandidate (filter (not . BS.isPrefixOf "refs/heads/_gaw_aux_") names)
       let valid = [ref | (ref, True, True, _) <- observations]
           warnings = ["Ignoring GAW-like branch " <> refNameBytes ref <> ": " <> detail
             | (ref, True, False, detail) <- observations]

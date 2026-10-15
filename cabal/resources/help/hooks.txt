@@ -17,3 +17,8 @@ config marker would remain unchanged. Future versions must put :version first
 to receive this protection, available from v0.6.0. The v0.5.0 CLI cannot
 protect syntax that its parser does not understand.
 Role metadata and non-blocking config warnings do not change protection.
+
+Existing _gaw_aux_ branches are protected by name even when their config is
+missing or damaged. Native movement, deletion and renaming are rejected; new
+branch imports retain normal creation behavior. Only an observed unchanged
+nonzero tip is a no-op: zero old/new fields can encode unchecked deletion.

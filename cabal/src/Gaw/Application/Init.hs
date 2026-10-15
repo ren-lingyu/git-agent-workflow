@@ -13,6 +13,7 @@ import qualified Data.ByteString as BS
 import Gaw.Application.Deploy (deploy, renderDeployError)
 import Gaw.Application.State (inspectCommittedObject, inspectCommittedState)
 import Gaw.Protocol.Init
+import Gaw.Protocol.Layout (auxiliaryReserved)
 import Gaw.Protocol.Ref
 import Gaw.Protocol.State
 import Gaw.System.FileSystem (FileSystem (..))
@@ -106,8 +107,8 @@ initialize git fs directory branch requestedPath = runExceptT $ do
       if gitExitCode result /= 0 then throwE (InitError "invalid-branch"
         ("Invalid local branch name " <> quoted branch)) else
         case parseSourceRef ("refs/heads/" <> branch) of
-          Right ref -> pure ref
-          Left _ -> throwE (InitError "invalid-branch"
+          Right ref | not (auxiliaryReserved ref) -> pure ref
+          _ -> throwE (InitError "invalid-branch"
             ("Invalid local branch name " <> quoted branch))
     listRefs prefix = do
       result <- command ["for-each-ref", "--format=%(refname)", prefix] Nothing
@@ -117,6 +118,8 @@ initialize git fs directory branch requestedPath = runExceptT $ do
       result <- lift (inspectRef git directory ref)
       either (const (throwE (InitError "git-failure" "Cannot inspect Git ref"))) pure result
     inspectHistory name = do
+      when ("refs/heads/_gaw_aux_" `BS.isPrefixOf` name) (throwE
+        (InitError "existing-history" "Existing Auxiliary history requires recovery, not init"))
       marker <- command ["ls-tree", "-z", "--full-tree", name, "--", ".gaw/config"] Nothing
       requireSuccess "git-failure" "Cannot inspect existing branch marker: " marker
       when (not (BS.null (gitStdout marker))) $ do

@@ -9,6 +9,7 @@ import qualified Data.ByteString as BS
 import Gaw.Application.State (inspectCommittedState)
 import Gaw.Protocol.Config (effectiveWorkspace, configWarnings, renderConfigWarning)
 import Gaw.Protocol.Check
+import Gaw.Protocol.Layout (auxiliaryReserved)
 import Gaw.Protocol.Ref
 import Gaw.Protocol.State
 import Gaw.Protocol.Workspace
@@ -69,7 +70,7 @@ inspectCheck git fs directory = do
         Left _ -> pure (finding "selector" CheckError "Invalid GAW selector: Git ref query failed")
         Right RefMissing -> pure (finding "selector" CheckWarning
           "GAW selector is absent; repository is not deployed")
-        Right (RefSymbolic source) | isSourceRef source -> do
+        Right (RefSymbolic source) | isSourceRef source && not (auxiliaryReserved source) -> do
           sourceState <- inspectRef git directory source
           case sourceState of
             Right (RefDirect _) -> do

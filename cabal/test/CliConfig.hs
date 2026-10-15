@@ -141,6 +141,15 @@ configCliTests temporary git = do
       _ <- gitOk directory ["rm", "--", "outside", uuid ++ "/.gaw/config"]
       nativeCommit directory "missing config"
       _ <- cliFail candidate directory ["check", "--branch", branch]
+      -- Even a damaged Auxiliary with no config is protected by its name.
+      _ <- gitOk directory ["config", "hook.gaw-reference-transaction.event", "reference-transaction"]
+      _ <- gitOk directory ["config", "hook.gaw-reference-transaction.command", candidate ++ " --reference-transaction"]
+      _ <- gitOk directory ["config", "hook.gaw-reference-transaction.enabled", "true"]
+      _ <- failure directory git ["update-ref", "refs/heads/" ++ branch, "main"]
+      _ <- gitOk directory ["checkout", "main"]
+      _ <- failure directory git ["branch", "-D", branch]
+      _ <- failure directory git ["branch", "-m", branch, "renamed-aux"]
+      _ <- gitOk directory ["branch", "ordinary", "main"]
       pure ()
     newConfig candidate root = do
       directory <- seed root "new"
@@ -187,6 +196,8 @@ configCliTests temporary git = do
       require (isInfixOf "Unsupported config version 2" unsupportedCommit) "commit hid unsupported version"
       still <- gitOk agent ["rev-parse", "HEAD"]
       require (still == before) "rejected candidates changed HEAD"
+      _ <- cliFail candidate agent ["branch", "-m", "_gaw_aux_reserved"]
+      _ <- cliFail candidate agent ["branch", "-m", "_gaw_aux_01234567-89ab-4cde-8fab-0123456789ab"]
       _ <- cliOk candidate agent ["branch", "-m", "renamed"]
       _ <- cliOk candidate agent ["branch", "-m", "agents"]
       pure ()

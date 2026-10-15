@@ -7,6 +7,7 @@ module Gaw.Application.Hook
 import qualified Data.ByteString as BS
 import Gaw.Application.State (inspectCommittedState)
 import Gaw.Protocol.Hook
+import Gaw.Protocol.Layout (auxiliaryReserved)
 import Gaw.Protocol.Ref
 import Gaw.Protocol.State (CommittedState (..), classifyCommittedState, stateFindings)
 import Gaw.System.Git
@@ -35,8 +36,19 @@ evaluateTransaction git directory _ input = case parseReferenceTransaction input
         Left problem -> pure (Left problem)
         Right Nothing -> pure (Right ())
         Right (Just ref) -> do
-          observation <- observeSource update ref
-          pure (observation >>= checkProtectedSource update (refNameBytes ref))
+          -- An unchecked delete can report zero for BOTH old and new values.
+          -- Only an observed, nonzero unchanged tip is a genuine no-op.
+          if auxiliaryReserved ref then case updateNewValue update of
+            ObjectValue value | not (BS.all (== 48) value) -> do
+              observed <- inspectRef git directory ref
+              pure $ case observed of
+                Right RefMissing -> Right ()
+                Right (RefDirect oid) | objectIdBytes oid == value -> Right ()
+                _ -> Left (ProtectedRef (refNameBytes ref))
+            _ -> pure (Left (ProtectedRef (refNameBytes ref)))
+          else do
+            observation <- observeSource update ref
+            pure (observation >>= checkProtectedSource update (refNameBytes ref))
 
     sourceForUpdate update = case parseRefName (updateRef update) of
       Left _ -> pure (Left (IndeterminateSource (updateRef update)))
