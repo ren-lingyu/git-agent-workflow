@@ -9,8 +9,9 @@ implemented and verified, including the final review additions. The user committ
 N1 as `130dfe0`; its tree/parent/empty index match the independently tested N1
 snapshot. N2 is now committed as `396c7ed`, with its exact tested tree and sole
 parent `130dfe0` verified. N3 is committed as `d7958f5`, with its exact tested
-tree, sole parent `396c7ed` and empty index verified. N4 passed isolated validation
-and is staged awaiting the user's commit; N5 remains outside the index.
+tree, sole parent `396c7ed` and empty index verified. N4 is committed as `5079274`,
+with exact tested tree, sole parent `d7958f5` and empty index verified.
+N5 isolated validation is running and remains outside the index.
 No release, installation, external issue update
 or other-project action is part of this task.
 
@@ -20,7 +21,7 @@ draft each message from the actual staged diff, then poll for at most three
 minutes per item until timeout or a verified expected HEAD move. Native project
 commits remain user-managed. Verify parent, committed tree, branch and index,
 not merely a changed HEAD; only then update GAW and proceed to the next item.
-Current main HEAD is `d7958f5`, and its index contains only approved N4. Shared CLI,
+Current main HEAD is `5079274`, and its index is empty after N4. Shared CLI,
 manifest and test files need partial staging. UUID parsing must accompany N1's
 layout/branch inspection; N2 adds protection/lifecycle policy. Existing PLAN
 input/completion snapshots already retain the needed raw evidence, so this
@@ -83,9 +84,14 @@ continuation. Verified `396c7ed` is a sole-parent child of `130dfe0` with exact
 tested tree `99f6452065c46f72890e7c770bfb3932036c19a7` and empty index.
 N3 was observed within its polling window as `d7958f5`, with tested tree
 `9b313801c1682eb9f1a10e1e92a2bfdc291779c7` and sole parent `396c7ed`.
-N4's actual staged message is ready in tmp/commit.md. Next: poll for a
-sole-parent child of `d7958f5` with full tree
-`bda85acbd995a1813c5dc9d9290e8f4bd9dac9b1`. Items 1–6 remain authorized.
+N4 was observed within its polling window as `5079274`, with tested tree
+`bda85acbd995a1813c5dc9d9290e8f4bd9dac9b1` and sole parent `d7958f5`.
+Next: validate/stage N5, draft its actual staged message and poll for a
+sole-parent child of `5079274` with full tree
+`66194eb691982dd120d1613120f10e1eb1bc47b2`. Items 1–6 remain authorized.
+The user requests `Closes: #5` only if the commit directly resolves the issue;
+otherwise use `Refs: #5`. N4 remains Refs. Public web retrieval of #5 failed,
+so do not infer complete issue resolution solely from PLAN association.
 On unexpected movement or timeout stop, preserve the candidate, and record the
 pending node. On a verified commit associate only its actually tested/inspected
 snapshot with the GAW update, then proceed within the granted staging scope.
