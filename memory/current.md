@@ -68,10 +68,16 @@ staged review write tmp/commit.md, then poll main HEAD every 10 seconds for at
 most 180 seconds. Accept only a single-parent child of the prior HEAD with the
 expected tree and an empty index. N1's expected full tree
 `80f55437fdbb43468d25cd93a3608725b8422b12` is now verified in `130dfe0`.
-N2's actual staged message is ready in tmp/commit.md. Next: poll for a sole-parent
-child of `130dfe0` with expected full project tree
-`99f6452065c46f72890e7c770bfb3932036c19a7`. N1 was observed within its
-180-second polling window. Items 1–6 remain authorized for this sequence.
+N2's actual staged message is ready in tmp/commit.md. Its full 180-second polling
+window expired without HEAD movement; the final check still found `130dfe0`
+and the exact approved N2 index tree. Stop this run with N2 staged and N3–N5
+unstaged; preserve the candidate/message. On continuation inspect the actual
+state before doing anything: accept a user-created sole-parent child of
+`130dfe0` only with expected full project tree
+`99f6452065c46f72890e7c770bfb3932036c19a7` and empty index, associate that
+verified snapshot in GAW, then validate/stage N3. If still unchanged, await the
+user's commit or renewed polling request. N1 was observed within its own
+180-second window. Items 1–6 remain authorized for this sequence.
 On unexpected movement or timeout stop, preserve the candidate, and record the
 pending node. On a verified commit associate only its actually tested/inspected
 snapshot with the GAW update, then proceed within the granted staging scope.
