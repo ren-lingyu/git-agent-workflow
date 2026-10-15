@@ -14,5 +14,5 @@ Options:
    --worktree-path <path> create or validate a linked worktree at path
    --help                  show this help
 
-Formal GAW lifecycle operations cannot enter the reserved _gaw_aux_ range.
-Rename is limited to the currently selected formal GAW branch.
+Formal GAW cannot use the reserved _gaw_aux_ branch range. Use git gaw aux
+init/deploy for Auxiliary source histories; see git gaw help aux.

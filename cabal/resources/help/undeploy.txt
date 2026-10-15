@@ -8,3 +8,11 @@ configuration, and discoverable exact v0.2 symbolic registrations.
 Unsafe or unreadable protocol refs are preserved and reported. Such residuals
 make the command return nonzero even when other cleanup succeeded. After
 explicitly resolving residuals, undeploy may be run again.
+
+Cleanup affects the entire repository's GAW deployment, preserving formal and
+Auxiliary branches/history/worktrees. The report captures branch/selector/hook
+and worktree inventory before cleanup; unavailable inventory is marked unknown
+without blocking cleanup. Successful removal of existing hook configuration
+warns that GAW reference-transaction protection has been disabled. Failed hook
+cleanup never claims protection has been disabled; the warning is nonblocking.
+Commit's existing behavior after undeploy remains unchanged.

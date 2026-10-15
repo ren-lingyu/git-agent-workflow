@@ -6,7 +6,12 @@ import Control.Exception (finally)
 import Control.Monad (unless, forM_, filterM)
 import qualified Data.ByteString.Char8 as BSC
 import Data.List (isInfixOf, intercalate)
+import Gaw.Application.Undeploy (undeploy)
+import Gaw.Protocol.Undeploy (UndeployResult (..))
 import Gaw.Application.Branch (deleteBranch)
+import Gaw.Application.Auxiliary (initializeAuxiliary, AuxiliaryError (..))
+import Gaw.System.FileSystem (posixFileSystem)
+import Gaw.Protocol.Init (initializedBranch)
 import Data.IORef (newIORef, readIORef, writeIORef, modifyIORef')
 import Gaw.Application.State (inspectCommittedState)
 import Gaw.Protocol.Config (parseConfig, configVersion, ConfigVersion (..))
@@ -15,7 +20,7 @@ import Gaw.Protocol.State
 import Gaw.System.Git (Git (..), GitInvocation (..), GitResult (..), runGitPosix)
 import qualified System.OsString.Posix as OS
 import System.Directory (findExecutable, makeAbsolute, createDirectory,
-  createDirectoryIfMissing, removePathForcibly, removeFile)
+  createDirectoryIfMissing, removePathForcibly, removeFile, doesPathExist)
 import System.Exit (ExitCode (..))
 import System.FilePath ((</>), getSearchPath)
 import System.Environment (getEnvironment)
@@ -31,6 +36,7 @@ configCliTests temporary git = do
   createDirectory root
   finally (do
     helpTopics candidate root
+    deploymentLifecycle candidate root
     auxiliaryLifecycle candidate root
     layoutChecks candidate root
     newConfig candidate root
@@ -125,6 +131,137 @@ configCliTests temporary git = do
         (exampleBlocks (lines source))
       require (map configVersion decoded == [ConfigV0, ConfigV0, ConfigV1])
         "published v0/v1 configuration examples do not decode"
+    deploymentLifecycle candidate root = do
+      directory <- seed root "deployment"
+      let agent = root </> "deployment-formal"
+          aux = root </> "deployment-aux"
+          draft = root </> "deployment-draft"
+      _ <- cliOk candidate directory ["init", "--branch", "agents", "--worktree-path", agent]
+      _ <- cliOk candidate directory ["aux", "init", "--worktree-path", aux]
+      branch <- takeWhile (/= '\n') <$> gitOk aux ["branch", "--show-current"]
+      let uuid = drop 9 branch
+      _ <- cliOk candidate directory ["aux", "init"]
+      status <- cliOk candidate directory ["status", "--diagnose"]
+      require (isInfixOf "Auxiliary GAW branches (2):" status &&
+        isInfixOf "no associated worktree" status && isInfixOf "GAW branches (1):" status)
+        "status did not distinguish branch types or missing worktrees"
+      _ <- gitOk directory ["-c", "hook.gaw-reference-transaction.enabled=false", "symbolic-ref", "refs/gaw/HEAD", "refs/heads/" ++ branch]
+      invalidSelector <- cliOk candidate directory ["status"]
+      require (isInfixOf "Selector: invalid" invalidSelector && isInfixOf "formal GAW branch" invalidSelector)
+        "Auxiliary selector was accepted or diagnosed as an ordinary nonlocal target"
+      _ <- cliFail candidate directory ["aux", "init"]
+      _ <- gitOk directory ["-c", "hook.gaw-reference-transaction.enabled=false", "symbolic-ref", "refs/gaw/HEAD", "refs/heads/agents"]
+      auxiliaryFailures candidate directory root uuid
+      before <- gitOk directory ["for-each-ref", "--format=%(refname) %(objectname)", "refs/heads/"]
+      treesBefore <- gitOk directory ["worktree", "list", "--porcelain", "-z"]
+      cleanup <- cliOk candidate directory ["undeploy"]
+      after <- gitOk directory ["for-each-ref", "--format=%(refname) %(objectname)", "refs/heads/"]
+      treesAfter <- gitOk directory ["worktree", "list", "--porcelain", "-z"]
+      require (before == after && treesBefore == treesAfter &&
+        isInfixOf "Selector: valid -> refs/heads/agents" cleanup &&
+        isInfixOf "Auxiliary GAW branches" cleanup && isInfixOf "protection has been disabled" cleanup)
+        "undeploy lost histories/worktrees or pre-cleanup inventory/warning"
+      again <- cliOk candidate directory ["undeploy"]
+      require (not (isInfixOf "protection has been disabled" again)) "absent hook was reported removed"
+      _ <- cliFail candidate directory ["aux", "init"]
+      _ <- cliFail candidate directory ["aux", "deploy", "--branch", branch]
+      _ <- cliOk candidate aux ["commit", "--allow-empty", "-m", "undeployed Auxiliary commit"]
+      _ <- cliOk candidate agent ["commit", "--allow-empty", "-m", "undeployed formal commit"]
+      _ <- cliOk candidate directory ["deploy", "--branch", "agents"]
+      _ <- cliOk candidate directory ["aux", "deploy", "--branch", branch]
+      _ <- failure directory git ["update-ref", "refs/heads/" ++ branch, "main"]
+      -- Existing formal safe/force behavior and worktree constraints.
+      _ <- gitOk directory ["branch", "formal-merged", "agents"]
+      _ <- gitOk directory ["branch", "--set-upstream-to=agents", "formal-merged"]
+      _ <- cliOk candidate directory ["branch", "-d", "formal-merged"]
+      tip <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", "agents"]
+      tree <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", "agents^{tree}"]
+      future <- takeWhile (/= '\n') <$> gitOk directory ["commit-tree", tree, "-p", tip, "-m", "unmerged formal"]
+      _ <- gitOk directory ["branch", "formal-draft", future]
+      _ <- gitOk directory ["worktree", "add", "--quiet", draft, "formal-draft"]
+      forM_ ["-d", "-D"] $ \mode -> do
+        _ <- cliFail candidate directory ["branch", mode, "formal-draft"]
+        _ <- cliFail candidate directory ["branch", mode, "agents"]
+        pure ()
+      _ <- gitOk directory ["worktree", "remove", draft]
+      _ <- cliFail candidate directory ["branch", "-d", "formal-draft"]
+      _ <- cliOk candidate directory ["branch", "-D", "formal-draft"]
+      -- Failure to collect optional inventory must not prevent cleanup.
+      executable <- OS.fromBytes (BSC.pack git)
+      location <- OS.fromBytes (BSC.pack directory)
+      let capability = runGitPosix executable
+          failedInventory = Git $ \request -> case gitArguments request of
+            ["rev-parse", "--path-format=absolute", "--git-common-dir"] -> pure (GitResult 1 "" "injected inventory failure")
+            _ -> runGit capability request
+      report <- undeploy failedInventory location
+      require (case report of
+        Right value -> null (residuals value) && deploymentBefore value == Nothing && protectionDisabled value
+        _ -> False)
+        "inventory failure blocked cleanup or hid actual hook removal"
+      pure ()
+    auxiliaryFailures candidate directory root existingUuid = do
+      executable <- OS.fromBytes (BSC.pack git)
+      location <- OS.fromBytes (BSC.pack directory)
+      let capability = runGitPosix executable
+          freshUuid = "11111111-1111-4111-8111-111111111111"
+          source = "refs/heads/_gaw_aux_" <> freshUuid
+          path = root </> "auxiliary-failure"
+          requested = Just (BSC.pack path)
+          create entropy wrapped target = initializeAuxiliary wrapped posixFileSystem entropy location target
+          failValidation request = gitArguments request == ["rev-parse", "--show-toplevel"] &&
+            gitDirectory request /= location
+          failingGit preserve = Git $ \request ->
+            if failValidation request || (preserve && "worktree" `elem` gitArguments request && "remove" `elem` gitArguments request)
+            then pure (GitResult 1 "" "injected worktree failure") else runGit capability request
+      failed <- create (pure (Right freshUuid)) (failingGit False) requested
+      require (case failed of Left (AuxiliaryError reason _) -> reason == "deployment-failed"; _ -> False)
+        "Auxiliary init failed without compensated-deployment diagnostic"
+      exists <- doesPathExist path
+      require (not exists) "failed deployment left its worktree"
+      _ <- failure directory git ["show-ref", "--verify", BSC.unpack source]
+      partial <- create (pure (Right freshUuid)) (failingGit True) requested
+      require (case partial of
+        Left (AuxiliaryError reason detail) -> reason == "partial-failure" && BSC.isInfixOf "Branch retained" detail
+        _ -> False) "partial deploy did not retain/report attached branch"
+      _ <- gitOk directory ["show-ref", "--verify", BSC.unpack source]
+      _ <- gitOk directory ["worktree", "remove", path]
+      _ <- cliOk candidate directory ["branch", "-D", "_gaw_aux_" ++ BSC.unpack freshUuid]
+      -- Existing-name collision regenerates identity instead of replacing refs.
+      choices <- newIORef [BSC.pack existingUuid, freshUuid]
+      let entropy = do
+            values <- readIORef choices
+            case values of
+              value:rest -> writeIORef choices rest >> pure (Right value)
+              [] -> pure (Left "unexpected extra entropy request")
+      retried <- create entropy capability Nothing
+      require (case retried of Right value -> initializedBranch value == "_gaw_aux_" <> freshUuid; _ -> False)
+        "UUID collision did not create a fresh independent history"
+      _ <- cliOk candidate directory ["branch", "-D", "_gaw_aux_" ++ BSC.unpack freshUuid]
+      let formal = root </> "deployment-formal"
+          otherUuid = "22222222-2222-4222-8222-222222222222"
+      config formal ("(:version 1 :workspace ((:directory \"" ++ BSC.unpack freshUuid ++ "/nested\")))\n")
+      _ <- cliOk candidate formal ["commit", "-m", "UUID path reserved by formal workspace"]
+      pathChoices <- newIORef [freshUuid, otherUuid]
+      let pathEntropy = do
+            values <- readIORef pathChoices
+            case values of
+              value:rest -> writeIORef pathChoices rest >> pure (Right value)
+              [] -> pure (Left "unexpected extra entropy request")
+      pathRetry <- create pathEntropy capability Nothing
+      require (case pathRetry of Right value -> initializedBranch value == "_gaw_aux_" <> otherUuid; _ -> False)
+        "UUID colliding with formal workspace was not regenerated"
+      _ <- cliOk candidate directory ["branch", "-D", "_gaw_aux_" ++ BSC.unpack otherUuid]
+      config formal "(:version 1 :workspace ())\n"
+      _ <- cliOk candidate formal ["commit", "-m", "restore source config"]
+      -- A ref rollback failure is distinct from complete compensation.
+      let failedRollback = Git $ \request ->
+            if failValidation request || maybe False (BSC.isInfixOf ("delete " <> source)) (gitInput request)
+            then pure (GitResult 1 "" "injected rollback failure") else runGit capability request
+      residual <- create (pure (Right freshUuid)) failedRollback requested
+      require (case residual of Left (AuxiliaryError reason _) -> reason == "partial-failure"; _ -> False)
+        "ref rollback failure was hidden"
+      _ <- cliOk candidate directory ["branch", "-D", "_gaw_aux_" ++ BSC.unpack freshUuid]
+      pure ()
     deletionRaces directory branch = do
       executable <- OS.fromBytes (BSC.pack git)
       location <- OS.fromBytes (BSC.pack directory)

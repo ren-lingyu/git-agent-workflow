@@ -10,6 +10,7 @@ import qualified Data.ByteString as BS
 import Data.List (sort)
 import Gaw.Application.State (inspectCommittedState)
 import Gaw.Protocol.Config (configWarnings, renderConfigWarning)
+import Gaw.Protocol.Layout (auxiliaryReserved)
 import Gaw.Protocol.Ref
 import Gaw.Protocol.State
 import Gaw.Protocol.Status
@@ -76,7 +77,7 @@ inspectStatus git directory = do
           Right (RefInvalid _) -> pure (Right (StatusBranch name Nothing InvalidBranch []
             (Just "Source ref is missing or symbolic")))
           Right (RefDirect oid) -> do
-            marked <- markerAt name
+            marked <- if auxiliaryReserved ref then pure (Right True) else markerAt name
             case marked of
               Left problem -> pure (Left problem)
               Right False -> pure (Right (StatusBranch name (Just (objectIdBytes oid))
@@ -152,14 +153,15 @@ classifySelected branches selector = case protocolStatus selector of
   _ | not (protocolSymbolic selector) -> selector { protocolStatus = ProtocolInvalid,
         protocolDetail = Just "Selector must be symbolic" }
   _ -> case protocolValue selector of
-    Just target | "refs/heads/" `BS.isPrefixOf` target ->
+    Just target | "refs/heads/" `BS.isPrefixOf` target &&
+        not ("refs/heads/_gaw_aux_" `BS.isPrefixOf` target) ->
       case filter ((== target) . statusBranchRef) branches of
         [branch] | statusBranchClass branch == ValidBranch ->
           selector { protocolStatus = ProtocolValid }
         _ -> selector { protocolStatus = ProtocolInvalid,
           protocolDetail = Just "Selector does not reach a valid GAW branch" }
     Just _ -> selector { protocolStatus = ProtocolInvalid,
-      protocolDetail = Just "Selector must point directly to a local branch" }
+      protocolDetail = Just "Selector must point directly to a formal GAW branch" }
     Nothing -> selector { protocolStatus = ProtocolInvalid,
       protocolDetail = Just "Selector must be symbolic" }
 

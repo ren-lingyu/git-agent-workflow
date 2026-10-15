@@ -8,6 +8,7 @@ extra-source-files:
     resources/help/*.txt
 data-files:
     share/skills/git-agent-workflow/SKILL.md
+    share/skills/git-agent-workflow/references/auxiliary.md
     share/skills/git-agent-workflow/references/memory.md
     share/skills/git-agent-workflow/references/archive.md
     share/skills/git-agent-workflow/references/skills.md
@@ -26,12 +27,12 @@ library
     , Gaw.Application.Undeploy
     , Gaw.Application.Deploy
     , Gaw.Application.Branch
-    , Gaw.Application.Init
-    , Gaw.Protocol.Layout
     , Gaw.Application.Auxiliary
-    , Gaw.System.Entropy
     , Gaw.Application.AuxiliaryCheck
     , Gaw.Protocol.Auxiliary
+    , Gaw.System.Entropy
+    , Gaw.Application.Init
+    , Gaw.Protocol.Layout
     , Gaw.Protocol.Check
     , Gaw.Protocol.Commit
     , Gaw.Protocol.Config

@@ -6,6 +6,7 @@ module Gaw.Application.Undeploy
   ) where
 
 import qualified Data.ByteString as BS
+import Gaw.Application.Status (inspectStatus)
 import Gaw.Protocol.Ref
 import Gaw.Protocol.Undeploy
 import Gaw.System.Git
@@ -19,6 +20,7 @@ undeploy :: Monad m => Git m -> PosixPath -> m (Either UndeployError UndeployRes
 undeploy git directory = do
   probe <- invoke ["rev-parse", "--git-dir"] Nothing
   if gitExitCode probe /= 0 then pure (Left (NotRepository probe)) else do
+    inventory <- inspectStatus git directory
     selectorResult <- inspectRef git directory selectorRef
     let selector = either (const RefMissing) id selectorResult
         firstResidual = case selectorResult of
@@ -35,9 +37,11 @@ undeploy git directory = do
           _ -> ["Cannot discover protocol refs: Git ref query failed"]
     (didRemoveSelector, selectorResidual) <- deleteSelector selector
     (legacyRemoved, legacyResidual) <- cleanCandidates candidates
-    (didClearHook, hookResidual) <- clearHook
+    (didClearHook, hookResidual, removedHookKeys) <- clearHook
     pure (Right (UndeployResult didRemoveSelector legacyRemoved didClearHook
-      (firstResidual ++ discoveryResidual ++ selectorResidual ++ legacyResidual ++ hookResidual)))
+      (firstResidual ++ discoveryResidual ++ selectorResidual ++ legacyResidual ++ hookResidual)
+      (either (const Nothing) Just inventory)
+      (didClearHook && removedHookKeys)))
   where
     invoke args input = runGit git (GitInvocation directory args input [])
 
@@ -97,17 +101,18 @@ undeploy git directory = do
             | otherwise -> pure ([], ["Preserving unsafe protocol ref " <> name])
 
     clearHook = do
-      failures <- go hookKeys
+      (failures, removed) <- go hookKeys
       pure $ if null failures
-        then (True, [])
+        then (True, [], removed)
         else (False, ["Cannot remove GAW hook config: Cannot remove local hook keys: " <>
-          BS.intercalate ", " failures])
+          BS.intercalate ", " failures], removed)
       where
-        go [] = pure []
+        go [] = pure ([], False)
         go (key:rest) = do
           result <- invoke ["config", "--local", "--unset-all", key] Nothing
-          later <- go rest
-          pure (if gitExitCode result `elem` [0, 1, 5] then later else key : later)
+          (later, removed) <- go rest
+          pure (if gitExitCode result `elem` [0, 1, 5] then later else key : later,
+            removed || gitExitCode result == 0)
 
     hookKeys = ["hook.gaw-reference-transaction.event",
       "hook.gaw-reference-transaction.command",

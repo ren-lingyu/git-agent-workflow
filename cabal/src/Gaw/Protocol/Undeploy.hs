@@ -10,6 +10,7 @@ module Gaw.Protocol.Undeploy
 
 import qualified Data.ByteString as BS
 import Data.List (nub, sort)
+import Gaw.Protocol.Status (StatusReport, renderStatusReport)
 import Gaw.Protocol.Ref (RefState (..), refNameBytes)
 
 data UndeployResult = UndeployResult
@@ -17,6 +18,8 @@ data UndeployResult = UndeployResult
   , removedLegacyRefs :: [BS.ByteString]
   , hookCleared :: Bool
   , residuals :: [BS.ByteString]
+  , deploymentBefore :: Maybe StatusReport
+  , protectionDisabled :: Bool
   } deriving (Eq, Show)
 
 undeployCandidates :: RefState -> [BS.ByteString] -> [BS.ByteString]
@@ -44,7 +47,11 @@ safeLegacyRegistration name state = case (legacySource name, state) of
 
 renderUndeployResult :: UndeployResult -> BS.ByteString
 renderUndeployResult result = BS.concat
-  (["GAW selector: ", if removedSelector result then "removed\n" else "unchanged\n",
+  ([case deploymentBefore result of
+      Just before -> "Deployment before cleanup:\n" <> renderStatusReport before
+      Nothing -> "Deployment before cleanup: unknown (inventory could not be read).\n",
+    "GAW selector: ", if removedSelector result then "removed\n" else "unchanged\n",
     "GAW hook config: ", if hookCleared result then "cleared\n" else "not fully removed\n"]
+   ++ ["Warning: GAW reference-transaction protection has been disabled.\n" | protectionDisabled result]
    ++ map ("Removed legacy ref: " <>) (map (<> "\n") (removedLegacyRefs result))
    ++ map ("Residual: " <>) (map (<> "\n") (residuals result)))

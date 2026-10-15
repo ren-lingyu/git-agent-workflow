@@ -7,8 +7,9 @@ description: Use Git Agent Workflow (GAW) to establish, recover, maintain, groun
 
 GAW is persistent agent memory, not an ordinary project branch workflow.
 The workspace tree holds each durable state, the first-parent chain records
-its evolution, and additional project parents associate exact snapshots
-without merging their trees. Workspace content explains goals, evidence,
+its evolution, and additional external parents associate exact snapshots
+without merging their trees. Selected Auxiliary source checkpoints may also
+be additional parents; formal GAW remains current-memory authority. Workspace content explains goals, evidence,
 causes, decisions and results.
 
 ## Establish state and resume
@@ -18,7 +19,7 @@ before choosing a branch, worktree or lifecycle action. Exit zero means a
 report was produced, not that every finding is healthy. Reserve
 `status --diagnose` for a relevant repository-wide investigation.
 
-Enter the reported GAW worktree, run `git gaw check`, read `.gaw/config` and
+Enter the reported formal GAW worktree, run `git gaw check`, read `.gaw/config` and
 recover current goals, established conclusions, unresolved questions,
 provenance and the next action from its declared workspace first. Check also
 native Git status and unstaged/untracked changes: check examines HEAD and the
@@ -70,6 +71,8 @@ Use workspace content to explain goals, evidence, causal relationships, and resu
   handoff, read [the memory workflow](references/memory.md).
 - For selection, faithful capture, description and verification of historical
   material, read [the archive workflow](references/archive.md).
+- For independent source histories, cross-session/agent integration, Auxiliary
+  lifecycle checks and source recovery, read [the Auxiliary workflow](references/auxiliary.md).
 - For creating, modifying, referencing, renaming or retiring project skills,
   read [the project-skill workflow](references/skills.md).
 
@@ -80,7 +83,7 @@ constraints and do not create additional execution permissions.
 
 Checkpoint a state that a future agent may need to restore and explain: a consequential finding, decision, phase transition, or handoff. A session boundary, small edit, or each new project commit does not by itself require a GAW commit. If no new durable information emerged, make no checkpoint.
 
-Choose additional project parents for the exact snapshots the relevant work, observation, test, or comparison was actually performed against. Zero parents are normal for planning, cleanup, or handoff unrelated to a specific code snapshot. Use one or several only when each has a real provenance role; do not attach the latest branch tip, a future goal commit, or every intermediate commit by habit. An unchanged GAW tree can still acquire a meaningful project-parent association.
+Choose additional external parents for the exact project or Auxiliary source snapshots the relevant work, observation, test, or comparison was actually performed against. Zero parents are normal for planning, cleanup, or handoff unrelated to a specific code snapshot. Use one or several only when each has a real provenance role; do not attach the latest branch tip, a future goal commit, or every intermediate commit by habit. An unchanged GAW tree can still acquire a meaningful project-parent association.
 
 Keep project-parent associations within a checkpoint as homogeneous in meaning as practical. Do not interpret additional-parent positions as different business roles such as based-on or resulting state. For associations with project states from different phases, prefer separate checkpoints when each state has independent recovery value; this does not require one project parent per checkpoint or one checkpoint per project commit. Homogeneity guides agent organization, not a new protocol invariant requiring the CLI to interpret natural language. Every selected parent still needs the exact-snapshot evidence described here.
 
@@ -101,7 +104,7 @@ files, and must run at the GAW worktree root. Before a checkpoint:
 3. Stage intended declared-workspace paths explicitly, review the complete
    index again, run `git gaw check` and resolve invalid-candidate findings.
 4. Use public `git gaw commit` with an appropriate message and only justified
-   project parents. Inspect the result with `git gaw show` when needed.
+   external parents. Inspect the result with `git gaw show` when needed.
 
 GAW determines recovery value, not commit-message style. Reuse a suitable
 message workflow when applicable, without forcing a nonempty-diff requirement

@@ -14,11 +14,12 @@ in Git and lets Git provide its history and reachability model.
 The current version is =0.6.0=.  The bundled agent-memory skill maintains
 current workspace state as substantive work evolves, recovers relevant
 history across sessions, and creates selective, evidence-backed checkpoints.
-GAW branch identity follows validated branch content rather than local
-registration refs.  =git gaw init= creates history, =git gaw deploy= selects
+Formal GAW branch identity follows validated branch content rather than local
+registration refs. Auxiliary GAW additionally uses reserved UUIDv4 branch names
+and a matching UUID subtree.  =git gaw init= creates history, =git gaw deploy= selects
 an existing valid local branch, and =git gaw undeploy= exits local deployment
 without removing history or worktrees.  =git gaw branch= handles
-selected-branch rename and deletion of an unselected valid GAW branch.  The
+selected formal branch rename and deletion of valid formal/Auxiliary branches.  The
 =check=, edit, stage, =commit=, and =show= loop remains the daily interface.
 
 Version 0.6.0 adds versioned workspace configuration with optional role groups,
@@ -26,6 +27,10 @@ a configuration help topic, and protection for unknown leading
 config versions.  It rejects checkpoints that mix protocol and workspace
 changes.  The bundled skill also defines memory, archive and project-skill
 workflows, including independent archive snapshots and workflow adaptation.
+
+The current development checkout also implements Auxiliary source histories;
+this does not imply a new release, tag or installed executable. See the Auxiliary
+section below and verify =git gaw help aux= in the CLI actually being used.
 
 The repository protocol and user-facing interface may still change before a
 stable release.  Remote-side enforcement, automatic fetching, arbitrary
@@ -76,10 +81,11 @@ A GAW commit records the state of the GAW workspace in its own tree.  Its
 parents have two distinct roles:
 
 1. the first parent is the previous GAW commit;
-2. any additional parents are project commits associated with that GAW state.
+2. additional parents are exact external snapshots associated with that state,
+   including project commits and selected Auxiliary source checkpoints.
 
 The trees of additional project parents are not merged into the GAW tree.
-They are parent edges used to associate project snapshots with agent history
+They are parent edges used to associate external snapshots with agent history
 and to keep those commits reachable through ordinary Git object reachability.
 
 The canonical temporal history of GAW is therefore its first-parent chain.
@@ -97,7 +103,7 @@ refs/gaw/HEAD -> refs/heads/<name>
 #+end_src
 
 Branch identity comes from complete committed-state validation.  The selector
-only records which local valid GAW branch is deployed; it does not define GAW
+only records which local valid formal GAW branch is deployed; it does not define GAW
 identity and is not authoritative for =git gaw commit=, which uses the current
 worktree's symbolic =HEAD=.  No irreplaceable repository information lives in
 =refs/gaw/*=, but malformed local metadata is reported rather than silently
@@ -212,7 +218,7 @@ These associations are represented directly as additional Git parent edges
 rather than through a separate snapshot database or identifier scheme.
 
 All additional parents express the same structural relation: association
-with an exact project snapshot.  Their positions do not encode business
+with an exact external snapshot, including Auxiliary source history.  Their positions do not encode business
 roles such as /based-on/ or /resulting state/.  Workspace content explains
 the purpose, evidence, causal relationships, and results of the associated
 work; the Git graph supplies the exact structural links.
@@ -237,7 +243,7 @@ repository is already initialized.  A branch with a =.gaw/config= marker that
 fails complete committed-state validation is treated as ambiguous or corrupt,
 not ignored.
 
-The initial =(:workspace ())= blob, its trees, and the root commit are written
+The initial =(:version 1 :workspace ())= blob, its trees, and the root commit are written
 before any ref becomes visible.  The source branch and =refs/gaw/HEAD= are
 then created in one expected-state
 =update-ref --stdin= transaction.  A failed ref transaction may leave
@@ -283,14 +289,67 @@ and selected by =refs/gaw/HEAD=.  It uses native =git branch -m= so Git
 maintains worktree =HEAD=, reflogs, and branch configuration, then updates the
 selector and verifies the final invariant.
 
-Both delete forms require an unselected local direct branch with valid GAW
-committed state.  =-d= uses native =git branch -d= and retains Git's safe-delete
-check; =-D= uses native =git branch -D= and skips only that check.  Git's
-worktree constraints still apply, and neither form bypasses GAW validation.
-Ordinary branches remain native Git's responsibility.  Rename uses
-strict preflight checks, ordered updates, and best-effort compensation because
-the native branch operation and selector update cannot share one transaction.
-Incomplete compensation is reported explicitly as a partial failure.
+Both delete forms require valid committed state and no associated worktree.
+For formal GAW they require an unselected direct branch: =-d= retains native
+Git safe-delete semantics and =-D= skips only that check. Rename remains
+limited to the selected formal GAW and cannot enter the reserved =_gaw_aux_=
+range. Ordinary branches remain native Git's responsibility.
+
+For Auxiliary GAW, =-d= requires its current tip to be an ancestor of the
+valid formal tip selected by =refs/gaw/HEAD=. Upstream and caller HEAD are
+irrelevant. One ref transaction verifies selector target, formal tip and
+Auxiliary tip. =-D= explicitly abandons history without requiring integration;
+conditional tip deletion, valid state and no worktree are still required.
+Unretained/unknown retention produces an abandonment warning; continued
+reachability is not guaranteed. Neither mode removes worktrees or other refs.
+Worktree registrations are checked independently before and after deletion;
+detected races trigger conditional branch restoration or a partial-failure
+report. Serialize worktree lifecycle activity with branch deletion.
+
+Rename uses ordered native/selector updates and best-effort compensation;
+those operations cannot share one transaction. Incomplete compensation is
+reported explicitly as a partial failure.
+
+** Auxiliary GAW Source Histories
+Auxiliary GAW preserves independent source evolution while formal GAW remains
+the only authority for project-current memory:
+
+#+begin_src text
+git gaw aux init [--worktree-path <path>]
+git gaw aux deploy --branch <name> [--worktree-path <path>]
+git gaw aux check [--branch <name>]
+#+end_src
+
+Init uses secure random UUIDv4 identity and atomic create-if-absent branch
+creation at =refs/heads/_gaw_aux_<uuid>=. Collisions generate another UUID.
+Its independent root contains only =<uuid>/.gaw/config=, reusing the selected
+formal tip's exact committed config blob. It copies neither workspace content,
+uncommitted config nor formal-history parents. V0/v1 declarations are relative
+to that UUID directory; all tracked entries must lie within it. UUID supplies
+path separation, not provenance. There is no extra ref registry or selector.
+
+Auxiliary init/deploy require a valid formal selector and the existing canonical
+shared hook; they neither select formal memory nor install/repair hooks.
+Deployment reuses ordinary worktree selection and failure compensation. Without
+a requested path it may remain repository-only. Run ordinary =gaw commit/check=
+at the Git worktree root, not within the UUID directory. Logical protocol
+isolation is relative to =<uuid>/.gaw/=; parent conflicts compare physical paths.
+Existing commit requirements remain unchanged, including after undeploy.
+
+=aux check= reports structure separately from deletion readiness: a valid but
+unintegrated history is not corruption. Without a current Auxiliary worktree,
+specify =--branch=. =check --branch= checks committed state without worktree
+readiness. Integrate selected conclusions into formal memory and associate
+actually inspected source checkpoints through ordinary additional parents;
+source trees are never merged. Retention of an intermediate checkpoint does
+not guarantee retention of a later tip. Use =branch -d= for retained tips or
+=-D= for deliberate abandonment after associated worktrees have been removed.
+No =aux retire=, =abort=, =discard=, rename or separate executable is added.
+
+The bundled skill's =references/auxiliary.md= explains checkpoint selection,
+provenance, archive reuse, knowledge integration and source recovery through
+formal ancestry and stable UUID-relative paths after safe branch deletion.
+Checkpoint OIDs remain operational references, not durable semantic identities.
 
 ** Leaving Local Deployment
 =git gaw undeploy= removes the local selector and GAW-owned named-hook keys.
@@ -300,7 +359,12 @@ history, =.gaw/config=, worktrees, and their contents.  Direct, mismatched,
 malformed, unreadable, or undiscoverable legacy refs are not automatically
 removed.  Residual problems are reported as partial failure; completed cleanup
 is not rolled back, and the command can be repeated.  After resolving residuals,
-=git gaw deploy --branch <name>= can restore a local deployment.
+=git gaw deploy --branch <name>= can restore formal deployment and shared
+protection before =aux deploy=. Cleanup reports the pre-cleanup branch/selector/
+hook/worktree inventory, explicitly marks unavailable inventory, and warns
+when existing shared hook configuration has actually been removed. Inventory
+failure alone does not block cleanup or change its success code. All formal
+and Auxiliary branches/worktrees remain; commit gains no new deployment rule.
 
 ** Creating Commits
 The command =git gaw commit= creates commits on a valid GAW branch
@@ -310,8 +374,8 @@ select the branch for this command.
 
 The command uses the current index as its complete tree source.  It neither
 stages paths nor includes unstaged or untracked changes.  A candidate tree is
-accepted only when it contains a valid =.gaw/config= and no content outside
-=.gaw= and the declared workspace.  Gitlinks are not supported in a GAW tree.
+accepted only when it contains a valid config and no content outside
+the protocol paths and declared workspace within its formal or UUID root.  Gitlinks are not supported in a GAW tree.
 
 The command syntax is:
 
@@ -367,9 +431,14 @@ tip, independent of the transaction's old-value.  It rejects movement or
 deletion when that tip is valid GAW committed state.  If the old tip contains
 the =.gaw/config= marker, its mode, type, and object ID must remain unchanged
 at the proposed new tip; inability to determine that reliably fails closed.
-First introduction of the marker is allowed, including creation of a new
+For formal GAW, first introduction of the marker is allowed, including creation of a new
 local branch from existing portable GAW history.  Ordinary transactions which
 create, modify, or delete any =refs/gaw/*= ref are also rejected.
+The =_gaw_aux_= namespace is guarded by name, even if its config is missing
+or its history is damaged. Native movement, deletion and renaming of existing branches
+are rejected; new branch imports retain the usual creation behavior. A nonzero new value equal to the observed current tip is a no-op;
+zero old/new transaction fields may instead denote an unchecked deletion.
+Auxiliary controlled operations reuse the shared bypass.
 Malformed transaction input or failed state queries are rejected.  The =prepared=,
 =committed=, and =aborted= phases perform no work; unknown phases are protocol
 errors.
@@ -413,6 +482,11 @@ The Haskell CLI forwards Git's stdout and stderr bytes unchanged and returns
 Git's exit status.
 
 ** Checking a GAW Worktree
+=git gaw check --branch <name>= validates formal or Auxiliary committed state
+without a target worktree, the caller's index or Git operation readiness. It
+does not report that a worktree is ready. =git gaw aux check= additionally
+reports safe-deletion conditions separately from structure.
+
 The command =git gaw check= performs a read-only readiness check for the
 current GAW worktree.  It checks the local branch and optional selector, the
 committed config and workspace, additional project-parent tip trees, the
@@ -438,7 +512,8 @@ directory, local GAW and ordinary branches, the local selector, configured
 protection hook, worktree attachments, and discovered =refs/gaw/*= refs
 (including unexpected refs).
 
-Branches with a =.gaw/config= tip marker receive full committed-state
+Formal branches with a =.gaw/config= tip marker and reserved Auxiliary names
+receive full committed-state
 validation; the marker alone does not establish that a branch is valid.  Ref
 discovery combines Git's normal =refs/gaw/*= enumeration with exact probes of
 =refs/gaw/HEAD=, its symbolic target, and recognizable legacy names derived
@@ -465,7 +540,7 @@ fsck is not run.
 
 ** Command Help
 GAW provides overview and command-specific help through =git gaw help= and
-=git gaw help init|deploy|undeploy|branch|commit|show|check|status|config|hooks|recovery=.  The
+=git gaw help aux|init|deploy|undeploy|branch|commit|show|check|status|config|hooks|recovery=.  The
 overview is also available as =git gaw --help= or =git gaw -h=, while each
 command accepts =--help= as its sole argument.
 
@@ -524,7 +599,9 @@ The bundled [[file:cabal/share/skills/git-agent-workflow/SKILL.md][git-agent-wor
 persistent working memory across sessions, rather than as a command reference.
 The declared workspace holds current memory, GAW commits are recoverable
 checkpoints, the first-parent chain is temporal memory history, and additional
-project parents ground memory in exact project snapshots.  The skill starts
+external parents ground memory in exact project snapshots or Auxiliary source
+states. The Auxiliary workflow explains independent source reconstruction and
+formal integration while preserving formal memory authority.  The skill starts
 recovery from the current workspace and expands into relevant history only
 when needed.  It favors distilled, verifiable, actionable state over full
 conversation archives, fixed memory-file templates, or an ever-growing

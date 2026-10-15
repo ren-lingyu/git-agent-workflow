@@ -18,5 +18,5 @@ The default config is (:version 1 :workspace ()); no fixed memory, archive or
 skills directories are created. Older CLIs may not understand this config.
 See git gaw help config for versions, role groups and path rules.
 
-Formal GAW lifecycle operations cannot enter the reserved _gaw_aux_ range.
-Rename is limited to the currently selected formal GAW branch.
+Formal GAW cannot use the reserved _gaw_aux_ branch range. Use git gaw aux
+init/deploy for Auxiliary source histories; see git gaw help aux.

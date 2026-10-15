@@ -74,6 +74,8 @@ renderStatusReport report = BS.concat
       hookDetail (statusHook report), ")\n"
   , "\nGAW branches (", count gawBranches, "):\n"
   , BS.concat (map renderGawBranch gawBranches)
+  , "\nAuxiliary GAW branches (", count auxiliaryBranches, "):\n"
+  , BS.concat (map renderGawBranch auxiliaryBranches)
   , "\nOrdinary branches (", count ordinaryBranches, "):\n"
   , BS.concat ["  " <> statusBranchRef branch <> "\n" | branch <- ordinaryBranches]
   , "\nGAW protocol refs (", count otherRefs, "):\n"
@@ -82,13 +84,17 @@ renderStatusReport report = BS.concat
   , BS.concat (map renderWorktree (statusWorktrees report))
   ]
   where
-    gawBranches = filter ((/= OrdinaryBranch) . statusBranchClass) (statusBranches report)
+    auxiliary branch = "refs/heads/_gaw_aux_" `BS.isPrefixOf` statusBranchRef branch
+    gawBranches = filter (\branch -> statusBranchClass branch /= OrdinaryBranch && not (auxiliary branch)) (statusBranches report)
+    auxiliaryBranches = filter auxiliary (statusBranches report)
     ordinaryBranches = filter ((== OrdinaryBranch) . statusBranchClass) (statusBranches report)
     otherRefs = filter ((/= "refs/gaw/HEAD") . protocolName) (statusProtocolRefs report)
     renderGawBranch branch = "  " <> statusBranchRef branch <> " " <>
       maybe "" (<> " ") (statusBranchOid branch) <> branchName (statusBranchClass branch) <>
       maybe "" ("; " <>) (statusBranchDetail branch) <> "\n" <>
       BS.concat ["    warning: " <> warning <> "\n" | warning <- statusBranchWarnings branch] <>
+      (if any ((== Just (statusBranchRef branch)) . worktreeBranch) (statusWorktrees report)
+        then "" else "    no associated worktree\n") <>
       BS.concat ["    at " <> worktreePath tree <> "\n"
         | tree <- statusWorktrees report, worktreeBranch tree == Just (statusBranchRef branch)]
 

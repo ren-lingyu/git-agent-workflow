@@ -12,3 +12,10 @@ residuals, git gaw deploy --branch <name> can select an existing valid local
 GAW branch. No GAW command performs implicit network operations or repairs
 arbitrary history or marker content. Manual repair may require explicitly
 disabling the GAW named hook; see git gaw help hooks.
+
+For Auxiliary history, check --branch validates committed state without its
+worktree; aux check --branch also reports deletion readiness. Preserve damaged
+history for explicit recovery: branch -D does not bypass validity/worktree
+constraints. Redeploy formal GAW first, then use aux deploy for an existing
+Auxiliary branch. A tip safely deleted with branch -d remains reachable through
+formal ancestry; a forced abandonment with -D has no such guarantee.
