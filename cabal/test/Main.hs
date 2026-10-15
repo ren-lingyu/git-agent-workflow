@@ -12,6 +12,7 @@ import Gaw.Protocol.Deploy
 import Gaw.Protocol.Hook
 import Gaw.Protocol.Ref
 import Gaw.Protocol.Workspace
+import Gaw.Protocol.Layout
 import Gaw.Protocol.Show
 import Gaw.Protocol.Status (StatusWorktree (..))
 import Gaw.System.Repository
@@ -122,6 +123,7 @@ main = do
     == Left (BranchAlreadyAttached "refs/heads/gaw" "/tmp/agent")
   assert $ planWorktree "refs/heads/gaw" (Just "/tmp/new") True []
     == Left (PathOccupied "/tmp/new")
+  layoutTests
   versionedConfigTests
   commitBoundaryTests
   putStrLn "Protocol tests passed"
@@ -268,3 +270,27 @@ versionedConfigTests = do
     other -> print other >> exitFailure
   assert $ isLimit (parseConfig ("(:version 1 :workspace ((:memory (" <> BS.concat ["(:file \"p" <> TE.encodeUtf8 (DataText.pack (show i)) <> "\")" | i <- [1..1025 :: Int]] <> "))))"))
   assert $ isLimit (parseConfig (BS.replicate 17 40 <> BS.replicate 17 41))
+
+layoutTests :: IO ()
+layoutTests = do
+  let uuid = "01234567-89ab-4cde-8fab-0123456789ab"
+      layout = Auxiliary uuid
+      branch = "refs/heads/_gaw_aux_" <> uuid
+      file path = GitEntry "100644" "blob" (BS.replicate 40 97) path 0 False
+  requireRef <- either (const exitFailure) pure (parseSourceRef branch)
+  assert (auxiliaryUuid requireRef == Just uuid)
+  mapM_ (\name -> case parseSourceRef ("refs/heads/_gaw_aux_" <> name) of
+    Right ref -> assert (auxiliaryUuid ref == Nothing && auxiliaryReserved ref)
+    Left _ -> exitFailure)
+    ["01234567-89ab-1cde-8fab-0123456789ab", "01234567-89AB-4cde-8fab-0123456789ab",
+     "01234567-89ab-4cde-cfab-0123456789ab", "bad"]
+  config <- either (const exitFailure) pure (parseConfig "(:workspace ((:directory \"memory\")))")
+  let workspace = effectiveWorkspace config
+      entries = synthesizeIndexDirectories [file (configPath layout), file (uuid <> "/memory/note")]
+  assert (validateWorkspaceAt layout workspace entries == Right ())
+  assert (validateWorkspaceAt layout workspace (entries ++ [file "outside"]) == Left (OutsideDeclaredWorkspace "outside"))
+  assert (validateWorkspaceAt layout workspace (entries ++ [file (uuid <> "/other")]) == Left (OutsideDeclaredWorkspace "other"))
+  assert (validateWorkspaceAt layout workspace (entries ++ [(file "outside") {entryStage = 2}]) /= Right ())
+  assert (firstProjectPathConflictAt layout workspace [file ".gaw/config", file "memory/a"] == Nothing)
+  assert (firstProjectPathConflictAt layout workspace [file (uuid <> "/memory/a")] == Just (uuid <> "/memory/a"))
+  assert (firstProjectPathConflictAt layout workspace [file uuid] == Just uuid)

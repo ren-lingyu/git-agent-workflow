@@ -12,6 +12,7 @@ import Control.Monad.Trans.Except (ExceptT, runExceptT, throwE)
 import qualified Data.ByteString as BS
 import Gaw.Application.State (inspectCommittedState)
 import Gaw.Protocol.Branch
+import Gaw.Protocol.Layout (auxiliaryReserved)
 import Gaw.Protocol.Ref
 import Gaw.Protocol.State
 import Gaw.System.FileSystem (FileSystem (..))
@@ -155,6 +156,8 @@ directSource git at source = do
 
 validSource :: Monad m => Git m -> PosixPath -> RefName -> ExceptT BranchError m ()
 validSource git at source = do
+  if auxiliaryReserved source then throwE (BranchError "invalid-state"
+    "Auxiliary lifecycle requires dedicated validation") else pure ()
   report <- lift (inspectCommittedState git at source)
   case classifyCommittedState (stateFindings report) of
     ValidCommittedState _ -> pure ()

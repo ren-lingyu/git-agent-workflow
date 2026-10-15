@@ -29,6 +29,7 @@ configCliTests temporary git = do
   createDirectory root
   finally (do
     helpTopics candidate root
+    layoutChecks candidate root
     newConfig candidate root
     boundaryChanges candidate root
     migrateLegacy candidate root
@@ -117,6 +118,30 @@ configCliTests temporary git = do
         (exampleBlocks (lines source))
       require (map configVersion decoded == [ConfigV0, ConfigV0, ConfigV1])
         "published v0/v1 configuration examples do not decode"
+    layoutChecks candidate root = do
+      directory <- seed root "layout"
+      let uuid = "01234567-89ab-4cde-8fab-0123456789ab"
+          branch = "_gaw_aux_" ++ uuid
+          logical = directory </> uuid
+      _ <- gitOk directory ["checkout", "--orphan", branch]
+      _ <- gitOk directory ["rm", "-f", "--", "project.txt"]
+      config logical "(:workspace ((:directory \"memory\")))\n"
+      _ <- gitOk directory ["add", "--", uuid ++ "/.gaw/config"]
+      nativeCommit directory "Auxiliary root"
+      _ <- gitOk directory ["checkout", "main"]
+      report <- cliOk candidate directory ["check", "--branch", branch]
+      require (isInfixOf "committed state is valid" report &&
+        not (isInfixOf "worktree is ready" report) && not (isInfixOf "[ok] index:" report))
+        "branch check claimed worktree readiness"
+      _ <- gitOk directory ["checkout", branch]
+      writeFile (directory </> "outside") "foreign root\n"
+      _ <- gitOk directory ["add", "--", "outside"]
+      nativeCommit directory "invalid outer path"
+      _ <- cliFail candidate directory ["check", "--branch", branch]
+      _ <- gitOk directory ["rm", "--", "outside", uuid ++ "/.gaw/config"]
+      nativeCommit directory "missing config"
+      _ <- cliFail candidate directory ["check", "--branch", branch]
+      pure ()
     newConfig candidate root = do
       directory <- seed root "new"
       let agent = root </> "agent"

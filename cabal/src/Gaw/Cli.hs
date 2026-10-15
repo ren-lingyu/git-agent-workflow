@@ -9,7 +9,7 @@ import Data.Version (showVersion)
 import Control.Exception (try)
 import System.IO.Error (isDoesNotExistError)
 import Data.FileEmbed (embedFile)
-import Gaw.Application.Check (inspectCheck)
+import Gaw.Application.Check (inspectCheck, inspectBranchCheck)
 import Gaw.Application.Commit (createCommit)
 import Gaw.Application.Deploy (deploy, renderDeployError)
 import Gaw.Application.Branch (renameBranch, deleteBranch, renderBranchError)
@@ -17,11 +17,11 @@ import Gaw.Application.Init (initialize, renderInitError)
 import Gaw.Application.Hook (evaluateTransaction)
 import Gaw.Application.Status (StatusError (..), inspectStatus)
 import Gaw.Application.Undeploy (UndeployError (..), undeploy)
-import Gaw.Protocol.Check (checkReady, renderCheckReport)
+import Gaw.Protocol.Check (checkReady, renderCheckReport, renderBranchCheckReport)
 import Gaw.Protocol.Commit (CommitRequest (..), renderCommitError)
 import Gaw.Protocol.Deploy (DeployMode (..), deployedMode, renderDeployResult)
 import Gaw.Protocol.Init (InitResult (..))
-import Gaw.Protocol.Ref (objectIdBytes)
+import Gaw.Protocol.Ref (objectIdBytes, parseSourceRef)
 import Gaw.Protocol.Hook (HookError (..), HookPhase (..), parseHookPhase)
 import Gaw.Protocol.Show (ShowError (..), prepareShowArguments)
 import Gaw.Protocol.Status (renderStatusReport, statusHealthy)
@@ -90,7 +90,7 @@ usageText = BS.concat
   , "  git gaw branch -m <new-name> | -d <name> | -D <name>\n"
   , "  git gaw commit [options] [--] [project-commit...]\n"
   , "  git gaw show [options] [object...] [-- path...]\n"
-  , "  git gaw check\n"
+  , "  git gaw check [--branch <name>]\n"
   , "  git gaw status [--diagnose]\n"
   , "  git gaw help [init|deploy|undeploy|branch|commit|show|check|status|config|hooks|recovery]\n"
   ]
@@ -301,15 +301,20 @@ makeCommitMessage = go BS.empty
           go next rest
 
 runCheck :: [BS.ByteString] -> IO ExitCode
-runCheck arguments
-  | not (null arguments) = do
-      BS.hPut stderr "git-gaw: git gaw check does not accept arguments\n"
-      pure (ExitFailure 1)
-  | otherwise = do
-      executable <- OS.fromBytes gitExecutable
-      directory <- OS.fromBytes "."
-      report <- inspectCheck (runGitPosix executable) posixFileSystem directory
-      BS.hPut stdout (renderCheckReport report)
+runCheck arguments = do
+  executable <- OS.fromBytes gitExecutable
+  directory <- OS.fromBytes "."
+  let git = runGitPosix executable
+  result <- case arguments of
+    [] -> Right <$> inspectCheck git posixFileSystem directory
+    ["--branch", name] -> case parseSourceRef ("refs/heads/" <> name) of
+      Left _ -> pure (Left "Invalid local branch name")
+      Right source -> Right <$> inspectBranchCheck git directory source
+    _ -> pure (Left "Usage: git gaw check [--branch <name>]")
+  case result of
+    Left detail -> BS.hPut stderr ("git-gaw: " <> detail <> "\n") >> pure (ExitFailure 1)
+    Right report -> do
+      BS.hPut stdout ((if null arguments then renderCheckReport else renderBranchCheckReport) report)
       pure (if checkReady report then ExitSuccess else ExitFailure 1)
 
 runStatus :: [BS.ByteString] -> IO ExitCode

@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Gaw.Application.Check
-  ( inspectCheck
+  ( inspectBranchCheck
+  , inspectCheck
   ) where
 
 import qualified Data.ByteString as BS
@@ -186,3 +187,10 @@ trimLine = BS.dropWhileEnd (\byte -> byte == 10 || byte == 13)
 trailingSlash :: BS.ByteString -> BS.ByteString
 trailingSlash path | BS.null path || BS.last path == 47 = path
                    | otherwise = path <> "/"
+
+-- This report deliberately contains no index, worktree or operation readiness.
+inspectBranchCheck :: Monad m => Git m -> PosixPath -> RefName -> m CheckReport
+inspectBranchCheck git directory source = do
+  state <- inspectCommittedState git directory source
+  pure (CheckReport (finding "branch" CheckOk (refNameBytes source) :
+    map fromState (stateFindings state)))

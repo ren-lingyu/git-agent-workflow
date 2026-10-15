@@ -3,6 +3,7 @@
 module Gaw.System.Config
   ( ConfigReadError (..)
   , configReadDetail
+  , readConfigAtPath
   , readConfigAtTree
   , readConfigBlob
   ) where
@@ -34,7 +35,11 @@ configReadDetail _ = "Invalid staged config"
 
 readConfigAtTree :: Monad m => Git m -> PosixPath -> ObjectId
   -> m (Either ConfigReadError Config)
-readConfigAtTree git directory tree = do
+readConfigAtTree git directory tree = readConfigAtPath git directory tree ".gaw/config"
+
+readConfigAtPath :: Monad m => Git m -> PosixPath -> ObjectId -> BS.ByteString
+  -> m (Either ConfigReadError Config)
+readConfigAtPath git directory tree path = do
   kind <- invoke git directory ["cat-file", "-t", objectIdBytes tree]
   if gitExitCode kind /= 0
     then pure (Left (ConfigGitFailure ["cat-file", "-t", objectIdBytes tree] kind))
@@ -43,7 +48,7 @@ readConfigAtTree git directory tree = do
       else do
         let arguments = ["--literal-pathspecs", "ls-tree", "--full-tree",
                          "--format=%(objectmode) %(objecttype) %(objectname)",
-                         objectIdBytes tree, "--", ".gaw/config"]
+                         objectIdBytes tree, "--", path]
         entry <- invoke git directory arguments
         if gitExitCode entry /= 0
           then pure (Left (ConfigGitFailure arguments entry))

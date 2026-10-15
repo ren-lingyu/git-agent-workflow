@@ -5,6 +5,7 @@ module Gaw.Protocol.Check
   , CheckFinding (..)
   , CheckReport (..)
   , checkReady
+  , renderBranchCheckReport
   , renderCheckReport
   ) where
 
@@ -40,3 +41,8 @@ statusName status = case status of
   CheckWarning -> "warning"
   CheckError -> "error"
   CheckSkipped -> "skipped"
+
+renderBranchCheckReport :: CheckReport -> BS.ByteString
+renderBranchCheckReport report = BS.concat (map renderFinding (checkFindings report)) <>
+  if checkReady report then "\nGAW committed state is valid; worktree readiness was not checked.\n"
+  else "\nGAW committed state is invalid or indeterminate.\n"

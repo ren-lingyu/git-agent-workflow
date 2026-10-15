@@ -1,4 +1,4 @@
-usage: git gaw check
+usage: git gaw check [--branch <name>]
 
 Check whether the current GAW worktree is ready for the normal
 edit, stage, commit, and show loop.  The check is read-only and may run from a
@@ -18,3 +18,7 @@ because it is a local guard rather than a runtime prerequisite.
 Config v0 and v1 are supported. Unknown top-level v1 fields produce separate
 HEAD and index warnings without making the check fail. Unsupported config
 versions are reported explicitly and prevent readiness.
+
+--branch checks only the named local branch's committed state, without a
+worktree, index or operation readiness check. Formal and canonical Auxiliary
+UUID layouts are supported. This mode does not claim worktree readiness.

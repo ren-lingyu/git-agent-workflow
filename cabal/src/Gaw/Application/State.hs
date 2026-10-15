@@ -2,12 +2,14 @@
 
 module Gaw.Application.State
   ( inspectCommittedState
+  , inspectCommittedObjectAt
   , inspectCommittedObject
   ) where
 
 import qualified Data.ByteString as BS
 import Gaw.Protocol.Config (ConfigError (UnsupportedVersion, UnrecognizedVersion), effectiveWorkspace, unsupportedVersionDetail, unrecognizedVersionDetail)
 import Gaw.Protocol.Workspace.Types (Workspace)
+import Gaw.Protocol.Layout
 import Gaw.Protocol.Ref
 import Gaw.Protocol.State
 import Gaw.Protocol.Workspace
@@ -23,18 +25,21 @@ inspectCommittedState git directory source = do
   case completeOid commitResult of
     Nothing -> pure (StateReport (Just source) Nothing Nothing Nothing
       (headFailure : skipped "Skipped because HEAD does not resolve to a commit"))
-    Just commit -> inspectResolvedCommit git directory (Just source) commit
+    Just commit -> inspectResolvedCommit git directory (layoutForRef source) (Just source) commit
   where
     headFailure = finding Head FindingError Indeterminate "The current GAW branch is unborn"
     skipped detail = map (\name -> finding name FindingSkipped Determinate detail)
       [HeadConfig, HeadWorkspace, ProjectParents]
 
 inspectCommittedObject :: Monad m => Git m -> PosixPath -> ObjectId -> m StateReport
-inspectCommittedObject git directory = inspectResolvedCommit git directory Nothing
+inspectCommittedObject git directory = inspectCommittedObjectAt git directory Formal
 
-inspectResolvedCommit :: Monad m => Git m -> PosixPath -> Maybe RefName
+inspectCommittedObjectAt :: Monad m => Git m -> PosixPath -> HistoryLayout -> ObjectId -> m StateReport
+inspectCommittedObjectAt git directory layout = inspectResolvedCommit git directory layout Nothing
+
+inspectResolvedCommit :: Monad m => Git m -> PosixPath -> HistoryLayout -> Maybe RefName
   -> ObjectId -> m StateReport
-inspectResolvedCommit git directory source commit = inspectCommit commit
+inspectResolvedCommit git directory layout source commit = inspectCommit commit
   where
     inspectCommit current = do
       treeResult <- command git directory ["rev-parse", "--verify", "--end-of-options",
@@ -46,7 +51,7 @@ inspectResolvedCommit git directory source commit = inspectCommit commit
            finding HeadWorkspace FindingSkipped Determinate "Skipped because HEAD config is unavailable",
            finding ProjectParents FindingSkipped Determinate "Skipped because HEAD config is unavailable"])
         Just tree -> do
-          configResult <- readConfigAtTree git directory tree
+          configResult <- readConfigAtPath git directory tree (configPath layout)
           case configResult of
             Left problem -> pure (StateReport source (Just current) (Just tree) Nothing
               [finding Head FindingOk Determinate "HEAD resolves to a commit",
@@ -58,19 +63,19 @@ inspectResolvedCommit git directory source commit = inspectCommit commit
       treeEntries <- readTreeRecords git directory tree
       let workspaceFinding = case treeEntries of
             Left _ -> finding HeadWorkspace FindingError Indeterminate "Cannot validate the HEAD workspace"
-            Right entries -> case validateWorkspace (effectiveWorkspace config) entries of
+            Right entries -> case validateWorkspaceAt layout (effectiveWorkspace config) entries of
               Right () -> finding HeadWorkspace FindingOk Determinate
                 "HEAD satisfies its workspace declaration"
               Left problem -> finding HeadWorkspace FindingError (workspaceCertainty problem)
                 (workspaceDetail problem)
-      parentFinding <- inspectParents git directory current (effectiveWorkspace config)
+      parentFinding <- inspectParents git directory layout current (effectiveWorkspace config)
       pure (StateReport source (Just current) (Just tree) (Just config)
         [finding Head FindingOk Determinate "HEAD resolves to a commit",
          finding HeadConfig FindingOk Determinate "HEAD contains a valid .gaw/config",
          workspaceFinding, parentFinding])
 
-inspectParents :: Monad m => Git m -> PosixPath -> ObjectId -> Workspace -> m StateFinding
-inspectParents git directory commit workspace = do
+inspectParents :: Monad m => Git m -> PosixPath -> HistoryLayout -> ObjectId -> Workspace -> m StateFinding
+inspectParents git directory layout commit workspace = do
   result <- command git directory ["rev-list", "--parents", "-n", "1", objectIdBytes commit]
   case parseParents commit result of
     Nothing -> pure (queryFailure ProjectParents "Cannot validate project parents")
@@ -87,7 +92,7 @@ inspectParents git directory commit workspace = do
           entriesResult <- readTreeRecords git directory tree
           case entriesResult of
             Left _ -> pure (queryFailure ProjectParents "Cannot validate project parents")
-            Right entries -> case firstProjectPathConflict workspace entries of
+            Right entries -> case firstProjectPathConflictAt layout workspace entries of
               Just _ -> pure (finding ProjectParents FindingError Determinate
                 "An associated project parent tracks a reserved or workspace path")
               Nothing -> go rest

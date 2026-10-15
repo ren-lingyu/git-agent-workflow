@@ -27,6 +27,7 @@ library
     , Gaw.Application.Deploy
     , Gaw.Application.Branch
     , Gaw.Application.Init
+    , Gaw.Protocol.Layout
     , Gaw.Protocol.Check
     , Gaw.Protocol.Commit
     , Gaw.Protocol.Config
