@@ -2,9 +2,40 @@
 
 ## Current state and recovery
 
+The user requested the 0.7.0 release preparation commit. Three paths are staged:
+README.org, cabal/git-agent-workflow.cabal and the bundled references/auxiliary.md.
+They set source version 0.7.0, summarize Auxiliary features and explain upgrade
+availability, reserved names, diagnostics and interactive/shared-hook executable
+compatibility. No feature expansion or lock change. Ordinary HEAD is still
+`c0c9f01`, and worktree equals the staged candidate, full tree
+`58f05784023951a6bb7cfc1c8719a5d508f79ac3`. Native project commit remains
+user-managed. The actual staged message is ready in tmp/commit.md, subject
+`chore(release): prepare version 0.7.0`; no Issue closure is introduced by this
+metadata/documentation commit. Draft release notes are in tmp/release-0.7.0.md.
+
+`timeout 120s nix flake check --no-write-lock-file -L` passed, with observed
+fresh compilation and execution of both suites, 13 help and 5 skill resource
+sdist/install/exposure checks. Derivation:
+`/nix/store/kdf7hljj3k22nhpq2ba1n2h8mxrybdyk-git-agent-workflow-0.7.0.drv`.
+Output: `/nix/store/rcf3rkl69pqvfklp62hbrnyi4raiclhh-git-agent-workflow-0.7.0`.
+That output printed `git-gaw 0.7.0` and its `help aux` succeeded. Non-host
+aarch64 Linux/Darwin systems were omitted; existing Cabal warnings are nonfatal.
+The planned `timeout 120s nix build --rebuild --no-link --no-write-lock-file -L
+.#checks.x86_64-linux.git-agent-workflow` was launched in parallel and exited 1
+before building: --rebuild requires existing valid outputs, absent at that point.
+Do not report it as passing or as a failed source test. No automatic retry was
+made; the successful first build above actually ran the required validation.
+
+Next: user commits the reviewed staged candidate. Verify its sole parent is
+`c0c9f01`, full tree matches the recorded tested candidate and index is empty
+before associating that commit in GAW. Do not associate the 0.7.0 tests with
+the old 0.6.0 HEAD. No tag, push, Release or installation has been performed.
+Existing PLAN snapshots suffice; no duplicate archive was created. Last release
+review observed published v0.6.0 and no v0.7.0 tag/Release; recheck before publishing.
+
 The Auxiliary GAW implementation and its N1–N5 user-managed commit sequence
-are complete against v0.6.0 baseline `801fe3b`. Current main is `c0c9f01`, with
-empty index and clean ordinary worktree. Each node was independently checked
+are complete against v0.6.0 baseline `801fe3b`. At implementation completion,
+main was `c0c9f01` with empty index and clean worktree. Each node was independently checked
 before staging; its sole parent and complete committed tree matched its tested
 cumulative snapshot. Final source bytes were preserved throughout partial
 staging. Native project commits were made by the user, not the agent.
@@ -364,7 +395,9 @@ the current repository config and new init output are explicit v1. Do not
 confuse the bootstrap or old init example with current behavior.
 
 No pending action remains from the Auxiliary implementation/commit sequence.
-Await a new objective; do not repeat completed staging or polling.
+The 0.7.0 release preparation candidate is now staged as described at the top;
+verify the user's eventual commit and continue release work only within its
+separate authorization. Do not repeat completed N1–N5 staging or polling.
 PLAN implementation input and completion record are preserved
 in separate immutable snapshots. Existing follow-up
 labels remain note-local examples, not mandatory priorities. Release/tag,
