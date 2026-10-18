@@ -22,6 +22,20 @@ existing archives already preserve what is needed. Retired documents and
 temporary evidence may be useful; age, a filename or a mention alone does not
 make an artifact worth archiving.
 
+Do not assume that material obtained again from the same path, URL or
+acquisition procedure matches an earlier observation. Reassess each newly
+obtained item for archival value, whether an earlier copy was retained
+or declined. Apply the same selection threshold: repeated acquisition or
+changed content alone does not justify archival retention or duplicate snapshots.
+
+Each time material is obtained, complete the retention decision and act on it:
+distill relevant findings, decisions and uncertainties into current memory,
+and capture selected raw evidence through the archive workflow. Do not leave
+this work at a recommendation or defer it by default until session handoff.
+When neither memory updates nor archival retention are warranted, leave them
+unchanged. These steps remain subject to the host's authorization boundaries;
+if required action is blocked, report what remains pending and why.
+
 State the selection scope and reason, and identify the actual sources. A
 material reference from another selected document supports inclusion, but
 independent evidence value can also justify an artifact. Do not archive whole
