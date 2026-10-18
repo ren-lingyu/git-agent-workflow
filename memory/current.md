@@ -2,6 +2,27 @@
 
 ## Current state and recovery
 
+Current task: refine the bundled archive workflow. The user supplied the
+reacquisition-selection paragraph and requested that each acquisition lead to
+an actual retention decision and warranted memory/archive work, not just advice.
+The ordinary archive reference now reassesses newly obtained items regardless
+of past retention decisions, keeps the existing selection threshold, and requires
+distillation/capture when warranted without automatic duplicate snapshots or
+unnecessary writes. Host authorization still applies; blocked work is reported.
+The user explicitly authorized staging. Only
+cabal/share/skills/git-agent-workflow/references/archive.md is staged, with
+14 added lines and blob `0a4e7a67b2c0f4ba9fad209c4a6aad42fbe80df2`.
+The full staged diff was reviewed and diff --cached --check passed. No build/test
+was run; this changes bundled workflow instructions, not CLI implementation.
+The actual staged message is in tmp/commit.md, subject
+`feat(skill): complete retention decisions for each acquisition`.
+One commit is appropriate; no split or duplicate archive is needed. Next: user
+commits the candidate, then verify the expected sole parent `db2f013`, only the
+intended archive reference changed, its blob matches the reviewed candidate,
+and index/worktree are clean before grounding the new commit in GAW. Do not
+associate the pending workflow change with the old project baseline as if it
+already contained it. No project commit or publication was performed by agent.
+
 The 0.7.0 release preparation is committed by the user as `db2f013`:
 README.org, cabal/git-agent-workflow.cabal and the bundled references/auxiliary.md.
 They set source version 0.7.0, summarize Auxiliary features and explain upgrade
