@@ -46,6 +46,13 @@ memory maintenance or require a version upgrade to resume.
   resources; current progress and temporary project facts belong in memory.
 - **First-parent history** preserves evolution and superseded durable states.
 
+Prefer English for newly authored GAW memory, skills, archive descriptions
+and checkpoint messages, regardless of the language of source materials
+or conversations. Preserve original wording where evidence fidelity,
+quotations, identifiers or technical meaning require it. Respect explicit
+user or project language requirements; do not rewrite existing history
+merely to enforce this preference.
+
 These are workflow roles, not required directory names or a closed CLI role
 set. Maintain current memory promptly when a substantive finding, decision,
 blocker or next action changes recovery; checkpoint selectively.
