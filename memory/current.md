@@ -2,22 +2,23 @@
 
 ## Current state and recovery
 
-Current task: the user proposes an English-first language preference in the
-bundled main skill and explicitly authorized staging. Only
-cabal/share/skills/git-agent-workflow/SKILL.md is staged, with 7 added lines and
-blob `fe3e6a9e0b78debf1548b673fd4d787df7db7217`. The preference covers newly
+The English-first language preference is committed by the user as `f47ba0b`.
+Its sole parent is `e283fde`; only
+cabal/share/skills/git-agent-workflow/SKILL.md changed, with the reviewed
+7-line addition and blob `fe3e6a9e0b78debf1548b673fd4d787df7db7217`.
+Main is now `f47ba0b`, with empty index and clean ordinary worktree.
+The adopted preference covers newly
 authored GAW memory, skills, archive descriptions and checkpoint messages;
 it preserves evidence/quotations/technical meaning, explicit user/project language
 requirements and historical conventions. It does not set ordinary project
 commit or conversation language. The full staged diff was reviewed, cached
 diff check passed, and no build/test was run. One commit is appropriate; no
-archive is warranted because project history will preserve this instruction.
-The actual staged message is in tmp/commit.md, subject
+archive is warranted because project history preserves this instruction.
+The verified user-created commit subject is
 `feat(skill): prefer English for newly authored GAW content`.
-Next: user commits, then verify sole parent `e283fde`, only this intended path
-changed with the reviewed blob, and clean index/worktree before associating the
-inspected commit in GAW. Until committed, this is a pending workflow change,
-not proof that installed skills or other projects already follow it.
+Its GAW association grounds the inspected committed instruction, not a build/test
+claim. This task is complete; await a new objective. A committed bundled skill
+does not prove installed skills or other projects have adopted the change.
 
 The bundled archive workflow refinement is complete as user commit `e283fde`.
 The user supplied the
@@ -30,7 +31,7 @@ unnecessary writes. Host authorization still applies; blocked work is reported.
 The verified commit has sole parent `db2f013`, changes only
 cabal/share/skills/git-agent-workflow/references/archive.md, and preserves the
 reviewed 14-line addition with blob `0a4e7a67b2c0f4ba9fad209c4a6aad42fbe80df2`.
-Main is now `e283fde`, with empty index and clean ordinary worktree.
+At that task's completion main was `e283fde`, with empty index and clean worktree.
 The full staged diff was reviewed and diff --cached --check passed before
 commit. No build/test was run for this workflow-only change; prior 0.7.0 build
 evidence below pertains to `db2f013`, not this later bundled-resource revision.
