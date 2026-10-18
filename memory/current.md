@@ -2,6 +2,23 @@
 
 ## Current state and recovery
 
+Current task: the user proposes an English-first language preference in the
+bundled main skill and explicitly authorized staging. Only
+cabal/share/skills/git-agent-workflow/SKILL.md is staged, with 7 added lines and
+blob `fe3e6a9e0b78debf1548b673fd4d787df7db7217`. The preference covers newly
+authored GAW memory, skills, archive descriptions and checkpoint messages;
+it preserves evidence/quotations/technical meaning, explicit user/project language
+requirements and historical conventions. It does not set ordinary project
+commit or conversation language. The full staged diff was reviewed, cached
+diff check passed, and no build/test was run. One commit is appropriate; no
+archive is warranted because project history will preserve this instruction.
+The actual staged message is in tmp/commit.md, subject
+`feat(skill): prefer English for newly authored GAW content`.
+Next: user commits, then verify sole parent `e283fde`, only this intended path
+changed with the reviewed blob, and clean index/worktree before associating the
+inspected commit in GAW. Until committed, this is a pending workflow change,
+not proof that installed skills or other projects already follow it.
+
 The bundled archive workflow refinement is complete as user commit `e283fde`.
 The user supplied the
 reacquisition-selection paragraph and requested that each acquisition lead to
