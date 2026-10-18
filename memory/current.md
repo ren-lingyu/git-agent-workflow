@@ -2,32 +2,34 @@
 
 ## Current state and recovery
 
-Current task: refine the bundled archive workflow. The user supplied the
+The bundled archive workflow refinement is complete as user commit `e283fde`.
+The user supplied the
 reacquisition-selection paragraph and requested that each acquisition lead to
 an actual retention decision and warranted memory/archive work, not just advice.
 The ordinary archive reference now reassesses newly obtained items regardless
 of past retention decisions, keeps the existing selection threshold, and requires
 distillation/capture when warranted without automatic duplicate snapshots or
 unnecessary writes. Host authorization still applies; blocked work is reported.
-The user explicitly authorized staging. Only
-cabal/share/skills/git-agent-workflow/references/archive.md is staged, with
-14 added lines and blob `0a4e7a67b2c0f4ba9fad209c4a6aad42fbe80df2`.
-The full staged diff was reviewed and diff --cached --check passed. No build/test
-was run; this changes bundled workflow instructions, not CLI implementation.
-The actual staged message is in tmp/commit.md, subject
+The verified commit has sole parent `db2f013`, changes only
+cabal/share/skills/git-agent-workflow/references/archive.md, and preserves the
+reviewed 14-line addition with blob `0a4e7a67b2c0f4ba9fad209c4a6aad42fbe80df2`.
+Main is now `e283fde`, with empty index and clean ordinary worktree.
+The full staged diff was reviewed and diff --cached --check passed before
+commit. No build/test was run for this workflow-only change; prior 0.7.0 build
+evidence below pertains to `db2f013`, not this later bundled-resource revision.
+The user-created commit subject is
 `feat(skill): complete retention decisions for each acquisition`.
-One commit is appropriate; no split or duplicate archive is needed. Next: user
-commits the candidate, then verify the expected sole parent `db2f013`, only the
-intended archive reference changed, its blob matches the reviewed candidate,
-and index/worktree are clean before grounding the new commit in GAW. Do not
-associate the pending workflow change with the old project baseline as if it
-already contained it. No project commit or publication was performed by agent.
+Its GAW association grounds the inspected committed workflow, not an unexecuted
+build/test claim. No pending action remains for this refinement, and no duplicate
+archive is needed: project history preserves the skill text, while this memory
+records the adopted rule. No project commit or publication was performed by agent.
 
 The 0.7.0 release preparation is committed by the user as `db2f013`:
 README.org, cabal/git-agent-workflow.cabal and the bundled references/auxiliary.md.
 They set source version 0.7.0, summarize Auxiliary features and explain upgrade
 availability, reserved names, diagnostics and interactive/shared-hook executable
-compatibility. No feature expansion or lock change. Ordinary HEAD is `db2f013`,
+compatibility. No feature expansion or lock change. At preparation completion,
+ordinary HEAD was `db2f013`,
 with verified sole parent `c0c9f01`, exact tested candidate tree
 `58f05784023951a6bb7cfc1c8719a5d508f79ac3`, empty index and clean worktree.
 The user-created commit subject is
