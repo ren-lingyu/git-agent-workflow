@@ -2,29 +2,72 @@
 
 ## Current state and recovery
 
-Active objective: implement the accepted knowledge establishment/consolidation
-skill extension from the new ignored root PLAN.md against clean `f47ba0b`.
-The user authorized implementation, including the minimum Cabal data-files
-changes needed to distribute two new references. N0 inventory is complete;
-N1 semantics are fixed by the accepted plan. Reuse current memory/reconstruction,
-archive, snapshot and exact-provenance rules. Add establishment and consolidation,
-make source-history retention independent from knowledge adoption and raw-evidence
-archival, and explain full ancestor-closure consequences. Formal and Auxiliary
-share single-source knowledge semantics; formal memory stays authoritative.
-No CLI/config/version changes, real Auxiliary creation, history rewrite, GC,
-external-project work or publication is authorized by this implementation.
+The knowledge establishment/consolidation skill extension is implemented and
+validated through N0–N5, but remains uncommitted and unstaged on ordinary main
+`f47ba0b`. The user authorized implementation and minimum Cabal data-files
+changes, not automatic ordinary-project staging. Six intended paths: the Cabal
+manifest, bundled SKILL.md, memory.md, auxiliary.md, and new establishment.md /
+consolidation.md. The final candidate full project tree is
+`a3059dd9ad0450bf741aa827758dd664a3b352b7`. No CLI, config, version, dependency lock or runtime
+implementation changed. Next: request explicit staging for those six paths,
+review the actual index and draft tmp/commit.md; user makes the native project
+commit. Verify its sole parent, complete tree and clean index/worktree before
+associating the tested implementation snapshot in GAW. Do not attach the old
+baseline as if it contained this implementation.
 
-The new PLAN is 18,819 bytes, SHA-256
+N0 reused current maintenance, retrospective evidence-horizon and selective
+archive/snapshot/exact-provenance rules; no parallel knowledge protocol was added.
+Establishment handles absent/insufficient formal or Auxiliary baselines and
+returns to ordinary maintenance. Consolidation compares different knowledge
+scopes, coordinates centralized/distributed/hybrid work and supports staged
+recoverable integration. Auxiliary shares single-source knowledge semantics,
+while formal memory remains authoritative. Knowledge adoption, evidence archival
+and Git source-history retention are independent. Inspected/adopted source
+knowledge does not require a source parent; selected source history needs exact
+relevance/evidence, independent retention value and an acceptable authorized
+ancestor closure. Without retention, formal memory must remain self-explanatory.
+Clean reconstruction uses independent supported history without reintroducing
+excluded ancestry; accept replacement knowledge before separately considering
+abandonment. Deletion, object erasure and GC remain distinct decisions.
+
+The ignored input PLAN.md was 18,819 bytes, SHA-256
 `bd0b78eed100e83ea3611e8accba1e9cce4376ff05ef9e682bb256f84f732c36`.
-It differs from archived Auxiliary plans and has independent design/acceptance
-value, so preserve its exact original Chinese bytes in a fresh immutable project
-archive snapshot. Capture HEAD is context, not ignored-document provenance.
-Next: archive that input separately, then implement N2, N3, N4 and N5 in order,
-checking the preceding node's actual result. Keep progress in memory promptly,
-checkpoint selectively, and propose one coherent final project commit rather
-than mandatory per-node commits. Ask for ordinary-project staging only after
-review and validation. Clean-reconstruction acceptance uses an abstract tabletop
-case, as the user selected; no actual NixOS repository evidence is claimed.
+Its exact Chinese bytes and manifest are preserved immutably at
+`archive/2026-10-19T00-40-35Z--f47ba0b/`. The archive-only checkpoint associates
+checked capture HEAD as context, not the document's original creation provenance.
+The user selected an abstract clean-reconstruction tabletop case; no external
+NixOS repository was read and no real source creation/deletion/rewrite/GC or
+other-project action occurred.
+
+Validation passed against the uncommitted source snapshot under
+`tmp/knowledge-workflow-validation-20261019T004341Z/source`:
+21 local Markdown path/anchor links, exactly 7 Cabal-declared skill documents,
+metadata validation using skill-creator quick_validate.py, and diff whitespace
+review. All 12 archived-PLAN scenarios were exercised as tabletop reasoning:
+ordinary development, empty formal single/multiple sources, cross-session source,
+Auxiliary continuity, coordinated multiple agents, conflicts, final-only useful
+knowledge, worthwhile source history, excluded old archive/clean reconstruction,
+source retirement after integration, and repeated acquisition. No guessed parents,
+forced archives, mandatory Auxiliary or false historical runtime claims emerged.
+This is documented reasoning, not independent-agent or real NixOS execution.
+
+The exact isolated command was `timeout 120s nix flake check
+--no-write-lock-file -L path:/home/lingyu/Projects/git-agent-workflow/tmp/knowledge-workflow-validation-20261019T004341Z/source`.
+It passed with observed fresh compilation and execution of both existing suites,
+13 help resources and 7 skill resources through sdist/Cabal install/Nix exposure.
+Derivation: `/nix/store/6bki60lcghfvh132hmhbczl4q7gx6m61-git-agent-workflow-0.7.0.drv`.
+Output: `/nix/store/9aa0qd5vy5sz93bqdj8m3g9k5yx2gx3n-git-agent-workflow-0.7.0`.
+Actual Nix-exposed skill root:
+`/nix/store/9aa0qd5vy5sz93bqdj8m3g9k5yx2gx3n-git-agent-workflow-0.7.0/share/skills/git-agent-workflow/git-agent-workflow`.
+All 66 copied build inputs still match the original digests and isolated bytes;
+all 7 installed documents match the candidate. An extra manual comparison first
+assumed one fewer installed directory level, failed to locate SKILL.md, then
+read-only discovery supplied the real path and the comparison passed. No rebuild
+or packaging change was needed for that assumption. Existing Cabal warnings are
+nonfatal; non-host aarch64 Linux/Darwin checks were omitted. Tabletop details and
+input/result digests remain in acceptance.md, inputs.json and results.json in
+that tmp validation directory. They are temporary review aids; durable conclusions
+and boundaries are retained here, without another raw-evidence archive.
 
 The English-first language preference is committed by the user as `f47ba0b`.
 Its sole parent is `e283fde`; only
