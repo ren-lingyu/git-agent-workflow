@@ -10,6 +10,16 @@ Distill work into information that could help a later agent act: the current obj
 
 Maintain current memory as substantive work evolves, not only during retrospective consolidation or session handoff. When a verified finding, adopted decision, blocker, objective, current state, or next action materially changes what a future agent should resume from, update the declared workspace promptly. This does not require a checkpoint for every update; create one only when the resulting state has independent recovery value.
 
+When knowledge is absent or materially insufficient, use
+[establishment](establishment.md) to organize its initial recovery; routine
+updates do not require that full workflow. Consequential judgments about
+establishment, consolidation or maintenance can themselves deserve memory:
+retain their reasons, evidence limits and next action when they affect recovery,
+without turning every retention decision into a progress log.
+Newly discovered earlier material in a formal or Auxiliary history with a
+sufficient baseline uses this maintenance/reconstruction workflow; its age alone
+does not require establishment or a new GAW history.
+
 ## Track motivation and related work
 
 At the start of substantive work, identify its motivation: why it is needed,

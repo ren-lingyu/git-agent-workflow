@@ -57,6 +57,24 @@ These are workflow roles, not required directory names or a closed CLI role
 set. Maintain current memory promptly when a substantive finding, decision,
 blocker or next action changes recovery; checkpoint selectively.
 
+Persist knowledge that supports continued work. Screen and, where needed,
+sanitize content before writing GAW target files, staging
+(which already writes Git objects), saving checkpoint messages or associating
+external history. This applies equally to formal and Auxiliary memory, archives
+and project skills. Preserve useful technical facts without copying unnecessary
+credentials, tokens, sensitive personal information, unapproved private content
+or machine-environment details merely because they occur in a source.
+
+Review the material actually being persisted and the relevant ancestor closure
+of proposed additional parents, especially newly introduced history; do not
+default to reading every raw log or reauditing the entire repository. Removing
+a sensitive file in a later tree does not remove earlier Git objects, and a
+clean source tip alone does not establish a safe history. If retention cannot
+be made safe within the applicable permissions, stop the affected write or
+association and report the limitation. Supported knowledge can still be distilled
+without linking unsafe history. Later deletion, reconstruction or GC is not a
+normal sanitization strategy; do not automatically rewrite or clean history.
+
 The complete workspace snapshot must explain the durable state at that point.
 Its references, terms and conventions must agree with each other, without
 requiring a later checkpoint's layout or explanation. Individual files need
@@ -74,12 +92,19 @@ Use workspace content to explain goals, evidence, causal relationships, and resu
 
 ## Load workflow details when needed
 
-- For substantive current-memory updates, retrospective reconstruction or
-  handoff, read [the memory workflow](references/memory.md).
+- For ordinary current-memory maintenance, single-source historical reconstruction
+  or handoff, read [the memory workflow](references/memory.md).
+- For an absent or materially insufficient knowledge baseline, in formal GAW or
+  Auxiliary, read [establishment](references/establishment.md); it reuses the
+  memory workflow's reconstruction rules.
+- For comparing and integrating different knowledge scopes into formal memory,
+  read [consolidation](references/consolidation.md). With no substantive formal
+  baseline, combine it with establishment; Auxiliary is not a required step.
 - For selection, faithful capture, description and verification of historical
   material, read [the archive workflow](references/archive.md).
-- For independent source histories, cross-session/agent integration, Auxiliary
-  lifecycle checks and source recovery, read [the Auxiliary workflow](references/auxiliary.md).
+- For independent Auxiliary source histories, their layout/lifecycle, optional
+  source-history associations or retained-source recovery,
+  read [the Auxiliary workflow](references/auxiliary.md).
 - For creating, modifying, referencing, renaming or retiring project skills,
   read [the project-skill workflow](references/skills.md).
 
@@ -91,6 +116,19 @@ constraints and do not create additional execution permissions.
 Checkpoint a state that a future agent may need to restore and explain: a consequential finding, decision, phase transition, or handoff. A session boundary, small edit, or each new project commit does not by itself require a GAW commit. If no new durable information emerged, make no checkpoint.
 
 Choose additional external parents for the exact project or Auxiliary source snapshots the relevant work, observation, test, or comparison was actually performed against. Zero parents are normal for planning, cleanup, or handoff unrelated to a specific code snapshot. Use one or several only when each has a real provenance role; do not attach the latest branch tip, a future goal commit, or every intermediate commit by habit. An unchanged GAW tree can still acquire a meaningful project-parent association.
+
+For source-history associations, actual inspection or knowledge adoption alone
+is insufficient. Separately assess knowledge integration, raw-evidence archival
+and Git history retention. An additional parent retains its complete ancestor
+closure: confirm the exact relevant source state, the value of recording its
+association with formal knowledge evolution, and an acceptable authorized
+retention boundary. Explanation, audit, provenance review or recovery can justify
+an association; an extra long-term recovery purpose is not required. Follow
+[source association guidance](references/auxiliary.md)
+without treating associations as mandatory or rewriting earlier checkpoints.
+Without source history retention, formal memory must explain the adopted
+knowledge and limits without depending on that history remaining available. Existing exact-snapshot
+project-parent rules still apply; these judgments add no CLI parent roles or IDs.
 
 Keep project-parent associations within a checkpoint as homogeneous in meaning as practical. Do not interpret additional-parent positions as different business roles such as based-on or resulting state. For associations with project states from different phases, prefer separate checkpoints when each state has independent recovery value; this does not require one project parent per checkpoint or one checkpoint per project commit. Homogeneity guides agent organization, not a new protocol invariant requiring the CLI to interpret natural language. Every selected parent still needs the exact-snapshot evidence described here.
 

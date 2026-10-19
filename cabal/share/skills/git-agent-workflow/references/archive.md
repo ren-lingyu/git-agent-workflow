@@ -15,12 +15,20 @@ tool, manifest parser, schema, validator or new CLI is required.
 
 ## Select material that deserves retention
 
-Preserve raw material when losing it would materially impair interpretation,
-reproduction, audit or handoff of a result, decision, failure or migration.
-First consider whether project history, maintained tests, current memory or
-existing archives already preserve what is needed. Retired documents and
-temporary evidence may be useful; age, a filename or a mention alone does not
-make an artifact worth archiving.
+Preserve bounded material with independent historical evidence value when its
+loss would materially impair the intended interpretation, reproduction, audit
+or recovery. First consider whether distilled knowledge, project history,
+maintained tests or existing archives already suffice. A consequential design,
+superseded proposal or isolated experiment may merit retention, but its type,
+age, filename or mention alone does not establish that value.
+
+Choose the smallest sufficient evidence set for the purpose: an experiment may
+need its conditions/method, necessary inputs, key observations or limited output,
+and verification limits, rather than its complete environment and logs. Default
+against retaining full conversations, agent rollouts, routine tool/command logs,
+large build/test output, temporary directories or material reliably recoverable
+from project history. Exceptional independent evidence value can justify a
+bounded selection with explicit reasons, permissions and sanitization limits.
 
 Do not assume that material obtained again from the same path, URL or
 acquisition procedure matches an earlier observation. Reassess each newly
@@ -38,17 +46,23 @@ if required action is blocked, report what remains pending and why.
 
 State the selection scope and reason, and identify the actual sources. A
 material reference from another selected document supports inclusion, but
-independent evidence value can also justify an artifact. Do not archive whole
-conversations, tool logs or temporary directories by default. Obtain any
-required source-read or capture authorization before broadening the selection.
+independent evidence value can also justify an artifact. Obtain required
+source-read or capture authorization before broadening the selection.
+Formal and Auxiliary use the same threshold; creating a source history does
+not itself justify archiving its inputs. Apply the main skill's screening rules
+before writing a capture or staging it, not as a later cleanup step.
 
 ## Capture deliberately and faithfully
 
 Inspect selected paths, file types and sizes before reading or copying. Check
 source and destination roots and symbolic links; do not follow a link across
 an authorized boundary. Respect sensitive-content policies. Prefer faithful
-original bytes when authorized. If sanitization is necessary, identify the
-saved material as a sanitized derivative rather than a byte-exact original;
+original bytes only when their retention is both authorized and appropriate
+under the selection and sensitive-content screening rules.
+If sanitization is necessary, identify the saved material as a sanitized
+derivative rather than a byte-exact original; record the transformation's
+scope and evidentiary limits.
+Reassess selection if sanitization destroys the necessary evidence value;
 do not retain secrets merely to claim fidelity.
 
 For binary, large or costly material, assess format, size, retention value and

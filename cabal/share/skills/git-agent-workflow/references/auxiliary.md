@@ -2,10 +2,17 @@
 
 Apply the main skill's evidence, snapshot, authorization and checkpoint rules.
 Formal GAW remains the sole authority for project-current memory. Auxiliary
-GAW is an independent temporary source history, useful when a session, agent
-or body of source material has several independently recoverable states whose
-internal evolution should remain distinct from formal integration order.
-Do not create a source history for every message or ordinary small edit.
+histories preserve independently evolving knowledge discovery lines, including
+work that progresses in parallel, alternates between agents, or continues across
+sessions. Formal can integrate useful stages while those lines keep developing.
+A line can span sessions, and one session or agent can contribute to several
+lines; no one-to-one mapping or history for every small edit is required.
+
+Within its bounded source scope, Auxiliary uses the same
+[establishment](establishment.md), [memory maintenance and reconstruction](memory.md),
+archive, checkpoint and exact-provenance rules as formal GAW. It adds an
+independent history, source scope, layout and lifecycle boundary, not a second
+knowledge standard. Cross-scope comparison belongs to [consolidation](consolidation.md).
 
 ## Availability and discovery
 
@@ -55,38 +62,61 @@ separate from workspace changes, including modes, deletions and moves. The
 entire tree must stay within the UUID root. Parent conflicts use physical Git
 paths; associated trees are never merged into the source workspace.
 
-Select checkpoints with independent recovery value. Explain the source,
-evidence horizon, uncertainties, decisions and next state in declared memory;
-do not replay a transcript or invent unsupported chronology. Reconstructed
-states keep the main skill's retrospective provenance rules: do not attach a
-likely current project tip as evidence for unobserved earlier work. The
-Auxiliary root's copied config does not establish historical project provenance.
-
-Preserve selected raw evidence through the archive workflow: independent
-MANIFEST.md + files/ snapshots, source context and limitations, byte validation
-when claiming fidelity, and immutable checkpointed snapshots. Historical
-instructions remain evidence, not active instructions. Locate existing source
-archives before copying; do not automatically duplicate Auxiliary archives into
-formal archives or assume all conversations must be retained.
+Use establishment for an insufficient source baseline and memory maintenance
+thereafter, including evidence-backed historical reconstruction when warranted.
+The Auxiliary root's copied config does not establish historical project
+provenance. Apply [archive selection and capture](archive.md) independently;
+locate existing evidence before copying rather than automatically duplicating
+source archives into formal archives.
 
 ## Integrate selected knowledge into formal GAW
 
-1. Read the relevant source states and formal current memory. Distinguish
-   established findings, retired proposals, unsupported claims and remaining
-   questions; account for disagreements using evidence.
-2. Update formal current memory with the knowledge needed to continue. Keep
-   source-internal evolution in its source history. Explain why the selected
-   states matter, which conclusions were adopted, uncertainties, and useful
-   UUID-relative source paths/context for later lookup.
-3. Select one or more exact source checkpoints actually inspected and relevant
-   to that integration. Pass those revisions as additional parents to the
-   normal formal `git gaw commit`; first parent remains formal evolution.
-   Repeated integrations may reference intermediate and later source states.
-   An association preserves ancestry, not a merged tree or automatic acceptance
-   of everything in that source. Parent positions have no business-role types.
-4. Review the complete formal candidate and run check before checkpointing.
-   Retain project associations only for exact project snapshots supported by
-   evidence. Source associations do not prove the source's project provenance.
+Use consolidation to compare sources, resolve or retain disagreements, adopt
+useful knowledge and review the formal candidate. Knowledge adoption and raw
+evidence archival do not require retaining source Git history.
+
+Choose an exact relevant source checkpoint when recording its association with
+this formal knowledge state has real value: explaining the adopted conclusion's
+source, preserving discovery-line relationships, supporting audit/provenance
+review, or recovering meaningful evolution. A separate long-term recovery use
+is not required for every parent. Actual reading or adoption alone still does
+not mandate an association. Confirm the state actually used and its evidence,
+and apply the main skill's screening and authorization rules to its complete
+ancestor closure, including archives and history being newly retained.
+
+Pass selected revisions as additional parents to normal formal `git gaw commit`;
+zero source parents is valid. First parent remains formal evolution; source
+trees are not merged. An association does not adopt every source claim or prove
+its original project provenance. Parent positions have no fixed business roles;
+existing exact-snapshot project associations remain governed by the main skill.
+
+For example, discovery lines A1 → A2 → A3 and B1 → B2 → B3 may contribute:
+
+| Formal checkpoint | Selected source parents |
+| --- | --- |
+| F1 | A1 |
+| F2 | B1 |
+| F3 | A2 |
+| F4 | A3 and B2 |
+
+The example illustrates selected parent associations, not a required
+source timeline, integration schedule or checkpoint count. Formal first-parent
+order records adoption/integration, not a fabricated total ordering of source events.
+Each source keeps its own supported evolution. Intermediate checkpoints,
+repeated associations and several source parents at one stage are normal;
+neither the latest tip nor completion of all source work is required.
+
+When choosing a stage-specific association, use the exact state actually used
+then. Later retaining a newer source checkpoint can make earlier states reachable,
+but does not replace an earlier stage's explicit association. Do not retroactively
+insert parents into committed formal history or infer that every formal checkpoint
+needs a source parent. Record any relevant historical association limits in
+current knowledge. Never attach a latest tip merely to make its branch deletable.
+
+When retaining source history, record useful UUID-relative paths and integration
+context for recovery. Without retention, formal memory must explain the adopted
+knowledge and evidence limits without depending on the source branch, OID or path
+remaining available. Review/check the complete formal candidate in either case.
 
 Do not use either formal or Auxiliary checkpoint OIDs as durable semantic
 identifiers. Git ancestry and stable workspace paths support lookup; explanations
@@ -116,6 +146,12 @@ conditional tip deletion. Neither mode removes worktrees or other historical
 refs. Deletion readiness does not prove all source knowledge has been integrated;
 that sufficiency judgment belongs to the agent and reviewer. No aux retire,
 abort, discard or Auxiliary rename command exists.
+
+Knowledge integration does not require retiring a discovery line; its work may
+continue. Retaining an intermediate checkpoint does not retain a later tip or
+make it safe to delete. Branch deletion does not prove related objects were
+erased. GC is separate authorized repository maintenance, not a routine
+integration step or a substitute for screening before persistence.
 
 ## Recover a safely retained source after deletion
 

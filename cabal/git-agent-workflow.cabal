@@ -9,6 +9,8 @@ extra-source-files:
 data-files:
     share/skills/git-agent-workflow/SKILL.md
     share/skills/git-agent-workflow/references/auxiliary.md
+    share/skills/git-agent-workflow/references/establishment.md
+    share/skills/git-agent-workflow/references/consolidation.md
     share/skills/git-agent-workflow/references/memory.md
     share/skills/git-agent-workflow/references/archive.md
     share/skills/git-agent-workflow/references/skills.md
