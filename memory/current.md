@@ -3,7 +3,7 @@
 ## Current state and recovery
 
 Active task: implement the user's project memory entry-point guidance in only
-bundled SKILL.md and references/skills.md. The candidate is complete, unstaged,
+bundled SKILL.md and references/skills.md. The user has staged the complete two-file candidate,
 on the previously committed history-semantics revision. Formal's explicit :skills
 role now recommends a minimal project-level memory entry point, preferring an
 existing suitable skill. Navigation/interpretation alone is sufficient; no
@@ -27,8 +27,14 @@ worktree and failed for absent .gaw/config; checking the actual GAW worktree the
 passed. It was an invocation-location error, not evidence of damaged memory.
 This implementation result merits a handoff checkpoint; merely reading the new
 guidance would not. Distilled decisions and source changes suffice, so no raw
-request archive. Next: user reviews the two-file candidate; project staging needs
-explicit authorization. No project parent represents these uncommitted edits.
+request archive. Complete staged diff review and cached whitespace check passed;
+there are no unstaged project changes. The staged reference includes minor line
+wrapping of the ordinary skill criteria, with the same meaning. One coherent
+commit is appropriate. Final message is tmp/commit.md, subject
+feat(skill): guide project memory entry-point skills, with Refs: #5. Next: the
+user creates the ordinary commit, then inspect its exact content and parentage
+before associating the committed change. No project parent represents these
+uncommitted edits.
 
 The Git history/source-record semantics revision is complete as the user commit
 `fix(skill): clarify Git history and source recovery semantics`, with Refs: #5.
