@@ -7,10 +7,32 @@ not assumed directory names or a fixed relation between Git worktrees.
 
 ## Decide whether a skill is appropriate
 
-Reuse an existing suitable skill before creating another. A stable recurring
-procedure, non-obvious constraint or useful routing/resource boundary can
-justify a project skill. A one-time task, current commit, release status,
-temporary TODO or conversation chronology normally belongs in memory instead.
+When formal GAW declares workspace entries under the `:skills` role, prefer
+maintaining at least one project-level skill as an entry point to the project's
+GAW memory, even if it is otherwise minimal. Do not infer this role from a
+directory name or impose the convention without an explicit role declaration.
+
+This entry-point skill supports knowledge navigation and interpretation; it
+need not provide a separate reusable engineering procedure. Describe where to
+begin reading, the relevant memory organization, useful reading order and
+project-specific conventions. Reference existing memory rather than duplicating
+its contents or maintaining static indexes derived from Git history. No fixed
+skill name or memory file layout is required.
+
+Prefer updating an existing suitable entry-point skill over creating another.
+When absent, establish a minimal useful entry point within the declared workspace
+when authorized. Maintain it when the project's memory organization or
+interpretation changes, not after every memory update or session. Consulting
+this guidance alone does not warrant a checkpoint.
+
+An Auxiliary's inherited `:skills` role does not independently require another
+entry-point skill.
+
+For other project skills, reuse an existing suitable skill before creating
+another. A stable recurring procedure, non-obvious constraint or useful
+routing/resource boundary can justify a project skill.
+A one-time task, current commit, release status, temporary TODO or conversation
+chronology normally belongs in memory instead.
 Modify a skill when a reusable workflow changes, not merely because the
 project's current state changed.
 

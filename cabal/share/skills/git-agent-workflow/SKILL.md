@@ -36,6 +36,11 @@ warnings are non-blocking metadata diagnostics; an unsupported version needs
 a compatible CLI, not a protection bypass. Do not change config as routine
 memory maintenance or require a version upgrade to resume.
 
+When formal GAW declares workspace entries under the `:skills` role, prefer
+maintaining a project-level skill as an entry point for reading and interpreting
+the project's GAW memory. Follow [the project-skill workflow](references/skills.md)
+for this special case.
+
 ## Shared content and snapshot constraints
 
 - **Memory** holds current project knowledge, goals, decisions, verified facts,
