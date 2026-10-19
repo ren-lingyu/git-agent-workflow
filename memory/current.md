@@ -2,16 +2,40 @@
 
 ## Current state and recovery
 
-Active task: the user-authorized revised N0–N5 skill implementation is complete
-and validated, but its seven ordinary project paths remain unstaged on main
+Active task: revised N0–N5 implementation and the user-requested final textual
+refinement are complete. Its seven ordinary project paths remain unstaged on main
 `f47ba0b05cd034e55c37bf01641d678941964f43`. No automatic ordinary staging was
 authorized. Request explicit staging of the Cabal manifest, bundled SKILL.md,
 and references memory.md, archive.md, auxiliary.md, establishment.md and
 consolidation.md. The last two references are new and both are Cabal data-files.
-The tested full candidate tree, calculated without writing Git objects, is
-`1fd573b5c8e264197c58f29be396866d0e06f3a1`.
+Before the final textual refinement, the fully Nix-tested candidate tree was
+`1fd573b5c8e264197c58f29be396866d0e06f3a1`. It no longer identifies current bytes.
 No CLI/config/version/dependency-lock/runtime changes, real Auxiliary lifecycle,
 GC/history rewrite, installation/publication or cross-project actions occurred.
+
+Final patch decision: archive.md now prefers original bytes only when their
+retention is authorized and appropriate under selection and sensitive-content
+screening. Sanitized-derivative labeling, transformation/evidence limits, byte
+comparison and immutable snapshots are preserved. Auxiliary retains A1–A3,
+B1–B3 and F1–F4, explicitly saying these parent associations prescribe no source
+timeline, integration schedule or checkpoint count. Main SKILL.md is unchanged:
+its five shared source-association constraints remain clear, and optional
+shortening offered insufficient benefit. No new archive/audit protocol or design
+work was introduced. The request's durable decisions are distilled here and in
+the patch; the complete conversation has no independent archival need.
+
+Current final-patch validation: reviewed the full tracked diff and compared all
+66 prior build inputs with the tested isolated snapshot; only archive.md and
+auxiliary.md differ, by these small textual changes. The two new references and
+main Skill are unchanged. Existing package.nix resource-checker self-test passed
+for all 7 skill documents, skill-creator metadata validation passed, all 21 local
+Markdown links/anchors resolve, and git diff --check passed. No new tests/tools
+were added. The checker was extracted unchanged to a task-owned temporary
+folder under ignored tmp/ and its temporary outputs were removed. No network
+or build was used in this final patch. Prior Nix success below applies to the
+pre-refinement candidate, not a fresh build of current bytes. No substantive
+blocker was found; proceed to final engineering acceptance and explicit staging,
+without reopening design. Ordinary index remains empty.
 
 Authority: PLAN.md lines 550 onward supersede conflicting earlier N0–N5 guidance
 and acceptance. The user adopted three clarifications: screen/sanitize before
@@ -35,9 +59,9 @@ criteria and Cabal resources. Original memory reconstruction text is unchanged.
 Existing language, repeated-acquisition/prompt execution, fidelity, immutable
 snapshot, exact-provenance and lifecycle rules remain in force.
 
-Validation used the uncommitted corrected snapshot under
+Pre-refinement Nix validation used the uncommitted corrected snapshot under
 `tmp/knowledge-workflow-revision-20261019T012804Z/retry-source`.
-All 66 build inputs still match its recorded SHA-256 values and current files;
+At that validation, all 66 build inputs matched its recorded SHA-256 values and worktree;
 21 local links/anchors resolve, all 7 skill documents match Cabal declarations,
 skill-creator quick_validate passed, and diff whitespace review passed.
 The 24 revised scenarios, three adopted clarifications and one positive
@@ -57,7 +81,7 @@ and 7 skill resources through sdist/Cabal install/Nix exposure. Derivation:
 `/nix/store/1jvfkrkzb8n62fy8y3g0chksc2ygmskz-git-agent-workflow-0.7.0.drv`.
 Output: `/nix/store/q1fk16mpnj9cdxzrv3kql4famdmg1ng7-git-agent-workflow-0.7.0`;
 actual skill root is its `share/skills/git-agent-workflow/git-agent-workflow`.
-All seven installed documents match the candidate. Non-host aarch64 Linux/Darwin
+All seven installed documents matched that pre-refinement candidate. Non-host aarch64 Linux/Darwin
 checks were omitted; existing Cabal metadata/bounds/PATH warnings are nonfatal.
 retry-inputs.json/results.json identify the candidate and checks. These mechanical
 reports are temporary review aids; durable conclusions belong here, without an
