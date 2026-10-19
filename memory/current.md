@@ -2,101 +2,85 @@
 
 ## Current state and recovery
 
-The knowledge workflow candidate now requires revision before staging. The user
-appended revision guidance at PLAN.md line 550 onward and adopted all three
-review clarifications: (1) screen/sanitize before writing target content or
-staging, not merely before commit; git add already persists objects; (2) the
-new revision guidance overrides conflicting earlier N0–N5 requirements and
-acceptance conclusions; (3) when a stage-specific source association is chosen,
-use the exact state actually used, but never retroactively add parents to old
-checkpoints or require a source parent for every formal checkpoint.
+Active task: the user-authorized revised N0–N5 skill implementation is complete
+and validated, but its seven ordinary project paths remain unstaged on main
+`f47ba0b05cd034e55c37bf01641d678941964f43`. No automatic ordinary staging was
+authorized. Request explicit staging of the Cabal manifest, bundled SKILL.md,
+and references memory.md, archive.md, auxiliary.md, establishment.md and
+consolidation.md. The last two references are new and both are Cabal data-files.
+The tested full candidate tree, calculated without writing Git objects, is
+`1fd573b5c8e264197c58f29be396866d0e06f3a1`.
+No CLI/config/version/dependency-lock/runtime changes, real Auxiliary lifecycle,
+GC/history rewrite, installation/publication or cross-project actions occurred.
 
-The revision retains establishment/consolidation and shared single-source rules,
-but removes the dedicated clean-reconstruction workflow/routes, recognizes
-source-association/explanation/audit value beyond narrow long-term recovery,
-emphasizes interleaved ongoing discovery lines, strengthens knowledge-first
-bounded archival and preventive sanitization, and narrows establishment to
-missing/insufficient baselines. The revised 24-case matrix is not covered by the
-old candidate's 12 tabletop passes. No revised-source implementation, tests or
-ordinary staging were performed during this review/adoption. Root PLAN.md text
-was not edited to insert the three clarifications; these adopted decisions are
-preserved here alongside the original revision input.
+Authority: PLAN.md lines 550 onward supersede conflicting earlier N0–N5 guidance
+and acceptance. The user adopted three clarifications: screen/sanitize before
+target writes or staging (git add already persists objects); treat the revision
+as authoritative; and use the exact actually examined state when a stage-specific
+source association is selected, without retrospectively inserting parents or
+requiring a source parent at every Formal checkpoint.
 
-The expanded ignored PLAN.md is 54,803 bytes, SHA-256
-`db9e790e90e1481e88a32250452edbb83f6e2dec0423b66ee676f9b087c2483b`.
-It merits a fresh immutable archive: the earlier 18,819-byte snapshot lacks the
-new rationale and acceptance guidance. Preserve both, distinguishing the raw
-document from these subsequently adopted clarifications. Next: revise the
-existing diff locally against the new guidance and clarifications, re-run its
-applicable acceptance, then request staging for the actual revised file scope.
-Do not proceed with the former six-path staging request as if the old candidate
-still met the current requirements.
+The revised implementation retains establishment/consolidation and single-source
+knowledge rules. N1 adds first-persistence screening across Formal/Auxiliary
+memory, archives, skills, checkpoint messages and retained ancestry, and narrows
+archives to bounded independent evidence and minimal sufficient capture. N2–N3
+support ongoing discovery lines and interleaved intermediate integration;
+association/explanation/audit/provenance value need not pass a separate long-term
+recovery prerequisite. Knowledge adoption, evidence archival and history retention
+remain independent. The dedicated clean-reconstruction section/routes are removed;
+GC/retirement stays a separate-authority boundary. N4 limits establishment to an
+absent/materially insufficient target baseline; later-found earlier material with
+a sufficient baseline uses memory reconstruction. N5 aligns routing, source-parent
+criteria and Cabal resources. Original memory reconstruction text is unchanged.
+Existing language, repeated-acquisition/prompt execution, fidelity, immutable
+snapshot, exact-provenance and lifecycle rules remain in force.
 
-The prior knowledge establishment/consolidation candidate was implemented and
-validated through the earlier N0–N5, and remains uncommitted/unstaged on main
-`f47ba0b`. The user authorized implementation and minimum Cabal data-files
-changes, not automatic ordinary-project staging. Six intended paths: the Cabal
-manifest, bundled SKILL.md, memory.md, auxiliary.md, and new establishment.md /
-consolidation.md. The final candidate full project tree is
-`a3059dd9ad0450bf741aa827758dd664a3b352b7`. No CLI, config, version, dependency lock or runtime
-implementation changed. That candidate/tree and its checks below describe the
-superseded revision only, not completion against the new guidance. A future
-revised commit requires its own candidate identity and actual validation before
-being associated in GAW; do not attach the baseline as implemented content.
+Validation used the uncommitted corrected snapshot under
+`tmp/knowledge-workflow-revision-20261019T012804Z/retry-source`.
+All 66 build inputs still match its recorded SHA-256 values and current files;
+21 local links/anchors resolve, all 7 skill documents match Cabal declarations,
+skill-creator quick_validate passed, and diff whitespace review passed.
+The 24 revised scenarios, three adopted clarifications and one positive
+association-value case are consistent in tabletop reasoning, documented in
+acceptance.md in that validation directory. This is not independent-agent,
+real Auxiliary lifecycle or another-project execution.
 
-The earlier N0 reused current maintenance, retrospective evidence-horizon and selective
-archive/snapshot/exact-provenance rules; no parallel knowledge protocol was added.
-Establishment handles absent/insufficient formal or Auxiliary baselines and
-returns to ordinary maintenance. Consolidation compares different knowledge
-scopes, coordinates centralized/distributed/hybrid work and supports staged
-recoverable integration. Auxiliary shares single-source knowledge semantics,
-while formal memory remains authoritative. Knowledge adoption, evidence archival
-and Git source-history retention are independent. Inspected/adopted source
-knowledge does not require a source parent; selected source history needs exact
-relevance/evidence, independent retention value and an acceptable authorized
-ancestor closure. Without retention, formal memory must remain self-explanatory.
-Clean reconstruction uses independent supported history without reintroducing
-excluded ancestry; accept replacement knowledge before separately considering
-abandonment. Deletion, object erasure and GC remain distinct decisions.
+The first revised Nix attempt passed both runtime suites but failed the existing
+resource checker because its top-level Markdown link included a fragment that
+the checker treated as part of a filename. Only that SKILL.md link was changed
+to a file link; no checker/runtime change. The original failed snapshot/inputs
+remain separate from the corrected retry. The corrected command passed:
+`timeout 120s nix flake check --no-write-lock-file -L
+path:/home/lingyu/Projects/git-agent-workflow/tmp/knowledge-workflow-revision-20261019T012804Z/retry-source`.
+Observed fresh compilation and both runtime suites passed, along with 13 help
+and 7 skill resources through sdist/Cabal install/Nix exposure. Derivation:
+`/nix/store/1jvfkrkzb8n62fy8y3g0chksc2ygmskz-git-agent-workflow-0.7.0.drv`.
+Output: `/nix/store/q1fk16mpnj9cdxzrv3kql4famdmg1ng7-git-agent-workflow-0.7.0`;
+actual skill root is its `share/skills/git-agent-workflow/git-agent-workflow`.
+All seven installed documents match the candidate. Non-host aarch64 Linux/Darwin
+checks were omitted; existing Cabal metadata/bounds/PATH warnings are nonfatal.
+retry-inputs.json/results.json identify the candidate and checks. These mechanical
+reports are temporary review aids; durable conclusions belong here, without an
+additional raw-output archive. Baseline HEAD is not the implemented/tested source.
 
-The ignored input PLAN.md was 18,819 bytes, SHA-256
-`bd0b78eed100e83ea3611e8accba1e9cce4376ff05ef9e682bb256f84f732c36`.
-Its exact Chinese bytes and manifest are preserved immutably at
-`archive/2026-10-19T00-40-35Z--f47ba0b/`. The archive-only checkpoint associates
-checked capture HEAD as context, not the document's original creation provenance.
-The user selected an abstract clean-reconstruction tabletop case; no external
-NixOS repository was read and no real source creation/deletion/rewrite/GC or
-other-project action occurred.
+Archive decision: the revised ignored PLAN.md (54,803 bytes, SHA-256
+`db9e790e90e1481e88a32250452edbb83f6e2dec0423b66ee676f9b087c2483b`)
+is already preserved as exact Chinese evidence at
+`archive/2026-10-19T01-21-55Z--f47ba0b/`; its input is unchanged, so no duplicate
+archive. It includes old and revised guidance; the three adopted clarifications
+are recorded in memory, not inserted into the raw document. The earlier 18,819-byte
+PLAN snapshot remains immutable at `archive/2026-10-19T00-40-35Z--f47ba0b/`.
+Capture HEAD was context, not original document provenance or revised implementation.
+Prior candidate `a3059dd9ad0450bf741aa827758dd664a3b352b7` and its 12-case
+acceptance are superseded historical evidence; do not reuse their success as
+acceptance of this revision or restore its clean-reconstruction requirement.
 
-Validation passed against the uncommitted source snapshot under
-`tmp/knowledge-workflow-validation-20261019T004341Z/source`:
-21 local Markdown path/anchor links, exactly 7 Cabal-declared skill documents,
-metadata validation using skill-creator quick_validate.py, and diff whitespace
-review. All 12 archived-PLAN scenarios were exercised as tabletop reasoning:
-ordinary development, empty formal single/multiple sources, cross-session source,
-Auxiliary continuity, coordinated multiple agents, conflicts, final-only useful
-knowledge, worthwhile source history, excluded old archive/clean reconstruction,
-source retirement after integration, and repeated acquisition. No guessed parents,
-forced archives, mandatory Auxiliary or false historical runtime claims emerged.
-This is documented reasoning, not independent-agent or real NixOS execution.
-
-The exact isolated command was `timeout 120s nix flake check
---no-write-lock-file -L path:/home/lingyu/Projects/git-agent-workflow/tmp/knowledge-workflow-validation-20261019T004341Z/source`.
-It passed with observed fresh compilation and execution of both existing suites,
-13 help resources and 7 skill resources through sdist/Cabal install/Nix exposure.
-Derivation: `/nix/store/6bki60lcghfvh132hmhbczl4q7gx6m61-git-agent-workflow-0.7.0.drv`.
-Output: `/nix/store/9aa0qd5vy5sz93bqdj8m3g9k5yx2gx3n-git-agent-workflow-0.7.0`.
-Actual Nix-exposed skill root:
-`/nix/store/9aa0qd5vy5sz93bqdj8m3g9k5yx2gx3n-git-agent-workflow-0.7.0/share/skills/git-agent-workflow/git-agent-workflow`.
-All 66 copied build inputs still match the original digests and isolated bytes;
-all 7 installed documents match the candidate. An extra manual comparison first
-assumed one fewer installed directory level, failed to locate SKILL.md, then
-read-only discovery supplied the real path and the comparison passed. No rebuild
-or packaging change was needed for that assumption. Existing Cabal warnings are
-nonfatal; non-host aarch64 Linux/Darwin checks were omitted. Tabletop details and
-input/result digests remain in acceptance.md, inputs.json and results.json in
-that tmp validation directory. They are temporary review aids; durable conclusions
-and boundaries are retained here, without another raw-evidence archive.
+Next: obtain explicit staging authorization for exactly the seven paths above,
+inspect the actual complete staged diff and draft its commit message. The user
+creates the ordinary commit. Afterward verify its candidate tree, expected parent
+and empty index before associating that committed implementation in GAW. Current
+validation concerns uncommitted files, so this memory checkpoint uses no project
+parent rather than claiming that baseline HEAD contains the implementation.
 
 The English-first language preference is committed by the user as `f47ba0b`.
 Its sole parent is `e283fde`; only
