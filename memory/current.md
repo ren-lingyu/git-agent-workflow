@@ -2,6 +2,34 @@
 
 ## Current state and recovery
 
+Active task: implement the user's project memory entry-point guidance in only
+bundled SKILL.md and references/skills.md. The candidate is complete, unstaged,
+on the previously committed history-semantics revision. Formal's explicit :skills
+role now recommends a minimal project-level memory entry point, preferring an
+existing suitable skill. Navigation/interpretation alone is sufficient; no
+separate engineering procedure, fixed name or memory layout is required. Reference
+existing knowledge rather than copying it or keeping Git-derived static indexes.
+Maintain the entry point when organization/interpretation changes, not routinely.
+
+Six tabletop acceptance cases are consistent: explicit Formal role with no skill
+prefers authorized establishment; an existing suitable skill is reused; no explicit
+role imposes no convention; inherited Auxiliary role does not independently
+require an entry point; organization changes can warrant updates; ordinary memory
+updates do not. Consulting the guidance alone is not a checkpoint reason. Shared
+role discovery and v0/direct/custom-role rules, and existing namespace/resources/
+lifecycle sections, remain byte-identical. Full diff/whitespace review and all
+22 local Markdown links/anchors passed. No genuine semantic conflict was found.
+
+No actual entry-point skill was created, no AGENTS generation, installation,
+discovery/deployment checks, CLI/config/Auxiliary layout change, project staging
+or Nix build/test was performed. A GAW check was accidentally run in the ordinary
+worktree and failed for absent .gaw/config; checking the actual GAW worktree then
+passed. It was an invocation-location error, not evidence of damaged memory.
+This implementation result merits a handoff checkpoint; merely reading the new
+guidance would not. Distilled decisions and source changes suffice, so no raw
+request archive. Next: user reviews the two-file candidate; project staging needs
+explicit authorization. No project parent represents these uncommitted edits.
+
 The Git history/source-record semantics revision is complete as the user commit
 `fix(skill): clarify Git history and source recovery semantics`, with Refs: #5.
 Read-only verification confirmed the expected release-preparation parent, exactly
