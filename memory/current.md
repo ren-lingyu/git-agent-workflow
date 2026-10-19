@@ -2,6 +2,30 @@
 
 ## Current state and recovery
 
+Active objective: prepare source version 0.7.1 from the completed knowledge
+workflow extension. The user authorized version and related comments/documentation
+edits. Only cabal/git-agent-workflow.cabal and README.org are modified, unstaged,
+on main 77e0993. Cabal declares 0.7.1; CLI uses generated Package.version and Nix
+derives packaging from Cabal, so no duplicated version constant needs editing.
+README now identifies 0.7.1, describes establishment for formal/Auxiliary and
+consolidation into formal memory, ongoing discovery-line integration, independent
+retention decisions, preventive screening, selective/repeated-acquisition archive
+rules and English-first new content. It explains skill refresh and no workspace
+migration from 0.7.0. Existing 0.7.0 Auxiliary availability and older-version
+upgrade requirements remain accurate; the older upgrade subsection is labeled
+accordingly. No stale version-specific code comments were found that need edits.
+
+Read-only diff/whitespace review passed; no new build/test was run or authorized
+for this version preparation. Earlier user-reported Nix success applies to the
+prior 0.7.0-labeled implementation, not a rebuilt 0.7.1 candidate. No tag, Release,
+installation, remote or ordinary index/history mutation was performed. Next:
+review these two pending files and separately authorize staging or release checks
+if desired. This release decision belongs in memory; source history preserves
+the patch, so no new raw-material archive is needed. Use no project parent for
+this uncommitted preparation. Current host mapping for public git-gaw is
+/nix/store/zskl6zkw5aaabjvc7n375qhfyxgfykqd-git-agent-workflow-0.7.0/bin/git-gaw;
+the replaced executable path must not be used for subsequent commands.
+
 The knowledge workflow extension and final textual refinement are complete as
 user commit `77e09935e72affb7fd7f1008eeb2fb3128a9e9f6`, subject
 `feat(skill): guide knowledge establishment and consolidation`, with Refs: #5.
