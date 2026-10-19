@@ -2,20 +2,49 @@
 
 ## Current state and recovery
 
-The knowledge establishment/consolidation skill extension is implemented and
-validated through N0–N5, but remains uncommitted and unstaged on ordinary main
+The knowledge workflow candidate now requires revision before staging. The user
+appended revision guidance at PLAN.md line 550 onward and adopted all three
+review clarifications: (1) screen/sanitize before writing target content or
+staging, not merely before commit; git add already persists objects; (2) the
+new revision guidance overrides conflicting earlier N0–N5 requirements and
+acceptance conclusions; (3) when a stage-specific source association is chosen,
+use the exact state actually used, but never retroactively add parents to old
+checkpoints or require a source parent for every formal checkpoint.
+
+The revision retains establishment/consolidation and shared single-source rules,
+but removes the dedicated clean-reconstruction workflow/routes, recognizes
+source-association/explanation/audit value beyond narrow long-term recovery,
+emphasizes interleaved ongoing discovery lines, strengthens knowledge-first
+bounded archival and preventive sanitization, and narrows establishment to
+missing/insufficient baselines. The revised 24-case matrix is not covered by the
+old candidate's 12 tabletop passes. No revised-source implementation, tests or
+ordinary staging were performed during this review/adoption. Root PLAN.md text
+was not edited to insert the three clarifications; these adopted decisions are
+preserved here alongside the original revision input.
+
+The expanded ignored PLAN.md is 54,803 bytes, SHA-256
+`db9e790e90e1481e88a32250452edbb83f6e2dec0423b66ee676f9b087c2483b`.
+It merits a fresh immutable archive: the earlier 18,819-byte snapshot lacks the
+new rationale and acceptance guidance. Preserve both, distinguishing the raw
+document from these subsequently adopted clarifications. Next: revise the
+existing diff locally against the new guidance and clarifications, re-run its
+applicable acceptance, then request staging for the actual revised file scope.
+Do not proceed with the former six-path staging request as if the old candidate
+still met the current requirements.
+
+The prior knowledge establishment/consolidation candidate was implemented and
+validated through the earlier N0–N5, and remains uncommitted/unstaged on main
 `f47ba0b`. The user authorized implementation and minimum Cabal data-files
 changes, not automatic ordinary-project staging. Six intended paths: the Cabal
 manifest, bundled SKILL.md, memory.md, auxiliary.md, and new establishment.md /
 consolidation.md. The final candidate full project tree is
 `a3059dd9ad0450bf741aa827758dd664a3b352b7`. No CLI, config, version, dependency lock or runtime
-implementation changed. Next: request explicit staging for those six paths,
-review the actual index and draft tmp/commit.md; user makes the native project
-commit. Verify its sole parent, complete tree and clean index/worktree before
-associating the tested implementation snapshot in GAW. Do not attach the old
-baseline as if it contained this implementation.
+implementation changed. That candidate/tree and its checks below describe the
+superseded revision only, not completion against the new guidance. A future
+revised commit requires its own candidate identity and actual validation before
+being associated in GAW; do not attach the baseline as implemented content.
 
-N0 reused current maintenance, retrospective evidence-horizon and selective
+The earlier N0 reused current maintenance, retrospective evidence-horizon and selective
 archive/snapshot/exact-provenance rules; no parallel knowledge protocol was added.
 Establishment handles absent/insufficient formal or Auxiliary baselines and
 returns to ordinary maintenance. Consolidation compares different knowledge
