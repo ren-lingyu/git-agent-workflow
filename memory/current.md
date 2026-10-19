@@ -4,7 +4,7 @@
 
 Active objective: prepare source version 0.7.1 from the completed knowledge
 workflow extension. The user authorized version and related comments/documentation
-edits. Only cabal/git-agent-workflow.cabal and README.org are modified, unstaged,
+edits. The user subsequently staged cabal/git-agent-workflow.cabal and README.org;
 on main 77e0993. Cabal declares 0.7.1; CLI uses generated Package.version and Nix
 derives packaging from Cabal, so no duplicated version constant needs editing.
 README now identifies 0.7.1, describes establishment for formal/Auxiliary and
@@ -19,8 +19,12 @@ Read-only diff/whitespace review passed; no new build/test was run or authorized
 for this version preparation. Earlier user-reported Nix success applies to the
 prior 0.7.0-labeled implementation, not a rebuilt 0.7.1 candidate. No tag, Release,
 installation, remote or ordinary index/history mutation was performed. Next:
-review these two pending files and separately authorize staging or release checks
-if desired. This release decision belongs in memory; source history preserves
+the user creates the release-preparation commit. Both staged files were fully
+reviewed; cached whitespace check passed and no unstaged project changes exist.
+They form one coherent commit. Final tmp/commit.md subject is
+chore(release): prepare version 0.7.1, with no Issue closure/reference footer
+because this commit only prepares the version and README. Release checks still
+require their own authorization. This release decision belongs in memory; source history preserves
 the patch, so no new raw-material archive is needed. Use no project parent for
 this uncommitted preparation. Current host mapping for public git-gaw is
 /nix/store/zskl6zkw5aaabjvc7n375qhfyxgfykqd-git-agent-workflow-0.7.0/bin/git-gaw;
