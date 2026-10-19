@@ -3,9 +3,8 @@
 ## Current state and recovery
 
 Active task: revised N0–N5 implementation and the user-requested final textual
-refinement are complete. Its seven ordinary project paths remain unstaged on main
-`f47ba0b05cd034e55c37bf01641d678941964f43`. No automatic ordinary staging was
-authorized. Request explicit staging of the Cabal manifest, bundled SKILL.md,
+refinement are complete. Its seven ordinary project paths are now staged on main
+`f47ba0b05cd034e55c37bf01641d678941964f43`. The user explicitly authorized staging. The staged scope is the Cabal manifest, bundled SKILL.md,
 and references memory.md, archive.md, auxiliary.md, establishment.md and
 consolidation.md. The last two references are new and both are Cabal data-files.
 Before the final textual refinement, the fully Nix-tested candidate tree was
@@ -20,12 +19,14 @@ f47ba0b. One commit is appropriate: establishment/consolidation, their shared
 routing and Auxiliary semantics, archive screening and Cabal resource declarations
 serve the same workflow extension; splitting by planning node would separate
 cross-references and coordinated instructions. No phased polling is needed.
-Await explicit authorization for one seven-path git add; do not stage yet.
-Provisional subject: feat(skill): guide knowledge establishment and consolidation.
+The user authorized the one seven-path git add and it succeeded. Complete staged
+diff review and cached whitespace check passed; there are no unstaged project
+changes. Final message is tmp/commit.md, subject:
+feat(skill): guide knowledge establishment and consolidation.
+Staged binary-diff SHA-256: 48c8eccf3bacbbf3962b81c2179143091cbf4b0f92e3c21be226bf1e1b2140eb.
 Use Refs: #5, since this extends the previously completed N5 workflow, rather
-than asserting a new Issue closure. The user explicitly requested a proposed
-message before staging; present it as a worktree-based draft, then review the
-actual staged diff before writing the final tmp/commit.md. No new archive or
+than asserting a new Issue closure. The final message was derived from the actual complete staged diff after
+authorization, replacing the old English-language-preference message in tmp/commit.md. No new archive or
 runtime checks were needed for this boundary review; prior test limits remain.
 
 Final patch decision: archive.md now prefers original bytes only when their
@@ -50,7 +51,7 @@ folder under ignored tmp/ and its temporary outputs were removed. No network
 or build was used in this final patch. Prior Nix success below applies to the
 pre-refinement candidate, not a fresh build of current bytes. No substantive
 blocker was found; proceed to final engineering acceptance and explicit staging,
-without reopening design. Ordinary index remains empty.
+without reopening design. Ordinary index now contains the authorized seven-path candidate.
 
 Authority: PLAN.md lines 550 onward supersede conflicting earlier N0–N5 guidance
 and acceptance. The user adopted three clarifications: screen/sanitize before
@@ -114,12 +115,13 @@ Prior candidate `a3059dd9ad0450bf741aa827758dd664a3b352b7` and its 12-case
 acceptance are superseded historical evidence; do not reuse their success as
 acceptance of this revision or restore its clean-reconstruction requirement.
 
-Next: obtain explicit staging authorization for exactly the seven paths above,
-inspect the actual complete staged diff and draft its commit message. The user
-creates the ordinary commit. Afterward verify its candidate tree, expected parent
-and empty index before associating that committed implementation in GAW. Current
-validation concerns uncommitted files, so this memory checkpoint uses no project
-parent rather than claiming that baseline HEAD contains the implementation.
+Next: the user creates the ordinary commit using tmp/commit.md. No phased
+polling is needed because this is one coherent commit. After notification, verify
+its sole expected project parent f47ba0b, actual seven-path committed diff and
+empty index/worktree before associating that committed implementation in GAW.
+Do not confuse the old fully tested tree with the final textual refinement.
+Current validation/review concerns uncommitted files, so this memory checkpoint
+uses no project parent rather than claiming baseline HEAD contains them.
 
 The English-first language preference is committed by the user as `f47ba0b`.
 Its sole parent is `e283fde`; only
