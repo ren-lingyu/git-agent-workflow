@@ -2,6 +2,38 @@
 
 ## Current state and recovery
 
+Active task: the user authorized a narrow three-file bundled Skill revision
+on c3d4496: SKILL.md, references/auxiliary.md and references/consolidation.md.
+The ordinary index/worktree were clean before edits. New guidance avoids parallel
+static Git-derived memory indexes, treats Auxiliary UUIDs as structural collision-
+avoidance/layout locators, and describes parents as checkpoint evolution/external
+historical context rather than knowledge adoption, endorsement or validation.
+Source recovery now discovers relationships through Formal first-parent history,
+actual parents and source trees, without a pre-maintained UUID registry. Keep
+knowledge/evidence limits and independently useful paths/locators in memory.
+Accurate stage-specific associations, intermediate/interleaved source evolution,
+ancestor screening, zero/multiple parents and existing branch safety remain.
+The three-file candidate is complete and remains unstaged. All eight requested
+scenarios are consistent in tabletop review, not real lifecycle or independent
+agent execution. Read-only checks passed: diff whitespace, 21 local links/anchors,
+7 Cabal-declared Skill documents and unchanged metadata. Compared with HEAD, the
+Auxiliary create/normal-loop section, branch-deletion constraints, A/B/F example
+table and existing exact project-parent rules remain byte-identical. The revised
+source recovery still uses Formal first-parent lookup, actual parents, source-tree
+discovery, blob reads and source first-parent evolution. No direct conflict was
+found in the relevant memory/establishment references; neither was edited.
+Full project diff and scenario review are temporary aids at
+`tmp/git-history-semantics-20261019T102005Z/changes.patch` and `review.md`.
+No Nix build, runtime suite, actual branch removal or external-project work was
+performed. Next: user reviews the full patch, then any project staging requires
+explicit authorization. This checkpoint records uncommitted changes with no
+project parent; c3d4496 must not be presented as their implementation. No project staging,
+CLI/config/version change, source-ID format, historical rewrite, external-project
+access or installed-skill changes are authorized by this task. The NixOS case
+is illustrative only. No new archive is needed for the full request: distilled
+decisions and the source patch preserve the required rationale. Maintain normal
+GAW memory without adding a registry or cleaning unrelated old memory.
+
 Version 0.7.1 source preparation is complete as user commit
 `c3d44962cbabf889522c3dcd417321965d6a20bb`, subject
 `chore(release): prepare version 0.7.1`. Direct read-only verification confirmed
