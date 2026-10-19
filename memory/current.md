@@ -13,7 +13,12 @@ actual parents and source trees, without a pre-maintained UUID registry. Keep
 knowledge/evidence limits and independently useful paths/locators in memory.
 Accurate stage-specific associations, intermediate/interleaved source evolution,
 ancestor screening, zero/multiple parents and existing branch safety remain.
-The three-file candidate is complete and remains unstaged. All eight requested
+The user has staged the three-file candidate, including the final wording
+that source inspection alone does not require retaining its Git history through
+an additional parent. Complete staged diff review and cached whitespace check
+passed; no unstaged project changes remain. One coherent commit is appropriate.
+Final message is tmp/commit.md, subject
+fix(skill): clarify Git history and source recovery semantics, with Refs: #5. All eight requested
 scenarios are consistent in tabletop review, not real lifecycle or independent
 agent execution. Read-only checks passed: diff whitespace, 21 local links/anchors,
 7 Cabal-declared Skill documents and unchanged metadata. Compared with HEAD, the
@@ -25,8 +30,8 @@ found in the relevant memory/establishment references; neither was edited.
 Full project diff and scenario review are temporary aids at
 `tmp/git-history-semantics-20261019T102005Z/changes.patch` and `review.md`.
 No Nix build, runtime suite, actual branch removal or external-project work was
-performed. Next: user reviews the full patch, then any project staging requires
-explicit authorization. This checkpoint records uncommitted changes with no
+performed. Next: the user creates the ordinary commit; afterward verify its
+content and expected c3d4496 parent before associating the committed revision. This checkpoint records uncommitted changes with no
 project parent; c3d4496 must not be presented as their implementation. No project staging,
 CLI/config/version change, source-ID format, historical rewrite, external-project
 access or installed-skill changes are authorized by this task. The NixOS case
