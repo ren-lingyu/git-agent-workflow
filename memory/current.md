@@ -2,33 +2,28 @@
 
 ## Current state and recovery
 
-Active objective: prepare source version 0.7.1 from the completed knowledge
-workflow extension. The user authorized version and related comments/documentation
-edits. The user subsequently staged cabal/git-agent-workflow.cabal and README.org;
-on main 77e0993. Cabal declares 0.7.1; CLI uses generated Package.version and Nix
-derives packaging from Cabal, so no duplicated version constant needs editing.
-README now identifies 0.7.1, describes establishment for formal/Auxiliary and
-consolidation into formal memory, ongoing discovery-line integration, independent
-retention decisions, preventive screening, selective/repeated-acquisition archive
-rules and English-first new content. It explains skill refresh and no workspace
-migration from 0.7.0. Existing 0.7.0 Auxiliary availability and older-version
-upgrade requirements remain accurate; the older upgrade subsection is labeled
-accordingly. No stale version-specific code comments were found that need edits.
+Version 0.7.1 source preparation is complete as user commit
+`c3d44962cbabf889522c3dcd417321965d6a20bb`, subject
+`chore(release): prepare version 0.7.1`. Direct read-only verification confirmed
+its sole parent is 77e0993, exactly README.org and cabal/git-agent-workflow.cabal
+changed, the committed patch matches the reviewed release preparation, and the
+ordinary project worktree/index are clean. No staging or commit remains pending.
 
-Read-only diff/whitespace review passed; no new build/test was run or authorized
-for this version preparation. Earlier user-reported Nix success applies to the
-prior 0.7.0-labeled implementation, not a rebuilt 0.7.1 candidate. No tag, Release,
-installation, remote or ordinary index/history mutation was performed. Next:
-the user creates the release-preparation commit. Both staged files were fully
-reviewed; cached whitespace check passed and no unstaged project changes exist.
-They form one coherent commit. Final tmp/commit.md subject is
-chore(release): prepare version 0.7.1, with no Issue closure/reference footer
-because this commit only prepares the version and README. Release checks still
-require their own authorization. This release decision belongs in memory; source history preserves
-the patch, so no new raw-material archive is needed. Use no project parent for
-this uncommitted preparation. Current host mapping for public git-gaw is
-/nix/store/zskl6zkw5aaabjvc7n375qhfyxgfykqd-git-agent-workflow-0.7.0/bin/git-gaw;
-the replaced executable path must not be used for subsequent commands.
+Cabal declares 0.7.1; CLI version and Nix package metadata derive from it.
+README identifies the new source version, summarizes the bundled skill changes,
+and explains skill refresh and upgrading from 0.7.0 without history migration.
+The Auxiliary minimum of 0.7.0 and older upgrade guidance remain accurate.
+The commit contains no Issue footer because it only prepares version/docs.
+No additional raw archive is needed; source history preserves the patch.
+
+No new Nix test/build of this 0.7.1-labeled source has been reported or executed
+in this preparation. Earlier user-reported success belongs to the preceding
+0.7.0-labeled implementation; do not upgrade that evidence to a verified 0.7.1
+build. Tag, GitHub Release and installed-version status have not been checked;
+do not infer them from the source commit. Version preparation is complete;
+await the next user objective. Any requested release verification has its own
+authorization boundary. This GAW association grounds the directly inspected
+committed version/docs, not an unobserved runtime test.
 
 The knowledge workflow extension and final textual refinement are complete as
 user commit `77e09935e72affb7fd7f1008eeb2fb3128a9e9f6`, subject
