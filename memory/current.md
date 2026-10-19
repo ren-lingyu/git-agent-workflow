@@ -2,42 +2,34 @@
 
 ## Current state and recovery
 
-Active task: the user authorized a narrow three-file bundled Skill revision
-on c3d4496: SKILL.md, references/auxiliary.md and references/consolidation.md.
-The ordinary index/worktree were clean before edits. New guidance avoids parallel
-static Git-derived memory indexes, treats Auxiliary UUIDs as structural collision-
-avoidance/layout locators, and describes parents as checkpoint evolution/external
-historical context rather than knowledge adoption, endorsement or validation.
-Source recovery now discovers relationships through Formal first-parent history,
-actual parents and source trees, without a pre-maintained UUID registry. Keep
-knowledge/evidence limits and independently useful paths/locators in memory.
-Accurate stage-specific associations, intermediate/interleaved source evolution,
-ancestor screening, zero/multiple parents and existing branch safety remain.
-The user has staged the three-file candidate, including the final wording
-that source inspection alone does not require retaining its Git history through
-an additional parent. Complete staged diff review and cached whitespace check
-passed; no unstaged project changes remain. One coherent commit is appropriate.
-Final message is tmp/commit.md, subject
-fix(skill): clarify Git history and source recovery semantics, with Refs: #5. All eight requested
-scenarios are consistent in tabletop review, not real lifecycle or independent
-agent execution. Read-only checks passed: diff whitespace, 21 local links/anchors,
-7 Cabal-declared Skill documents and unchanged metadata. Compared with HEAD, the
-Auxiliary create/normal-loop section, branch-deletion constraints, A/B/F example
-table and existing exact project-parent rules remain byte-identical. The revised
-source recovery still uses Formal first-parent lookup, actual parents, source-tree
-discovery, blob reads and source first-parent evolution. No direct conflict was
-found in the relevant memory/establishment references; neither was edited.
-Full project diff and scenario review are temporary aids at
-`tmp/git-history-semantics-20261019T102005Z/changes.patch` and `review.md`.
-No Nix build, runtime suite, actual branch removal or external-project work was
-performed. Next: the user creates the ordinary commit; afterward verify its
-content and expected c3d4496 parent before associating the committed revision. This checkpoint records uncommitted changes with no
-project parent; c3d4496 must not be presented as their implementation. No project staging,
-CLI/config/version change, source-ID format, historical rewrite, external-project
-access or installed-skill changes are authorized by this task. The NixOS case
-is illustrative only. No new archive is needed for the full request: distilled
-decisions and the source patch preserve the required rationale. Maintain normal
-GAW memory without adding a registry or cleaning unrelated old memory.
+The Git history/source-record semantics revision is complete as the user commit
+`fix(skill): clarify Git history and source recovery semantics`, with Refs: #5.
+Read-only verification confirmed the expected release-preparation parent, exactly
+the three intended Skill files, and a committed diff identical to the reviewed
+patch. Ordinary worktree and index are clean; no staging or commit is pending.
+
+The revised shared guidance recovers Git-derived ancestry/relationships and
+reachability from Git rather than maintained static indexes. Necessary references,
+external locators and substantive explanations remain allowed. Auxiliary UUIDs
+provide collision avoidance and required layout, not knowledge identity. Parents
+express checkpoint evolution and relevant external historical context; knowledge
+integration, archival and history retention remain independent workflow decisions.
+Source recovery discovers the Formal checkpoint, its actual parents and source
+tree before reading source content/evolution, without a UUID registry. Exact
+stage-specific associations, interleaved intermediate sources, ancestor screening
+and existing deletion safety are preserved. No foreign-project memory cleanup,
+CLI/config/version or installed-skill change was made.
+
+All eight requested scenarios were reviewed as tabletop reasoning. Diff whitespace,
+21 local links/anchors and Cabal resource consistency passed; creation/normal-loop,
+branch-deletion constraints, example table and exact project-parent rules were
+compared with the prior source. The final wording removes adopting from the
+source-inspection/parent-choice sentence. No Nix build, runtime suite, actual
+branch deletion or independent-agent test was performed. Temporary review aids
+remain in tmp/git-history-semantics-20261019T102005Z; no additional raw archive
+was warranted. The GAW association grounds the directly inspected committed
+Skill revision, not a new runtime test or release. Await the next objective;
+source changes alone do not prove tag, publication or installation state.
 
 Version 0.7.1 source preparation is complete as user commit
 `c3d44962cbabf889522c3dcd417321965d6a20bb`, subject
