@@ -13,6 +13,21 @@ Before the final textual refinement, the fully Nix-tested candidate tree was
 No CLI/config/version/dependency-lock/runtime changes, real Auxiliary lifecycle,
 GC/history rewrite, installation/publication or cross-project actions occurred.
 
+Commit-boundary review: the user requested one commit if coherent, otherwise
+phased staging with at most three minutes of polling between phases. Reviewed
+the actual seven-path worktree candidate and empty ordinary index on main
+f47ba0b. One commit is appropriate: establishment/consolidation, their shared
+routing and Auxiliary semantics, archive screening and Cabal resource declarations
+serve the same workflow extension; splitting by planning node would separate
+cross-references and coordinated instructions. No phased polling is needed.
+Await explicit authorization for one seven-path git add; do not stage yet.
+Provisional subject: feat(skill): guide knowledge establishment and consolidation.
+Use Refs: #5, since this extends the previously completed N5 workflow, rather
+than asserting a new Issue closure. The user explicitly requested a proposed
+message before staging; present it as a worktree-based draft, then review the
+actual staged diff before writing the final tmp/commit.md. No new archive or
+runtime checks were needed for this boundary review; prior test limits remain.
+
 Final patch decision: archive.md now prefers original bytes only when their
 retention is authorized and appropriate under selection and sensitive-content
 screening. Sanitized-derivative labeling, transformation/evidence limits, byte
