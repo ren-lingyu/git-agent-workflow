@@ -90,6 +90,14 @@ review belongs to the skill; the CLI does not validate natural language.
 
 Use workspace content to explain goals, evidence, causal relationships, and results; the Git graph supplies checkpoint evolution and exact project associations. Do not use GAW checkpoint OIDs as durable semantic identifiers, either for the checkpoint itself or for other checkpoints expected to remain identifiable across history rewriting. Prefer Git relationships and stable workspace paths. Usually omit project OIDs already supplied by project-parent edges; retain them when independent historical lookup or reproducibility needs justify them, without treating object identity as stable semantic identity across rewriting. Historical evidence, diagnostic output, and other hashes are not automatically semantic dependencies merely because they contain hash strings.
 
+Recover checkpoint ancestry, external-parent relationships and retained-history
+reachability from Git. Do not maintain parallel static indexes of Git-derived
+relationships or metadata in GAW memory. Persist substantive knowledge and
+explanations not supplied by the Git graph and committed trees. Temporary
+queries, calculations and displays are useful; necessary source/path references
+and external locators with an independent purpose remain valid. This is not a
+blanket prohibition on UUIDs, OIDs or paths.
+
 ## Load workflow details when needed
 
 - For ordinary current-memory maintenance, single-source historical reconstruction
@@ -117,14 +125,13 @@ Checkpoint a state that a future agent may need to restore and explain: a conseq
 
 Choose additional external parents for the exact project or Auxiliary source snapshots the relevant work, observation, test, or comparison was actually performed against. Zero parents are normal for planning, cleanup, or handoff unrelated to a specific code snapshot. Use one or several only when each has a real provenance role; do not attach the latest branch tip, a future goal commit, or every intermediate commit by habit. An unchanged GAW tree can still acquire a meaningful project-parent association.
 
-For source-history associations, actual inspection or knowledge adoption alone
-is insufficient. Separately assess knowledge integration, raw-evidence archival
-and Git history retention. An additional parent retains its complete ancestor
-closure: confirm the exact relevant source state, the value of recording its
-association with formal knowledge evolution, and an acceptable authorized
-retention boundary. Explanation, audit, provenance review or recovery can justify
-an association; an extra long-term recovery purpose is not required. Follow
-[source association guidance](references/auxiliary.md)
+Assess knowledge integration, raw-evidence archival and Git source-history
+retention separately. Select additional parents for relevant external historical
+context needed to explain the checkpoint, with evidence of the exact state used.
+An additional parent retains its complete ancestor closure, which must be within
+an acceptable authorized retention boundary. Explanation, audit, provenance
+review or recovery can justify the context; an extra long-term recovery purpose
+is not required. Follow [source association guidance](references/auxiliary.md)
 without treating associations as mandatory or rewriting earlier checkpoints.
 Without source history retention, formal memory must explain the adopted
 knowledge and limits without depending on that history remaining available. Existing exact-snapshot

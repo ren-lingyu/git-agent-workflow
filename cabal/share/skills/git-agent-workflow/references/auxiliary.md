@@ -29,8 +29,10 @@ loop's permissions do not automatically authorize new histories or worktrees.
 
 Auxiliary names are `_gaw_aux_<uuid>` with a canonical lowercase UUIDv4. Its
 entire Git tree lies within the matching `<uuid>/` directory. The UUID provides
-structural separation, not source identity, provenance or chronology. Config
-is `<uuid>/.gaw/config`; workspace declarations and role discovery are relative
+structural separation, avoids branch/tree path collisions and satisfies Auxiliary
+commit layout requirements. It is not a stable semantic identifier for a source
+history or its knowledge scope, and does not establish provenance or chronology.
+Config is `<uuid>/.gaw/config`; workspace declarations and role discovery are relative
 to that UUID directory. Run commit/check at the Git worktree root. Do not
 mistake the UUID directory for a separate Git repository or invocation root.
 Formal GAW has its normal root `.gaw/config` and selected `refs/gaw/HEAD`.
@@ -75,20 +77,20 @@ Use consolidation to compare sources, resolve or retain disagreements, adopt
 useful knowledge and review the formal candidate. Knowledge adoption and raw
 evidence archival do not require retaining source Git history.
 
-Choose an exact relevant source checkpoint when recording its association with
-this formal knowledge state has real value: explaining the adopted conclusion's
-source, preserving discovery-line relationships, supporting audit/provenance
-review, or recovering meaningful evolution. A separate long-term recovery use
-is not required for every parent. Actual reading or adoption alone still does
-not mandate an association. Confirm the state actually used and its evidence,
+Choose an exact relevant source checkpoint when its external historical context
+is needed to explain the formal checkpoint: discovery-line relationships,
+audit/provenance context, or meaningful evolution. A separate long-term recovery
+use is not required for every parent, and source inspection does not mandate an
+association. Confirm the state actually used and its evidence,
 and apply the main skill's screening and authorization rules to its complete
 ancestor closure, including archives and history being newly retained.
 
 Pass selected revisions as additional parents to normal formal `git gaw commit`;
-zero source parents is valid. First parent remains formal evolution; source
-trees are not merged. An association does not adopt every source claim or prove
-its original project provenance. Parent positions have no fixed business roles;
-existing exact-snapshot project associations remain governed by the main skill.
+zero source parents is valid. First-parent history records the evolution of
+formal GAW checkpoints. Additional parents supply relevant external historical
+context without merging their trees. Parent positions have no fixed business
+roles; existing exact-snapshot project associations remain governed by the
+main skill.
 
 For example, discovery lines A1 → A2 → A3 and B1 → B2 → B3 may contribute:
 
@@ -100,8 +102,9 @@ For example, discovery lines A1 → A2 → A3 and B1 → B2 → B3 may contribut
 | F4 | A3 and B2 |
 
 The example illustrates selected parent associations, not a required
-source timeline, integration schedule or checkpoint count. Formal first-parent
-order records adoption/integration, not a fabricated total ordering of source events.
+source timeline, integration schedule or checkpoint count. Neither parent
+positions nor the resulting ancestry establish a total ordering of independent
+source histories.
 Each source keeps its own supported evolution. Intermediate checkpoints,
 repeated associations and several source parents at one stage are normal;
 neither the latest tip nor completion of all source work is required.
@@ -113,8 +116,10 @@ insert parents into committed formal history or infer that every formal checkpoi
 needs a source parent. Record any relevant historical association limits in
 current knowledge. Never attach a latest tip merely to make its branch deletable.
 
-When retaining source history, record useful UUID-relative paths and integration
-context for recovery. Without retention, formal memory must explain the adopted
+Recover source relationships and locations from Git history and committed trees,
+without a parallel UUID or checkpoint index. Keep substantive explanations and
+evidence limits in memory; cite a source location when it helps explain particular
+knowledge. Without retention, formal memory must explain the adopted
 knowledge and evidence limits without depending on the source branch, OID or path
 remaining available. Review/check the complete formal candidate in either case.
 
@@ -155,13 +160,15 @@ integration step or a substitute for screening before persistence.
 
 ## Recover a safely retained source after deletion
 
-Record the useful source UUID-relative paths and integration context in formal
-memory before deleting the activity branch. Locate the relevant integration
-checkpoint through formal first-parent/path history, for example
-`git log --first-parent refs/gaw/HEAD -- <formal-memory-path>`. Inspect that
-checkpoint's parent list with `git gaw show --no-patch --format=raw <integration>`.
-Inspect candidate external parents' trees for the recorded UUID/path; do not
-assign a fixed business role to parent number two or require a stored OID.
+Locate the relevant formal checkpoint through its first-parent history, for
+example `git log --first-parent refs/gaw/HEAD`, optionally narrowing to a relevant
+formal memory path with `-- <formal-memory-path>`. Inspect that checkpoint's
+actual parent list with `git gaw show --no-patch --format=raw <integration>`.
+Inspect relevant external parents' committed trees, for example
+`git ls-tree -r --name-only <source-parent>`, to discover the UUID-relative config,
+workspace and needed source files. Use the checkpoint's substantive memory
+explanations to guide the search; no pre-maintained UUID index or stored OID is
+required, and parent number two has no fixed business role.
 
 Once an inspected external parent is identified, read its preserved source
 blob with `git show <source-parent>:<uuid>/<declared-source-path>`, or follow

@@ -55,14 +55,17 @@ Integrate useful stages of ongoing discovery lines, not only their final tips.
 The same Auxiliary can contribute intermediate checkpoints to several formal
 states; different lines can be interleaved, and one formal checkpoint can select
 several source states. Source work can continue or correct an earlier conclusion
-after integration. Formal order records knowledge adoption; do not invent a
-total ordering of all source events. If a source advances during review, keep
-the exact state actually examined or inspect the new state before selecting it.
+after integration. Formal first-parent history records checkpoint evolution;
+its external parents supply historical context without merging trees or
+establishing a total ordering of independent source histories. If a source advances
+during review, keep the exact state actually examined or inspect the new state
+before selecting it.
 
 Maintain enough current state to resume: what knowledge was adopted, which
-source scopes were examined or remain, unresolved disputes, any historical
-associations already made, and the next action. Explain coverage limits and
-remaining decisions, without retaining a command-by-command progress log.
+source scopes were examined or remain, unresolved disputes, evidence and
+validation limits, and the next action. Recover historical associations from
+Git rather than maintaining a parallel index. Retain explanations that Git
+cannot supply and that affect continuation, without a command-by-command log.
 
 ## Make three independent retention decisions
 
@@ -70,25 +73,25 @@ remaining decisions, without retaining a command-by-command progress log.
   and questions belong in formal memory?
 - **Evidence archival:** which raw material independently merits preservation
   under [the archive workflow](archive.md)?
-- **Git source-history retention:** which exact source states merit association
-  with formal knowledge evolution, and are their ancestor-retention consequences
-  acceptable within the applicable permissions?
+- **Git source-history retention:** which exact source states supply historical
+  context needed to explain the formal checkpoint, and are their ancestor-retention
+  consequences acceptable within the applicable permissions?
 
-None of these decisions implies either of the others. Inspecting or adopting a
-source does not require an additional parent. Associating a checkpoint retains
-its ancestors, including material not copied into formal memory; a clean-looking
+These decisions are independent. Source inspection alone does not require
+retaining its Git history through an additional parent. Associating a checkpoint
+retains its ancestors, including material not copied into formal memory; a clean-looking
 tip alone does not establish an acceptable retention boundary. Before choosing
 an association, confirm relevance, evidence of the exact state used, a reason to
-record that association, and acceptable retention/sanitization boundaries. Value can
-come from explaining formal conclusions, discovery-line relationships, audit or
+record that historical context, and acceptable retention/sanitization boundaries.
+Value can come from explaining checkpoint evolution, discovery-line relationships, audit or
 provenance review, as well as recovery; a separate long-term recovery purpose
 is not a prerequisite. Apply the main skill's screening before persistence or
 association, without importing all raw material just to inspect its suitability.
 
 For selected Auxiliary associations, follow [the integration and lifecycle
 rules](auxiliary.md#integrate-selected-knowledge-into-formal-gaw). Keep existing
-exact-snapshot project-parent rules; an association is neither a merged tree
-nor acceptance of every source claim. Do not invent parents to make provenance
+exact-snapshot project-parent rules; external trees are not merged and parent
+positions have no fixed business roles. Do not invent parents to make provenance
 look complete, or use checkpoint OIDs as durable semantic identities.
 
 When a stage-specific association is chosen, a later association to a newer
