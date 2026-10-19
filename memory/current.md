@@ -2,6 +2,30 @@
 
 ## Current state and recovery
 
+Active objective: implement the accepted knowledge establishment/consolidation
+skill extension from the new ignored root PLAN.md against clean `f47ba0b`.
+The user authorized implementation, including the minimum Cabal data-files
+changes needed to distribute two new references. N0 inventory is complete;
+N1 semantics are fixed by the accepted plan. Reuse current memory/reconstruction,
+archive, snapshot and exact-provenance rules. Add establishment and consolidation,
+make source-history retention independent from knowledge adoption and raw-evidence
+archival, and explain full ancestor-closure consequences. Formal and Auxiliary
+share single-source knowledge semantics; formal memory stays authoritative.
+No CLI/config/version changes, real Auxiliary creation, history rewrite, GC,
+external-project work or publication is authorized by this implementation.
+
+The new PLAN is 18,819 bytes, SHA-256
+`bd0b78eed100e83ea3611e8accba1e9cce4376ff05ef9e682bb256f84f732c36`.
+It differs from archived Auxiliary plans and has independent design/acceptance
+value, so preserve its exact original Chinese bytes in a fresh immutable project
+archive snapshot. Capture HEAD is context, not ignored-document provenance.
+Next: archive that input separately, then implement N2, N3, N4 and N5 in order,
+checking the preceding node's actual result. Keep progress in memory promptly,
+checkpoint selectively, and propose one coherent final project commit rather
+than mandatory per-node commits. Ask for ordinary-project staging only after
+review and validation. Clean-reconstruction acceptance uses an abstract tabletop
+case, as the user selected; no actual NixOS repository evidence is claimed.
+
 The English-first language preference is committed by the user as `f47ba0b`.
 Its sole parent is `e283fde`; only
 cabal/share/skills/git-agent-workflow/SKILL.md changed, with the reviewed
