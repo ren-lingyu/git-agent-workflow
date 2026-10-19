@@ -2,32 +2,28 @@
 
 ## Current state and recovery
 
-Active task: revised N0–N5 implementation and the user-requested final textual
-refinement are complete. Its seven ordinary project paths are now staged on main
-`f47ba0b05cd034e55c37bf01641d678941964f43`. The user explicitly authorized staging. The staged scope is the Cabal manifest, bundled SKILL.md,
-and references memory.md, archive.md, auxiliary.md, establishment.md and
-consolidation.md. The last two references are new and both are Cabal data-files.
-Before the final textual refinement, the fully Nix-tested candidate tree was
-`1fd573b5c8e264197c58f29be396866d0e06f3a1`. It no longer identifies current bytes.
-No CLI/config/version/dependency-lock/runtime changes, real Auxiliary lifecycle,
-GC/history rewrite, installation/publication or cross-project actions occurred.
+The knowledge workflow extension and final textual refinement are complete as
+user commit `77e09935e72affb7fd7f1008eeb2fb3128a9e9f6`, subject
+`feat(skill): guide knowledge establishment and consolidation`, with Refs: #5.
+Read-only verification confirmed its sole parent is f47ba0b and its seven-path
+committed binary diff exactly matches the reviewed staged SHA-256
+`48c8eccf3bacbbf3962b81c2179143091cbf4b0f92e3c21be226bf1e1b2140eb`.
+Committed tree is `879940f6911d0f8438d988f772c7b2c4be62c9ca`.
+Ordinary project worktree and index are clean. No staging, commit or phased
+polling remains pending. Seven files form one coherent workflow change, including
+both new references and their Cabal declarations; no runtime/CLI/config/version
+or dependency-lock change was included.
 
-Commit-boundary review: the user requested one commit if coherent, otherwise
-phased staging with at most three minutes of polling between phases. Reviewed
-the actual seven-path worktree candidate and empty ordinary index on main
-f47ba0b. One commit is appropriate: establishment/consolidation, their shared
-routing and Auxiliary semantics, archive screening and Cabal resource declarations
-serve the same workflow extension; splitting by planning node would separate
-cross-references and coordinated instructions. No phased polling is needed.
-The user authorized the one seven-path git add and it succeeded. Complete staged
-diff review and cached whitespace check passed; there are no unstaged project
-changes. Final message is tmp/commit.md, subject:
-feat(skill): guide knowledge establishment and consolidation.
-Staged binary-diff SHA-256: 48c8eccf3bacbbf3962b81c2179143091cbf4b0f92e3c21be226bf1e1b2140eb.
-Use Refs: #5, since this extends the previously completed N5 workflow, rather
-than asserting a new Issue closure. The final message was derived from the actual complete staged diff after
-authorization, replacing the old English-language-preference message in tmp/commit.md. No new archive or
-runtime checks were needed for this boundary review; prior test limits remain.
+The user reports rerunning Nix tests and build successfully after committing.
+Record this as user-reported final validation, distinct from the earlier directly
+observed isolated Nix run below. Exact rerun commands, logs, derivations and
+platform scope were not supplied; do not invent those details or claim the agent
+reran the committed source. Current committed content and parentage were directly
+verified. The GAW project parent associates this inspected committed implementation,
+not an independently observed new runtime test. No additional raw-evidence archive
+is warranted: project history and distilled memory preserve the outcome.
+Source commit does not establish global skill installation, cross-project adoption,
+tag creation or publication. The task is complete; await the next objective.
 
 Final patch decision: archive.md now prefers original bytes only when their
 retention is authorized and appropriate under selection and sensitive-content
@@ -50,8 +46,8 @@ were added. The checker was extracted unchanged to a task-owned temporary
 folder under ignored tmp/ and its temporary outputs were removed. No network
 or build was used in this final patch. Prior Nix success below applies to the
 pre-refinement candidate, not a fresh build of current bytes. No substantive
-blocker was found; proceed to final engineering acceptance and explicit staging,
-without reopening design. Ordinary index now contains the authorized seven-path candidate.
+blocker was found. The subsequent user commit and reported final Nix validation
+complete this work; the ordinary index is now empty.
 
 Authority: PLAN.md lines 550 onward supersede conflicting earlier N0–N5 guidance
 and acceptance. The user adopted three clarifications: screen/sanitize before
@@ -114,14 +110,6 @@ Capture HEAD was context, not original document provenance or revised implementa
 Prior candidate `a3059dd9ad0450bf741aa827758dd664a3b352b7` and its 12-case
 acceptance are superseded historical evidence; do not reuse their success as
 acceptance of this revision or restore its clean-reconstruction requirement.
-
-Next: the user creates the ordinary commit using tmp/commit.md. No phased
-polling is needed because this is one coherent commit. After notification, verify
-its sole expected project parent f47ba0b, actual seven-path committed diff and
-empty index/worktree before associating that committed implementation in GAW.
-Do not confuse the old fully tested tree with the final textual refinement.
-Current validation/review concerns uncommitted files, so this memory checkpoint
-uses no project parent rather than claiming baseline HEAD contains them.
 
 The English-first language preference is committed by the user as `f47ba0b`.
 Its sole parent is `e283fde`; only
