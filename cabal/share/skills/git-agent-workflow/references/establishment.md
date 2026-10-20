@@ -43,16 +43,18 @@ existing organization rather than a required set of files or source IDs.
 Apply the main skill's screening before the first target writes, staging and
 checkpoints, equally in formal GAW and Auxiliary. Distill useful knowledge;
 do not import complete conversations for possible future audit or defer
-Auxiliary sanitization until a later formal integration. Raw evidence needs
-its own archival decision, not blanket retention for establishment.
+Auxiliary sanitization until a later formal integration. Establishing a baseline does not require per-source archival decisions or
+blanket retention of the materials examined.
 
 For earlier states, [Reconstruct supported earlier states](memory.md#reconstruct-supported-earlier-states)
 remains authoritative for evidence horizon/coverage, supported state selection,
 relative ordering, gaps, commit times and exact project provenance. Establishment
 organizes the initial baseline; it does not redefine those recovery rules.
 
-Assess raw evidence separately through [the archive workflow](archive.md).
-Saving all original material is not a prerequisite for establishing knowledge.
+Do not invoke archival assessment as a standard establishment step. When an
+explicit preservation request or a concrete independent original-evidence need
+arises, use [the archive workflow](archive.md) for selection and capture.
+Otherwise complete the knowledge baseline without an Archive operation.
 Choose project parents only for exact project snapshots supported by actual
 work or inspection, using the main skill's rules; copying a formal config into
 an Auxiliary root establishes no historical project provenance.

@@ -67,9 +67,11 @@ paths; associated trees are never merged into the source workspace.
 Use establishment for an insufficient source baseline and memory maintenance
 thereafter, including evidence-backed historical reconstruction when warranted.
 The Auxiliary root's copied config does not establish historical project
-provenance. Apply [archive selection and capture](archive.md) independently;
-locate existing evidence before copying rather than automatically duplicating
-source archives into formal archives.
+provenance. Creating or maintaining an Auxiliary does not call for archival assessment of
+its inputs by default. For an explicit preservation request or a concrete
+independent original-evidence need, use [archive selection and capture](archive.md)
+for bounded material; locate existing evidence before copying rather than
+automatically duplicating source archives into formal archives.
 
 ## Integrate selected knowledge into formal GAW
 

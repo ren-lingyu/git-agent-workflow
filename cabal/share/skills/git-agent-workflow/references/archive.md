@@ -15,6 +15,13 @@ tool, manifest parser, schema, validator or new CLI is required.
 
 ## Select material that deserves retention
 
+Archival assessment is conditional, not a routine stage of reading, historical
+reconstruction or memory maintenance. Enter it for an explicit request to
+preserve original evidence, or when the work reveals a concrete independent
+preservation need. A useful finding, an acquired artifact or a reference to a
+source is not itself a reason to archive. Either trigger calls for selection,
+not automatic capture.
+
 Preserve bounded material with independent historical evidence value when its
 loss would materially impair the intended interpretation, reproduction, audit
 or recovery. First consider whether distilled knowledge, project history,
@@ -30,24 +37,28 @@ large build/test output, temporary directories or material reliably recoverable
 from project history. Exceptional independent evidence value can justify a
 bounded selection with explicit reasons, permissions and sanitization limits.
 
-Do not assume that material obtained again from the same path, URL or
-acquisition procedure matches an earlier observation. Reassess each newly
-obtained item for archival value, whether an earlier copy was retained
-or declined. Apply the same selection threshold: repeated acquisition or
-changed content alone does not justify archival retention or duplicate snapshots.
+When archival assessment has been triggered, do not assume that material
+obtained again from the same path, URL or acquisition procedure matches
+an earlier observation. Assess each newly obtained candidate against the
+same retention threshold, regardless of whether an earlier copy was
+retained or declined. Repeated acquisition or changed content alone
+does not justify archival retention or duplicate snapshots.
 
-Each time material is obtained, complete the retention decision and act on it:
-distill relevant findings, decisions and uncertainties into current memory,
-and capture selected raw evidence through the archive workflow. Do not leave
-this work at a recommendation or defer it by default until session handoff.
-When neither memory updates nor archival retention are warranted, leave them
-unchanged. These steps remain subject to the host's authorization boundaries;
-if required action is blocked, report what remains pending and why.
+Use acquired material for the task and distill durable knowledge into current
+memory when warranted. Do not require an archival assessment or a recorded
+no-archive decision for every acquisition. When an archival trigger arises,
+evaluate the independent evidence value against the selection threshold.
+Declining capture after evaluation is a complete outcome and normally needs
+no persistent record. For selected material, act promptly within the host's
+authorization rather than deferring justified capture to a session handoff;
+if blocked, report what remains pending and why.
 
-State the selection scope and reason, and identify the actual sources. A
-material reference from another selected document supports inclusion, but
-independent evidence value can also justify an artifact. Obtain required
-source-read or capture authorization before broadening the selection.
+For selected material, state the scope, reason and actual sources. A reference
+to another artifact may warrant inspecting it, but does not transfer archival
+value. Include referenced material only when needed for a bounded sufficient
+evidence set under the same selection threshold; do not recursively capture
+materials solely because they are cited. Obtain required source-read or
+capture authorization before broadening the selection.
 Formal and Auxiliary use the same threshold; creating a source history does
 not itself justify archiving its inputs. Apply the main skill's screening rules
 before writing a capture or staging it, not as a later cleanup step.
@@ -73,8 +84,9 @@ paths and make intentional additions or corrections explicit.
 
 ## Organize an independent snapshot
 
-The default workflow creates a fresh snapshot for each archive operation,
-including a single document, with this layout under the declared archive root:
+After material has been selected for capture, the default workflow creates a
+fresh snapshot for each archive operation, including a single document, with
+this layout under the declared archive root:
 
 ```text
 <snapshot>/

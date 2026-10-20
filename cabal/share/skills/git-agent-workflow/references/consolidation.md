@@ -11,6 +11,10 @@ Sources may be Auxiliary histories, other knowledge records, project documents,
 or directly available conversations and tool evidence. They need not first
 become Auxiliaries or archives. Access to another repository or agent's material
 still requires its applicable authorization; no implicit import or fetch is added.
+The ordinary outcome is knowledge integration, not preservation of source
+materials. Do not start archival assessment for each source encountered;
+follow the archive workflow only for an explicit preservation request or a
+concrete independent original-evidence need.
 
 ## Inventory the relevant knowledge
 
@@ -71,14 +75,18 @@ cannot supply and that affect continuation, without a command-by-command log.
 
 - **Knowledge integration:** what continuing conclusions, reasons, limitations
   and questions belong in formal memory?
-- **Evidence archival:** which raw material independently merits preservation
-  under [the archive workflow](archive.md)?
+- **Evidence archival, when triggered:** which raw material independently merits
+  preservation under [the archive workflow](archive.md)?
 - **Historical dependency selection:** which exact source states merit association
   with this formal knowledge state, with evidence for each selected state and
   acceptable ancestor-retention consequences?
 
-These judgments are related but not interchangeable. Source inspection, knowledge
-integration and archival capture do not by themselves imply a parent. Selected
+These judgments are related but not interchangeable; they are not a mandatory
+three-part procedure for every source. In ordinary consolidation, maintain useful
+knowledge without initiating an archive operation. When an archival need arises,
+evaluate it separately; declining capture does not leave consolidation incomplete.
+Source inspection, knowledge integration and archival capture do not by themselves
+imply a parent. Selected
 parents express the historical dependencies described by the main skill; their
 ancestor closure remains reachable as a consequence. Before choosing an
 association, confirm relevance, evidence of the exact state used, the value of

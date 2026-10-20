@@ -64,7 +64,10 @@ merely to enforce this preference.
 
 These are workflow roles, not required directory names or a closed CLI role
 set. Maintain current memory promptly when a substantive finding, decision,
-blocker or next action changes recovery; checkpoint selectively.
+blocker or next action changes recovery; checkpoint selectively. Ordinary
+source inspection and memory maintenance do not start archival assessment by
+default. Consider preserving original evidence separately only when explicitly
+requested or when a concrete independent preservation need emerges.
 
 Persist knowledge that supports continued work. Screen and, where needed,
 sanitize content before writing GAW target files, staging
@@ -121,8 +124,9 @@ blanket prohibition on UUIDs, OIDs or paths.
 - For comparing and integrating different knowledge scopes into formal memory,
   read [consolidation](references/consolidation.md). With no substantive formal
   baseline, combine it with establishment; Auxiliary is not a required step.
-- For selection, faithful capture, description and verification of historical
-  material, read [the archive workflow](references/archive.md).
+- When original-evidence preservation is explicitly requested or independently
+  warranted, read [the archive workflow](references/archive.md) for selection,
+  faithful capture and verification. Ordinary source use does not trigger it.
 - For independent Auxiliary source histories, their layout/lifecycle, optional
   source-history associations or retained-source recovery,
   read [the Auxiliary workflow](references/auxiliary.md).
