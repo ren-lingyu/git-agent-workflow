@@ -2,6 +2,32 @@
 
 ## Current state and recovery
 
+The conditional archival-assessment correction is complete as user commit
+`fix(skill): make archival assessment conditional`. Direct read-only review
+confirmed the expected prior parent-semantics commit, exactly five bundled Skill
+files changed, and a clean ordinary project index/worktree. The message now uses
+fix/conditional, matching the behavioral change and both trigger paths.
+
+Routine reading, reconstruction, establishment, consolidation and Auxiliary
+maintenance do not trigger archival assessment by default. Explicit requests to
+preserve original evidence or a concrete independent preservation need trigger
+selection, not automatic capture. Repeated-acquisition reassessment now explicitly
+applies within an active archival evaluation. No per-acquisition no-archive record
+is required; declining capture is complete. Citations do not transfer archival
+value or recursively expand capture. Knowledge distillation remains timely;
+selected, justified capture remains prompt and subject to authorization.
+This supersedes older per-acquisition archival-assessment/recording guidance.
+
+The three prior review issues are resolved: correct semantic commit type, accurate
+conditional title, and explicit scoping of reassessment. Complete committed diff
+and whitespace review passed. Capture/sanitization and manifest/verification/
+checkpoint-immutability/authorization sections were compared with the prior source
+and remain unchanged; snapshot layout applies after selection. No new build or
+runtime test was executed or reported. This GAW association grounds the inspected
+committed instruction, not installed adoption or runtime results. No archive was
+triggered by this source review; substantive conclusions suffice in memory.
+The task is complete, with no pending staging/commit or speculative follow-up.
+
 The parent-semantics revision is complete as user commit
 `fix(skill): define parents as historical dependencies`. Read-only verification
 confirmed the expected prior entry-point-guidance parent, exactly bundled
