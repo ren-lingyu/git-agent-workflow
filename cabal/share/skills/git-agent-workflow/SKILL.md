@@ -6,11 +6,15 @@ description: Use Git Agent Workflow (GAW) to establish, recover, maintain, groun
 # Git Agent Workflow
 
 GAW is persistent agent memory, not an ordinary project branch workflow.
-The workspace tree holds each durable state, the first-parent chain records
-its evolution, and additional external parents associate exact snapshots
-without merging their trees. Selected Auxiliary source checkpoints may also
-be additional parents; formal GAW remains current-memory authority. Workspace content explains goals, evidence,
-causes, decisions and results.
+Each workspace tree represents a durable knowledge state. GAW commit parents
+encode the historical dependencies needed to interpret that state. For non-root
+checkpoints, the first parent supplies inherited knowledge history; initialization
+roots have no first parent. Additional parents supply other necessary context
+through exact Git commits, without merging their trees. Parent edges are not
+citations, knowledge-adoption records, approval markers or validation results.
+Formal GAW remains the authority for project-current memory; Auxiliary histories
+can preserve independent discovery lines. Workspace content explains goals,
+evidence, causes, decisions and results.
 
 ## Establish state and resume
 
@@ -93,7 +97,11 @@ paragraphs. Use relevant summaries, manifests and targeted reads while
 respecting file-size, sensitive-data and workspace permissions. This semantic
 review belongs to the skill; the CLI does not validate natural language.
 
-Use workspace content to explain goals, evidence, causal relationships, and results; the Git graph supplies checkpoint evolution and exact project associations. Do not use GAW checkpoint OIDs as durable semantic identifiers, either for the checkpoint itself or for other checkpoints expected to remain identifiable across history rewriting. Prefer Git relationships and stable workspace paths. Usually omit project OIDs already supplied by project-parent edges; retain them when independent historical lookup or reproducibility needs justify them, without treating object identity as stable semantic identity across rewriting. Historical evidence, diagnostic output, and other hashes are not automatically semantic dependencies merely because they contain hash strings.
+Use workspace content to explain goals, evidence, causal relationships and results;
+the Git graph supplies checkpoint evolution and historical dependencies on exact
+external states. Preserve substantive historical explanations when useful,
+without requiring separate explanatory material for every existing parent or a
+parallel parent inventory. Do not use GAW checkpoint OIDs as durable semantic identifiers, either for the checkpoint itself or for other checkpoints expected to remain identifiable across history rewriting. Prefer Git relationships and stable workspace paths. Usually omit project OIDs already supplied by project-parent edges; retain them when independent historical lookup or reproducibility needs justify them, without treating object identity as stable semantic identity across rewriting. Historical evidence, diagnostic output, and other hashes are not automatically semantic dependencies merely because they contain hash strings.
 
 Recover checkpoint ancestry, external-parent relationships and retained-history
 reachability from Git. Do not maintain parallel static indexes of Git-derived
@@ -130,16 +138,21 @@ Checkpoint a state that a future agent may need to restore and explain: a conseq
 
 Choose additional external parents for the exact project or Auxiliary source snapshots the relevant work, observation, test, or comparison was actually performed against. Zero parents are normal for planning, cleanup, or handoff unrelated to a specific code snapshot. Use one or several only when each has a real provenance role; do not attach the latest branch tip, a future goal commit, or every intermediate commit by habit. An unchanged GAW tree can still acquire a meaningful project-parent association.
 
-Assess knowledge integration, raw-evidence archival and Git source-history
-retention separately. Select additional parents for relevant external historical
-context needed to explain the checkpoint, with evidence of the exact state used.
-An additional parent retains its complete ancestor closure, which must be within
-an acceptable authorized retention boundary. Explanation, audit, provenance
-review or recovery can justify the context; an extra long-term recovery purpose
-is not required. Follow [source association guidance](references/auxiliary.md)
-without treating associations as mandatory or rewriting earlier checkpoints.
-Without source history retention, formal memory must explain the adopted
-knowledge and limits without depending on that history remaining available. Existing exact-snapshot
+Assess knowledge integration, raw-evidence archival and historical dependency
+selection separately. For source-history associations, confirm the exact relevant
+source state, the value of recording its association with formal knowledge
+evolution, and an acceptable authorized retention boundary. Explanation, audit,
+provenance review or recovery can justify an association; an extra long-term
+recovery purpose is not required. The historical-dependency definition interprets
+these relationships without adding a separate necessity test to the selection rules.
+An additional parent retains its complete ancestor closure; apply the existing
+screening and authorization rules before persistence. Reachability or branch
+deletion alone does not justify an association. Reading a source, integrating
+knowledge or archiving material does not by itself require a parent. Follow
+[source association guidance](references/auxiliary.md) without mandatory
+associations or rewriting earlier checkpoints. Without source history retention,
+formal memory must explain the knowledge and limits without depending on that
+history remaining available. Existing exact-snapshot
 project-parent rules still apply; these judgments add no CLI parent roles or IDs.
 
 Keep project-parent associations within a checkpoint as homogeneous in meaning as practical. Do not interpret additional-parent positions as different business roles such as based-on or resulting state. For associations with project states from different phases, prefer separate checkpoints when each state has independent recovery value; this does not require one project parent per checkpoint or one checkpoint per project commit. Homogeneity guides agent organization, not a new protocol invariant requiring the CLI to interpret natural language. Every selected parent still needs the exact-snapshot evidence described here.

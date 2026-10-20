@@ -67,26 +67,28 @@ validation limits, and the next action. Recover historical associations from
 Git rather than maintaining a parallel index. Retain explanations that Git
 cannot supply and that affect continuation, without a command-by-command log.
 
-## Make three independent retention decisions
+## Decide integration, archival and historical dependencies separately
 
 - **Knowledge integration:** what continuing conclusions, reasons, limitations
   and questions belong in formal memory?
 - **Evidence archival:** which raw material independently merits preservation
   under [the archive workflow](archive.md)?
-- **Git source-history retention:** which exact source states supply historical
-  context needed to explain the formal checkpoint, and are their ancestor-retention
-  consequences acceptable within the applicable permissions?
+- **Historical dependency selection:** which exact source states merit association
+  with this formal knowledge state, with evidence for each selected state and
+  acceptable ancestor-retention consequences?
 
-These decisions are independent. Source inspection alone does not require
-retaining its Git history through an additional parent. Associating a checkpoint
-retains its ancestors, including material not copied into formal memory; a clean-looking
-tip alone does not establish an acceptable retention boundary. Before choosing
-an association, confirm relevance, evidence of the exact state used, a reason to
-record that historical context, and acceptable retention/sanitization boundaries.
-Value can come from explaining checkpoint evolution, discovery-line relationships, audit or
-provenance review, as well as recovery; a separate long-term recovery purpose
-is not a prerequisite. Apply the main skill's screening before persistence or
-association, without importing all raw material just to inspect its suitability.
+These judgments are related but not interchangeable. Source inspection, knowledge
+integration and archival capture do not by themselves imply a parent. Selected
+parents express the historical dependencies described by the main skill; their
+ancestor closure remains reachable as a consequence. Before choosing an
+association, confirm relevance, evidence of the exact state used, the value of
+recording that context, and acceptable retention/sanitization boundaries.
+Explanation, discovery-line relationships, audit/provenance review or recovery
+can justify an association; an extra long-term recovery purpose is not required.
+Reachability or branch deletion alone does not justify a parent. A clean-looking
+tip does not establish an acceptable ancestor boundary. Apply the main skill's
+screening before persistence or association, without importing all raw material
+just to inspect its suitability.
 
 For selected Auxiliary associations, follow [the integration and lifecycle
 rules](auxiliary.md#integrate-selected-knowledge-into-formal-gaw). Keep existing
@@ -96,13 +98,14 @@ look complete, or use checkpoint OIDs as durable semantic identities.
 
 When a stage-specific association is chosen, a later association to a newer
 source state cannot replace recording the exact state used at that stage.
-Reachability alone does not explain that relationship. This does not require
-source parents at every stage or retrospective parent insertion into committed
-formal checkpoints; preserve relevant gaps in current knowledge instead.
+Ancestor reachability alone does not identify the exact context needed by an
+earlier formal stage. This does not require source parents at every stage or
+retrospective parent insertion into committed formal checkpoints; preserve
+relevant gaps in current knowledge instead.
 
-If source history is not retained, formal memory must still explain the useful
-knowledge and its evidentiary limits without depending on future availability of
-that branch, OID or path. Distill essential explanations and preserve selected
+If the relevant source history is not retained, formal memory must still explain
+the useful knowledge and its evidentiary limits without depending on that history
+remaining available. Distill essential explanations and preserve selected
 evidence independently when warranted. If existing history cannot be retained
 safely, stop its affected association; do not turn history replacement or object
 cleanup into a routine integration step.
@@ -113,8 +116,8 @@ Review current formal knowledge for correctness, coordination and completeness
 relative to the agreed objective. Account for examined source scopes and missing
 evidence, important recoverable evolution, conflicts and corrections, and the
 methods, scope and limitations of any validation performed. Check the accuracy
-of chosen stage-specific source associations and their actual retained ancestry;
-without source retention, check that no essential explanation relies on material
+of chosen stage-specific dependencies and their actual retained
+ancestry; without source retention, check that no essential explanation relies on material
 that may disappear. Ongoing source work must remain resumable after integration.
 
 The resulting workspace and next action must support a future agent without

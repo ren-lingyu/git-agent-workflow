@@ -74,16 +74,17 @@ source archives into formal archives.
 ## Integrate selected knowledge into formal GAW
 
 Use consolidation to compare sources, resolve or retain disagreements, adopt
-useful knowledge and review the formal candidate. Knowledge adoption and raw
-evidence archival do not require retaining source Git history.
+useful knowledge and review the formal candidate. Knowledge integration and raw
+evidence archival do not automatically require a source-history dependency.
 
-Choose an exact relevant source checkpoint when its external historical context
-is needed to explain the formal checkpoint: discovery-line relationships,
-audit/provenance context, or meaningful evolution. A separate long-term recovery
-use is not required for every parent, and source inspection does not mandate an
-association. Confirm the state actually used and its evidence,
+Choose an exact relevant source checkpoint when recording its historical context
+has real value: explaining formal conclusions or discovery-line relationships,
+supporting audit/provenance review, or recovering meaningful evolution. A separate
+long-term recovery purpose is not required for every parent. Source inspection
+does not mandate an association. Confirm the state actually used and its evidence,
 and apply the main skill's screening and authorization rules to its complete
-ancestor closure, including archives and history being newly retained.
+ancestor closure, including archives and newly retained history. Do not attach
+a parent for reachability or branch deletion alone.
 
 Pass selected revisions as additional parents to normal formal `git gaw commit`;
 zero source parents is valid. First-parent history records the evolution of
@@ -109,7 +110,7 @@ Each source keeps its own supported evolution. Intermediate checkpoints,
 repeated associations and several source parents at one stage are normal;
 neither the latest tip nor completion of all source work is required.
 
-When choosing a stage-specific association, use the exact state actually used
+When choosing a stage-specific dependency, use the exact state actually used
 then. Later retaining a newer source checkpoint can make earlier states reachable,
 but does not replace an earlier stage's explicit association. Do not retroactively
 insert parents into committed formal history or infer that every formal checkpoint
