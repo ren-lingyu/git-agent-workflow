@@ -2,6 +2,25 @@
 
 ## Current state and recovery
 
+The README documentation alignment is complete as user commit
+`3f75809ab13e69d46402628baf17669cb1e0ac04`, subject
+`docs(readme): restate parent edges as historical dependencies`. Verified sole
+parent `397f46b`, only README.org changed (42 insertions, 30 deletions), and the
+committed patch equals the reviewed staged diff; the commit message matches the
+drafted tmp/commit.md text. Ordinary project worktree and index are clean.
+
+README.org now restates GAW parent edges as historical dependencies needed to
+interpret each checkpoint's durable knowledge state: non-root checkpoints
+inherit GAW knowledge history through the first parent (initialization roots
+have no first parent), additional parents supply other historical context via
+exact Git commits without merging their trees, and parent edges are not
+citations, knowledge-adoption records, approval markers or validation results.
+Archival assessment is now conditional on explicit preservation requests or
+concrete independent evidence needs, not routine source inspection or memory
+maintenance. This is documentation-only and aligns the README with the two
+prior committed skill revisions; no CLI, protocol, config or Git-history
+semantics changed. No build/test was run. Await the next user objective.
+
 The conditional archival-assessment correction is complete as user commit
 `fix(skill): make archival assessment conditional`. Direct read-only review
 confirmed the expected prior parent-semantics commit, exactly five bundled Skill
