@@ -2,8 +2,13 @@
 
 ## Current state and recovery
 
-Current candidate: the parent-semantics revision remains unstaged in bundled
-SKILL.md, consolidation.md and auxiliary.md. The user's follow-up explicitly
+The parent-semantics revision is complete as user commit
+`fix(skill): define parents as historical dependencies`. Read-only verification
+confirmed the expected prior entry-point-guidance parent, exactly bundled
+SKILL.md/consolidation.md/auxiliary.md changed, and a committed patch identical
+to the reviewed final diff. The user removed the Refs trailer; its absence was
+verified. Ordinary project worktree and index are clean, with no pending staging
+or ordinary commit. The user's follow-up explicitly
 supersedes the part of PLAN.md that would impose an additional dependency-
 necessity selection threshold. Keep the new introductory meaning, including
 non-root first-parent inheritance, root exception and one concise distinction
@@ -19,24 +24,33 @@ deletion alone is still insufficient. No separate explanatory material is needed
 for every existing parent; keep useful substantive explanations and recover Git
 relationships from the DAG. Consolidation retains distinct knowledge integration,
 evidence archival and historical dependency selection, without a new threshold.
+Its self-explanation condition now refers to relevant source history actually not
+being retained, rather than no new source dependency being selected. History may
+already be retained through earlier Formal ancestry; a new parent is not required
+at the current checkpoint. The user explicitly adopted this final correction.
 
 Final diff was reviewed specifically for selection-behavior changes. Existing
 primary selection, exact retrospective provenance/checkpoint suffix and Auxiliary
-lifecycle/recovery suffix match HEAD verbatim. Four other references remain
+lifecycle/recovery suffix match the pre-revision source verbatim. Four other references remain
 unchanged and 22 local links/anchors resolve; whitespace review passed. A–I were
 revisited as tabletop scenarios, with positive checks for meaningful audit context
 without necessity proof and existing parents without new justification cards.
 This replaces the earlier stricter candidate/acceptance, not a new runtime test.
-No Nix build, package self-test, project staging or installation occurred.
+No new Nix build, package self-test or installation was performed or reported.
+The GAW project parent identifies the directly inspected committed semantics,
+not a new runtime-test result.
 
 Temporary full diff and updated review remain under
 `tmp/dependency-skill-review-20261020T121127Z/changes.patch` and `review.md`.
 No raw plan/request archive is warranted; decisions are distilled here and in
 source. No CLI/protocol/lifecycle/archival/security/authorization rule or Git
 ancestry was changed. The prior suggestion to reassess project archive rules
-under an added necessity threshold does not establish a follow-up task. Next:
-user reviews this semantic-only candidate; project staging still requires explicit
-authorization. No project parent is attached for uncommitted source changes.
+under an added necessity threshold does not establish a follow-up task. The
+semantic-only revision is complete; await the next user objective. Source
+commit does not establish tag, Release or installed-skill adoption status.
+Issue references should follow a concrete relationship, not be inherited merely
+from nearby commits; drafting commit messages generally does not require GAW
+memory updates, as the user has explicitly instructed.
 
 The project memory entry-point guidance is complete as user commit
 `feat(skill): guide project memory entry-point skills`, with Refs: #5.
