@@ -17,15 +17,20 @@ refresh. Existing release history/minimum Auxiliary version remains unchanged.
 Cabal is the version source for CLI and Nix metadata; no duplicated constant,
 lockfile, help or runtime change is needed. Read-only diff/whitespace review passed.
 
-Release validation is pending explicit command authorization. Proposed next
-check: timeout 120s nix flake check --no-write-lock-file -L, which evaluates the
-flake and can build the package, existing suites and bundled-resource checks.
-It may write Nix store/cache/build output and access network; lockfile writes
-are disabled. No test/build has been run for this 0.7.2 candidate, and earlier
-results must not be relabeled as such. No project staging, tag, GitHub Release,
-installation or remote mutation has been performed. Next: obtain check approval,
-inspect actual results, and only then review/authorize the release-preparation
-staging. This uncommitted preparation needs no additional project parent.
+The user reports manually running the checks with all passing, and supplied a
+nix flake check result: exit 0, 0.7.2 package/check derivation
+/nix/store/qnb0cll2v9n8dkjqrwrkvn7izv7lh51b-git-agent-workflow-0.7.2.drv,
+all checks passed, but running 0 flake checks. This confirms successful evaluation/
+check resolution, not a freshly observed package build or runtime suite execution.
+The log omits aarch64 Linux/Darwin. Dirty-tree warning reflects the intended two
+unstaged preparation files. No agent rerun occurred. Exact fresh build/test logs
+were not supplied; do not overstate the manual result or require repeat checks
+merely to associate a parent. Ordinary index remains empty; source/README both
+state 0.7.2. Next: obtain explicit staging authorization for only README.org and
+cabal/git-agent-workflow.cabal, then review the actual staged diff and draft its
+message without routine memory updates during message drafting. No tag, GitHub
+Release, installation or remote mutation has been performed. This uncommitted
+preparation and user-run check report need no additional project parent.
 
 The README documentation alignment is complete as user commit
 `3f75809ab13e69d46402628baf17669cb1e0ac04`, subject
