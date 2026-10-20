@@ -38,6 +38,13 @@ archives to bounded independent evidence, reassesses each acquisition, and
 prefers English for newly authored GAW content. This release changes skill
 guidance without changing CLI commands, configuration or Git history semantics.
 
+Subsequent skill revisions clarify parent edges as historical dependencies of
+knowledge states and make archival assessment conditional. Routine source
+inspection and memory maintenance do not trigger archival assessment; an
+explicit preservation request or a concrete independent evidence need can.
+These changes do not alter CLI commands or the Git protocol. The current source,
+published release and installed skill may differ.
+
 Versioned v0/v1 workspace configuration, protocol-change isolation, and the
 memory, archive and project-skill workflows introduced in 0.6.0 remain available.
 Source version, published release and installed executable are separate states;
@@ -113,16 +120,18 @@ that match these messages should be reviewed when upgrading.
 GAW history is an independent Git history rather than a history derived from
 the ordinary project branches.
 
-A GAW commit records the state of the GAW workspace in its own tree.  Its
-parents have two distinct roles:
+A GAW commit records a durable knowledge state in its own tree. Its parents
+encode historical dependencies needed to interpret that state:
 
-1. the first parent is the previous GAW commit;
-2. additional parents are exact external snapshots associated with that state,
-   including project commits and selected Auxiliary source checkpoints.
+1. for a non-root checkpoint, the first parent supplies its inherited GAW
+   knowledge history; an initialization root has no first parent;
+2. additional parents supply other historical context through exact Git
+   commits, including project commits and selected Auxiliary checkpoints.
 
-The trees of additional project parents are not merged into the GAW tree.
-They are parent edges used to associate external snapshots with agent history
-and to keep those commits reachable through ordinary Git object reachability.
+Additional-parent trees are not merged into the GAW tree. Parent edges are not
+citations, knowledge-adoption records, approval markers or validation results.
+They retain external commits and their ancestors through Git reachability as a
+consequence of the recorded dependencies, not as a separate semantic role.
 
 The canonical temporal history of GAW is therefore its first-parent chain.
 
@@ -250,14 +259,14 @@ a CLI with this protection.
 ** Project Association
 A GAW commit may be associated with zero, one, or multiple project commits.
 
-These associations are represented directly as additional Git parent edges
-rather than through a separate snapshot database or identifier scheme.
+These historical dependencies are represented directly as additional Git
+parent edges, not through a separate snapshot database or identifier scheme.
 
-All additional parents express the same structural relation: association
-with an exact external snapshot, including Auxiliary source history.  Their positions do not encode business
-roles such as /based-on/ or /resulting state/.  Workspace content explains
-the purpose, evidence, causal relationships, and results of the associated
-work; the Git graph supplies the exact structural links.
+All additional parents supply historical context through exact external commits,
+including Auxiliary source history. Their positions do not encode business roles
+such as /based-on/ or /resulting state/. Workspace content explains the purpose,
+evidence, causal relationships and results of the relevant work; the Git graph
+supplies exact parent relationships, not those explanations.
 
 A project commit attached to GAW history must not itself track the GAW
 workspace or reserved GAW protocol paths.  This is a local validity condition
@@ -634,16 +643,20 @@ checkpoint.
 The bundled [[file:cabal/share/skills/git-agent-workflow/SKILL.md][git-agent-workflow skill]] teaches a coding agent to use GAW as
 persistent working memory across sessions, rather than as a command reference.
 The declared workspace holds current memory, GAW commits are recoverable
-checkpoints, the first-parent chain is temporal memory history, and additional
-external parents ground memory in exact project snapshots or Auxiliary source
-states. The Auxiliary workflow explains independent source reconstruction and
-formal integration while preserving formal memory authority.  The skill starts
+checkpoints, the first-parent chain preserves inherited memory history, and
+additional parents record historical dependencies on exact external commits,
+including project snapshots and Auxiliary source states. The Auxiliary workflow
+explains independent source reconstruction and formal integration while
+preserving formal memory authority. The skill starts
 recovery from the current workspace and expands into relevant history only
 when needed.  It favors distilled, verifiable, actionable state over full
 conversation archives, fixed memory-file templates, or an ever-growing
 parallel progress log.  A checkpoint is useful when its memory state warrants
 independent future recovery; project parents are included only when they
-provide real provenance.
+provide real provenance. Routine source inspection and memory maintenance do
+not start archival assessment. Explicit preservation requests or concrete
+independent evidence needs can trigger it; only selected original evidence is
+captured using the existing archive snapshot workflow.
 
 When substantive work predates usable GAW memory history, the skill treats the
 session as evidence for current memory and any distinct, recoverable durable
@@ -680,20 +693,19 @@ storage layouts, fixed file sets, and unrelated engineering policies are not
 part of GAW.
 
 ** History Semantics
-The first parent of a GAW commit represents temporal GAW history.
+A non-root GAW checkpoint inherits knowledge history through its first parent;
+initialization roots have no first parent. Additional parents represent other
+historical dependencies needed to interpret the checkpoint's knowledge state,
+without participating in its first-parent temporal ordering. This describes
+what the relationships mean; it does not add parent-selection conditions.
 
-Additional parents represent associated project snapshots and do not
-participate in that temporal ordering.
-
-As a result, the canonical history traversal of GAW follows first-parent
-edges, and the canonical change represented by a GAW commit is the change
-relative to its first parent.
+Canonical GAW history traversal follows first-parent edges. For non-root
+checkpoints, the canonical change is relative to the first parent's tree.
 
 The workspace tree holds the durable memory state at each checkpoint;
 its content explains goals, decisions, evidence, results, and next actions.
-This semantic explanation complements the graph's evolution and snapshot
-associations rather than assigning different meanings to additional-parent
-positions.
+This semantic explanation complements the graph's evolution and external
+historical dependencies without assigning roles to additional-parent positions.
 
 Durable workspace references should not depend on GAW checkpoint OIDs as
 stable semantic identifiers, including a checkpoint's own OID or another
