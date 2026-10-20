@@ -11,7 +11,7 @@ context as the primary store of working state, GAW keeps selected agent state
 in Git and lets Git provide its history and reachability model.
 
 * Status
-The current source version is =0.7.1=.  The bundled agent-memory skill maintains
+The current source version is =0.7.2=.  The bundled agent-memory skill maintains
 current workspace state as substantive work evolves, recovers relevant
 history across sessions, and creates selective, evidence-backed checkpoints.
 Formal GAW branch identity follows validated branch content rather than local
@@ -38,12 +38,20 @@ archives to bounded independent evidence, reassesses each acquisition, and
 prefers English for newly authored GAW content. This release changes skill
 guidance without changing CLI commands, configuration or Git history semantics.
 
-Subsequent skill revisions clarify parent edges as historical dependencies of
-knowledge states and make archival assessment conditional. Routine source
-inspection and memory maintenance do not trigger archival assessment; an
-explicit preservation request or a concrete independent evidence need can.
-These changes do not alter CLI commands or the Git protocol. The current source,
-published release and installed skill may differ.
+Version 0.7.2 clarifies parent edges as historical dependencies of knowledge
+states while preserving established parent-selection criteria. Auxiliary UUIDs
+provide structural separation rather than knowledge-source identity; recover
+Git relationships from the DAG instead of maintaining parallel static indexes.
+For formal GAW with an explicit =:skills= role, the skill recommends a minimal
+project-level memory entry point, preferring an existing suitable skill.
+
+Archival assessment is conditional: routine source inspection and memory
+maintenance do not trigger it, but an explicit preservation request or a concrete
+independent evidence need can. Reassess newly acquired candidates within an
+active archival evaluation; no per-acquisition archive decision or record is
+required otherwise. Source references do not automatically expand capture scope.
+These skill and documentation changes do not alter CLI commands, configuration
+or the Git protocol. Source, published release and installed skill may differ.
 
 Versioned v0/v1 workspace configuration, protocol-change isolation, and the
 memory, archive and project-skill workflows introduced in 0.6.0 remain available.
@@ -90,11 +98,12 @@ cabal build git-gaw
 cabal run git-gaw -- --help
 #+end_src
 
-** Upgrading to 0.7.1
-Upgrading from 0.7.0 requires no workspace migration or history rewriting.
-Refresh the installed bundled skill to use the new establishment, consolidation
-and retention guidance; updating the executable alone does not establish that
-an agent environment has adopted the new skill. Existing checkpoints and archive
+** Upgrading to 0.7.2
+Upgrading from 0.7.0 or 0.7.1 requires no workspace migration or history rewriting.
+Refresh the installed bundled skill to use the current parent interpretation,
+memory entry-point and conditional archival guidance, alongside establishment
+and consolidation. Updating the executable alone does not establish that an
+agent environment has adopted the new skill. Existing checkpoints and archive
 snapshots keep their original conventions.
 
 ** Upgrading from versions before 0.7.0
