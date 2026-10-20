@@ -2,35 +2,26 @@
 
 ## Current state and recovery
 
-Active task: the user requested 0.7.2 release preparation after memory recovery.
-Project baseline is the committed README alignment; ordinary index/worktree were
-clean. The local v0.7.1 tag points to its version-preparation commit. Subsequent
-committed changes affect only bundled Skill guidance and README, not CLI/runtime,
-configuration or Git protocol. Do not infer GitHub publication from the local tag.
+Version 0.7.2 release preparation is complete. Read-only review confirmed the
+user's committed release-preparation patch changes only README.org and the Cabal
+version declaration, with the expected prior README-alignment parent. The ordinary
+project index and worktree are clean. The local v0.7.2 tag resolves to this exact
+release-preparation commit. No staging or source commit remains pending.
 
-The unstaged preparation edits only Cabal version (0.7.2) and README.org. README
-now names the release and summarizes semantic parent clarification without a new
-selection threshold, structural UUIDs and DAG recovery, the explicit-Formal-skills
-memory entry recommendation, and conditional archival assessment. Upgrade guidance
-covers 0.7.0/0.7.1 without history migration and distinguishes installed skill
-refresh. Existing release history/minimum Auxiliary version remains unchanged.
-Cabal is the version source for CLI and Nix metadata; no duplicated constant,
-lockfile, help or runtime change is needed. Read-only diff/whitespace review passed.
+Cabal and README now state 0.7.2. README summarizes parent interpretation without
+changing selection eligibility, structural Auxiliary UUIDs and DAG-based recovery,
+the explicit-Formal-skills memory entry recommendation, and conditional archival
+assessment. Upgrade guidance covers 0.7.0/0.7.1 without history migration and calls
+for refreshing the installed bundled skill. Cabal remains the version source for
+CLI and Nix metadata; no runtime, CLI, configuration or protocol change was needed.
 
-The user reports manually running the checks with all passing, and supplied a
-nix flake check result: exit 0, 0.7.2 package/check derivation
-/nix/store/qnb0cll2v9n8dkjqrwrkvn7izv7lh51b-git-agent-workflow-0.7.2.drv,
-all checks passed, but running 0 flake checks. This confirms successful evaluation/
-check resolution, not a freshly observed package build or runtime suite execution.
-The log omits aarch64 Linux/Darwin. Dirty-tree warning reflects the intended two
-unstaged preparation files. No agent rerun occurred. Exact fresh build/test logs
-were not supplied; do not overstate the manual result or require repeat checks
-merely to associate a parent. Ordinary index remains empty; source/README both
-state 0.7.2. Next: obtain explicit staging authorization for only README.org and
-cabal/git-agent-workflow.cabal, then review the actual staged diff and draft its
-message without routine memory updates during message drafting. No tag, GitHub
-Release, installation or remote mutation has been performed. This uncommitted
-preparation and user-run check report need no additional project parent.
+The user explicitly confirmed rerunning the checks with all checks passing before
+staging and committing. Record this as user-executed validation; the agent did not
+rerun Nix checks or builds. This later confirmation supersedes the earlier pending
+validation wording and the narrower interpretation of the supplied cached-check
+output. No repeat run is pending. GitHub Release publication, remote tag state and
+installed-version adoption have not been verified by this review. Release
+preparation and local tagging are complete; await the next user objective.
 
 The README documentation alignment is complete as user commit
 `3f75809ab13e69d46402628baf17669cb1e0ac04`, subject
