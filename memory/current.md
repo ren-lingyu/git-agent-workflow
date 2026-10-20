@@ -2,6 +2,31 @@
 
 ## Current state and recovery
 
+Active task: the user requested 0.7.2 release preparation after memory recovery.
+Project baseline is the committed README alignment; ordinary index/worktree were
+clean. The local v0.7.1 tag points to its version-preparation commit. Subsequent
+committed changes affect only bundled Skill guidance and README, not CLI/runtime,
+configuration or Git protocol. Do not infer GitHub publication from the local tag.
+
+The unstaged preparation edits only Cabal version (0.7.2) and README.org. README
+now names the release and summarizes semantic parent clarification without a new
+selection threshold, structural UUIDs and DAG recovery, the explicit-Formal-skills
+memory entry recommendation, and conditional archival assessment. Upgrade guidance
+covers 0.7.0/0.7.1 without history migration and distinguishes installed skill
+refresh. Existing release history/minimum Auxiliary version remains unchanged.
+Cabal is the version source for CLI and Nix metadata; no duplicated constant,
+lockfile, help or runtime change is needed. Read-only diff/whitespace review passed.
+
+Release validation is pending explicit command authorization. Proposed next
+check: timeout 120s nix flake check --no-write-lock-file -L, which evaluates the
+flake and can build the package, existing suites and bundled-resource checks.
+It may write Nix store/cache/build output and access network; lockfile writes
+are disabled. No test/build has been run for this 0.7.2 candidate, and earlier
+results must not be relabeled as such. No project staging, tag, GitHub Release,
+installation or remote mutation has been performed. Next: obtain check approval,
+inspect actual results, and only then review/authorize the release-preparation
+staging. This uncommitted preparation needs no additional project parent.
+
 The README documentation alignment is complete as user commit
 `3f75809ab13e69d46402628baf17669cb1e0ac04`, subject
 `docs(readme): restate parent edges as historical dependencies`. Verified sole
