@@ -2,42 +2,47 @@
 
 ## Current state and recovery
 
-Current task: read-only review of the revised historical-dependency PLAN.md.
-The user has incorporated the three clarifications, but has not authorized
-implementation. Parent selection must start with external history necessary to
-interpret the checkpoint, then establish exact-state evidence and acceptable
-ancestor-retention consequences. The first parent supplies inherited knowledge
-history for non-root checkpoints; initialization roots have no first parent.
-A concise exclusion of citation/adoption/approval/validation edge meanings follows
-the positive definition and supersedes the earlier blanket wording restriction.
-Both branch deletion modes require no associated worktree, even if it is clean.
+The user-authorized historical-dependency Skill refinement is implemented as
+an unstaged three-file candidate: bundled SKILL.md, consolidation.md and
+auxiliary.md. Project HEAD remains the committed entry-point guidance. The main
+Skill now defines parents as historical dependencies necessary to interpret the
+knowledge state, with inherited history on non-root first-parent edges and no
+first parent for initialization roots. One concise negative model boundary follows
+the positive definition. Knowledge explanations stay in memory without graph-
+derived indexes or per-edge reason tables. Project and GAW OID distinctions remain.
 
-Expected implementation scope is chiefly SKILL.md, consolidation.md and
-auxiliary.md, with compatibility review of the other references. Preserve exact
-retrospective provenance: a later inspection of a commit does not prove the
-original session used it. Keep zero/multiple parents, meaningful unchanged-tree
-associations, intermediate/interleaved discovery lines, source-tree recovery,
-ancestor screening and existing lifecycle permissions. Retention or deletion
-readiness alone cannot justify a new parent. Do not maintain Git-derived source
-registries or alter foreign projects, CLI protocols or configuration semantics.
-Cases A–I should check graph-based recovery without indexes, local retirement
-conditions, multiple discovery lines, recovered motivations without guessed
-provenance, later versus original observations, corrected source claims, unsafe
-ancestors, no unnecessary project parent and meaningful unchanged-tree context.
-Cross-project case facts remain supplied background, not independently verified.
+Selection now establishes dependency necessity, then exact evidence and acceptable
+ancestor closure. Later inspection can establish its own context without inventing
+original-session provenance. Audit/recovery are possible necessity reasons, not
+separate parent licenses. Retention alone or source deletion readiness is not a
+selection criterion. Consolidation distinguishes knowledge integration, archival
+and historical dependency selection, and checks both necessity and accuracy.
+Auxiliary keeps intermediate/interleaved lines, exact stage-specific context and
+source recovery; no parent is added to make a branch deletable. Zero/multiple
+parents and worthwhile unchanged-tree associations remain available.
 
-Archive decision: this plan is development guidance whose required model,
-constraints, reasons and acceptance expectations can be distilled into memory.
-No independent need for raw original bytes has been established. Neither a new
-revision nor absence from project history is sufficient reason for a snapshot.
-The user manually soft-rewound the prior archive/review checkpoints; the remaining
-two archive additions were verified against the staged copies and removed from
-the current candidate. No archive is being recreated or recommitted. Existing
-older archive snapshots, historical objects and reflog were not changed or cleaned.
-Only this substantive memory update should be checkpointed, with no external
-project parent: it records planning/review, not implementation or a build result.
-Next: await explicit implementation direction. Ordinary project worktree/index
-remain unchanged by this repair.
+Validation: all A–I plan cases are consistent in tabletop review, not runtime or
+foreign-project execution. Read-only checks passed for the full diff/whitespace,
+22 local links/anchors and all 7 Cabal-declared Skill resources; metadata is
+unchanged. Existing retrospective/checkpoint rules, role/entry-point guidance,
+security/snapshot block, Auxiliary deletion/recovery suffix and interleaving
+example were compared with the source baseline and preserved verbatim. The four
+other references remain unchanged and show no direct incompatibility. Protocol
+checks apply to GAW memory only, not natural-language correctness. No Nix build,
+package self-test, runtime suite or installation was run for this candidate.
+
+Full patch and A–I review are temporary aids under
+`tmp/dependency-skill-review-20261020T121127Z/changes.patch` and `review.md`.
+No raw PLAN archive is needed: implemented semantics, reasons and acceptance
+conclusions are distilled here and into source; do not recreate the removed
+archive. No CLI/config/version, Cabal manifest, foreign project, existing archive,
+history or ordinary project index was changed. Project-level adaptation remains
+a separately authorized opportunity, not an automatic task. The local project
+archive skill requires captured HEAD as sole external parent; a future authorized
+adaptation should assess dependency necessity rather than copy that fixed rule
+into the general model. It was not changed here. Next: user reviews
+the candidate, then explicitly authorizes staging if desired. No project parent
+is attached for this uncommitted implementation/validation state.
 
 The project memory entry-point guidance is complete as user commit
 `feat(skill): guide project memory entry-point skills`, with Refs: #5.
