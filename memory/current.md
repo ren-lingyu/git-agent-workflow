@@ -2,47 +2,41 @@
 
 ## Current state and recovery
 
-The user-authorized historical-dependency Skill refinement is implemented as
-an unstaged three-file candidate: bundled SKILL.md, consolidation.md and
-auxiliary.md. Project HEAD remains the committed entry-point guidance. The main
-Skill now defines parents as historical dependencies necessary to interpret the
-knowledge state, with inherited history on non-root first-parent edges and no
-first parent for initialization roots. One concise negative model boundary follows
-the positive definition. Knowledge explanations stay in memory without graph-
-derived indexes or per-edge reason tables. Project and GAW OID distinctions remain.
+Current candidate: the parent-semantics revision remains unstaged in bundled
+SKILL.md, consolidation.md and auxiliary.md. The user's follow-up explicitly
+supersedes the part of PLAN.md that would impose an additional dependency-
+necessity selection threshold. Keep the new introductory meaning, including
+non-root first-parent inheritance, root exception and one concise distinction
+from citation/adoption/approval/validation records. This is an interpretation
+clarification, not a redesign of parent eligibility.
 
-Selection now establishes dependency necessity, then exact evidence and acceptable
-ancestor closure. Later inspection can establish its own context without inventing
-original-session provenance. Audit/recovery are possible necessity reasons, not
-separate parent licenses. Retention alone or source deletion readiness is not a
-selection criterion. Consolidation distinguishes knowledge integration, archival
-and historical dependency selection, and checks both necessity and accuracy.
-Auxiliary keeps intermediate/interleaved lines, exact stage-specific context and
-source recovery; no parent is added to make a branch deletable. Zero/multiple
-parents and worthwhile unchanged-tree associations remain available.
+The primary checkpoint-selection paragraph is restored verbatim from committed
+source. Source choices retain established relevance, exact-state evidence, real
+historical-context value and acceptable authorized retention boundaries.
+Explanation, discovery-line relationships, audit/provenance review and recovery
+remain valid reasons without an extra indispensability proof. Retention or branch
+deletion alone is still insufficient. No separate explanatory material is needed
+for every existing parent; keep useful substantive explanations and recover Git
+relationships from the DAG. Consolidation retains distinct knowledge integration,
+evidence archival and historical dependency selection, without a new threshold.
 
-Validation: all A–I plan cases are consistent in tabletop review, not runtime or
-foreign-project execution. Read-only checks passed for the full diff/whitespace,
-22 local links/anchors and all 7 Cabal-declared Skill resources; metadata is
-unchanged. Existing retrospective/checkpoint rules, role/entry-point guidance,
-security/snapshot block, Auxiliary deletion/recovery suffix and interleaving
-example were compared with the source baseline and preserved verbatim. The four
-other references remain unchanged and show no direct incompatibility. Protocol
-checks apply to GAW memory only, not natural-language correctness. No Nix build,
-package self-test, runtime suite or installation was run for this candidate.
+Final diff was reviewed specifically for selection-behavior changes. Existing
+primary selection, exact retrospective provenance/checkpoint suffix and Auxiliary
+lifecycle/recovery suffix match HEAD verbatim. Four other references remain
+unchanged and 22 local links/anchors resolve; whitespace review passed. A–I were
+revisited as tabletop scenarios, with positive checks for meaningful audit context
+without necessity proof and existing parents without new justification cards.
+This replaces the earlier stricter candidate/acceptance, not a new runtime test.
+No Nix build, package self-test, project staging or installation occurred.
 
-Full patch and A–I review are temporary aids under
+Temporary full diff and updated review remain under
 `tmp/dependency-skill-review-20261020T121127Z/changes.patch` and `review.md`.
-No raw PLAN archive is needed: implemented semantics, reasons and acceptance
-conclusions are distilled here and into source; do not recreate the removed
-archive. No CLI/config/version, Cabal manifest, foreign project, existing archive,
-history or ordinary project index was changed. Project-level adaptation remains
-a separately authorized opportunity, not an automatic task. The local project
-archive skill requires captured HEAD as sole external parent; a future authorized
-adaptation should assess dependency necessity rather than copy that fixed rule
-into the general model. It was not changed here. Next: user reviews
-the candidate, then explicitly authorizes staging if desired. No project parent
-is attached for this uncommitted implementation/validation state.
+No raw plan/request archive is warranted; decisions are distilled here and in
+source. No CLI/protocol/lifecycle/archival/security/authorization rule or Git
+ancestry was changed. The prior suggestion to reassess project archive rules
+under an added necessity threshold does not establish a follow-up task. Next:
+user reviews this semantic-only candidate; project staging still requires explicit
+authorization. No project parent is attached for uncommitted source changes.
 
 The project memory entry-point guidance is complete as user commit
 `feat(skill): guide project memory entry-point skills`, with Refs: #5.
