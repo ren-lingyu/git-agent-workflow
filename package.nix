@@ -119,7 +119,6 @@ let
   );
 
 in package_.overrideAttrs (old_ : {
-
   nativeBuildInputs = builtins.concatLists [
     (old_.nativeBuildInputs or [ ])
     [
@@ -172,5 +171,4 @@ in package_.overrideAttrs (old_ : {
       platforms = lib.platforms.unix;
     }
   ];
-
 })

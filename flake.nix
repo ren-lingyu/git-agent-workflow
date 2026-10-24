@@ -1,5 +1,4 @@
 {
-
   description = "Git Agent Workflow (GAW)";
 
   inputs = {
@@ -18,7 +17,6 @@
     };
 
   in inputs.flake-parts.lib.mkFlake { inherit inputs; } {
-
     systems = [
       "x86_64-linux"
       "aarch64-linux"
@@ -36,7 +34,6 @@
       package_ = mkPackage_ pkgs;
 
     in {
-
       packages = {
         default = package_;
         git-agent-workflow = package_;
@@ -45,9 +42,6 @@
       checks = {
         git-agent-workflow = package_;
       };
-
     };
-
   };
-
 }
