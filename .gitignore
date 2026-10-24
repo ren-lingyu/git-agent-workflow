@@ -1,25 +1,25 @@
 *
 */
 
-!README.org
-!.gitignore
-!.gitmodules
-!LICENSE
-!flake.nix
-!flake.lock
-!package.nix
+!/README.org
+!/.gitignore
+!/.gitmodules
+!/LICENSE
+!/flake.nix
+!/flake.lock
+!/package.nix
 
-!cabal/
-!cabal/**/
-!cabal/**/*.hs
-!cabal/*.cabal
-!cabal/cabal.project
-!cabal/resources/**/*.txt
-!cabal/share/**/*.md
+!/cabal/
+!/cabal/**/
+!/cabal/**/*.hs
+!/cabal/*.cabal
+!/cabal/cabal.project
+!/cabal/resources/**/*.txt
+!/cabal/share/**/*.md
 
-!.github/
-!.github/**/
-!.github/**/*.yaml
+!/.github/
+!/.github/**/
+!/.github/**/*.yaml
 
 *~
 *#
