@@ -98,11 +98,11 @@ main skill.
 For example, discovery lines A1 → A2 → A3 and B1 → B2 → B3 may contribute:
 
 | Formal checkpoint | Selected source parents |
-| --- | --- |
-| F1 | A1 |
-| F2 | B1 |
-| F3 | A2 |
-| F4 | A3 and B2 |
+| ----------------- | ----------------------- |
+| F1                | A1                      |
+| F2                | B1                      |
+| F3                | A2                      |
+| F4                | A3 and B2               |
 
 The example illustrates selected parent associations, not a required
 source timeline, integration schedule or checkpoint count. Neither parent

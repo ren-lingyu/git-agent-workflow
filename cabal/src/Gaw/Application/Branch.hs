@@ -1,19 +1,19 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Gaw.Application.Branch
-  ( BranchError (..)
-  , renameBranch
-  , deleteBranch
-  , renderBranchError
-  ) where
+module Gaw.Application.Branch (
+    BranchError (..),
+    renameBranch,
+    deleteBranch,
+    renderBranchError,
+) where
 
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (ExceptT, runExceptT, throwE)
 import qualified Data.ByteString as BS
 import Gaw.Application.Auxiliary (renderAuxiliaryError)
-import Gaw.Application.AuxiliaryCheck (inspectAuxiliary, associatedWorktrees)
-import Gaw.Protocol.Auxiliary
+import Gaw.Application.AuxiliaryCheck (associatedWorktrees, inspectAuxiliary)
 import Gaw.Application.State (inspectCommittedState)
+import Gaw.Protocol.Auxiliary
 import Gaw.Protocol.Branch
 import Gaw.Protocol.Layout (auxiliaryReserved)
 import Gaw.Protocol.Ref
@@ -24,198 +24,361 @@ import Gaw.System.Repository (inspectRef)
 import System.OsPath.Posix (PosixPath)
 
 data BranchError = BranchError BS.ByteString BS.ByteString
-  deriving (Eq, Show)
+    deriving (Eq, Show)
 
 renderBranchError :: BranchError -> BS.ByteString
 renderBranchError (BranchError reason detail) =
-  "git-gaw: GAW branch operation failed (" <> reason <> "): " <> detail <> "\n"
+    "git-gaw: GAW branch operation failed (" <> reason <> "): " <> detail <> "\n"
 
-renameBranch :: Monad m => Git m -> FileSystem m -> PosixPath
-  -> BS.ByteString -> m (Either BranchError BranchResult)
+renameBranch ::
+    (Monad m) =>
+    Git m ->
+    FileSystem m ->
+    PosixPath ->
+    BS.ByteString ->
+    m (Either BranchError BranchResult)
 renameBranch git fs directory newName = runExceptT $ do
-  rootResult <- command directory ["rev-parse", "--show-toplevel"] Nothing
-  if gitExitCode rootResult /= 0 then throwE (BranchError "failure"
-    "Cannot locate the worktree root") else pure ()
-  root <- lift (pathFromBytes fs (trimLine (gitStdout rootResult)))
-  current <- currentHead root
-  selected <- currentSelected root
-  destination <- branchRef root newName
-  if any auxiliaryReserved [current, selected, destination]
-    then throwE (BranchError "reserved-branch" "Only formal GAW branches can be renamed; Auxiliary names are reserved")
-    else pure ()
-  plan <- case planRename current selected destination of
-    Right value -> pure value
-    Left detail -> throwE (BranchError "not-current-gaw-branch" detail)
-  requireDirect root (oldSource plan)
-  requireValid root (oldSource plan)
-  existing <- refState root (newSource plan)
-  case existing of
-    RefMissing -> pure ()
-    _ -> throwE (BranchError "destination-exists"
-      ("Destination branch exists: " <> quoted (refNameBytes (newSource plan))))
-  nativeRename root newName
-  protocolResult <- lift $ runExceptT
-    (renameSelector root (oldSource plan) (newSource plan))
-  case protocolResult of
-    Left failure -> do
-      rollback <- lift $ runExceptT (nativeRename root (branchTail (oldSource plan)))
-      case rollback of
-        Right () -> throwE (BranchError "protocol-failure"
-          ("Protocol rename failed and was compensated: " <> bareError failure))
-        Left compensation -> throwE (BranchError "partial-failure"
-          ("Protocol rename failed (" <> bareError failure <>
-            "); compensation failed: Native rename compensation failed: " <>
-            bareError compensation))
-    Right () -> pure ()
-  verification <- lift $ runExceptT $ do
-    actualHead <- currentHead root
-    if actualHead /= newSource plan then throwE (BranchError "verification-failure"
-      "Worktree HEAD was not renamed") else pure ()
-    actualSelected <- currentSelected root
-    if actualSelected /= newSource plan then throwE (BranchError "verification-failure"
-      "refs/gaw/HEAD was not renamed") else pure ()
-    requireValid root (newSource plan)
-  case verification of
-    Right () -> pure (BranchResult Rename (oldSource plan) (Just (newSource plan)) [])
-    Left failure -> do
-      selectorRollback <- lift $ runExceptT
-        (renameSelector root (newSource plan) (oldSource plan))
-      nativeRollback <- lift $ runExceptT
-        (nativeRename root (branchTail (oldSource plan)))
-      let errors = [bareError problem | Left problem <- [selectorRollback, nativeRollback]]
-      throwE (BranchError
-        (if null errors then "verification-failure" else "partial-failure")
-        ("Rename verification failed (" <> bareError failure <> ")" <>
-          if null errors then "" else "; compensation failed: " <>
-            BS.intercalate "; " errors))
+    rootResult <- command directory ["rev-parse", "--show-toplevel"] Nothing
+    if gitExitCode rootResult /= 0
+        then
+            throwE
+                ( BranchError
+                    "failure"
+                    "Cannot locate the worktree root"
+                )
+        else pure ()
+    root <- lift (pathFromBytes fs (trimLine (gitStdout rootResult)))
+    current <- currentHead root
+    selected <- currentSelected root
+    destination <- branchRef root newName
+    if any auxiliaryReserved [current, selected, destination]
+        then throwE (BranchError "reserved-branch" "Only formal GAW branches can be renamed; Auxiliary names are reserved")
+        else pure ()
+    plan <- case planRename current selected destination of
+        Right value -> pure value
+        Left detail -> throwE (BranchError "not-current-gaw-branch" detail)
+    requireDirect root (oldSource plan)
+    requireValid root (oldSource plan)
+    existing <- refState root (newSource plan)
+    case existing of
+        RefMissing -> pure ()
+        _ ->
+            throwE
+                ( BranchError
+                    "destination-exists"
+                    ("Destination branch exists: " <> quoted (refNameBytes (newSource plan)))
+                )
+    nativeRename root newName
+    protocolResult <-
+        lift $
+            runExceptT
+                (renameSelector root (oldSource plan) (newSource plan))
+    case protocolResult of
+        Left failure -> do
+            rollback <- lift $ runExceptT (nativeRename root (branchTail (oldSource plan)))
+            case rollback of
+                Right () ->
+                    throwE
+                        ( BranchError
+                            "protocol-failure"
+                            ("Protocol rename failed and was compensated: " <> bareError failure)
+                        )
+                Left compensation ->
+                    throwE
+                        ( BranchError
+                            "partial-failure"
+                            ( "Protocol rename failed ("
+                                <> bareError failure
+                                <> "); compensation failed: Native rename compensation failed: "
+                                <> bareError compensation
+                            )
+                        )
+        Right () -> pure ()
+    verification <- lift $ runExceptT $ do
+        actualHead <- currentHead root
+        if actualHead /= newSource plan
+            then
+                throwE
+                    ( BranchError
+                        "verification-failure"
+                        "Worktree HEAD was not renamed"
+                    )
+            else pure ()
+        actualSelected <- currentSelected root
+        if actualSelected /= newSource plan
+            then
+                throwE
+                    ( BranchError
+                        "verification-failure"
+                        "refs/gaw/HEAD was not renamed"
+                    )
+            else pure ()
+        requireValid root (newSource plan)
+    case verification of
+        Right () -> pure (BranchResult Rename (oldSource plan) (Just (newSource plan)) [])
+        Left failure -> do
+            selectorRollback <-
+                lift $
+                    runExceptT
+                        (renameSelector root (newSource plan) (oldSource plan))
+            nativeRollback <-
+                lift $
+                    runExceptT
+                        (nativeRename root (branchTail (oldSource plan)))
+            let errors = [bareError problem | Left problem <- [selectorRollback, nativeRollback]]
+            throwE
+                ( BranchError
+                    (if null errors then "verification-failure" else "partial-failure")
+                    ( "Rename verification failed ("
+                        <> bareError failure
+                        <> ")"
+                        <> if null errors
+                            then ""
+                            else
+                                "; compensation failed: "
+                                    <> BS.intercalate "; " errors
+                    )
+                )
   where
     command = invoke git
     branchRef = validatedBranch git
     currentHead at = do
-      result <- command at ["symbolic-ref", "--quiet", "HEAD"] Nothing
-      case (gitExitCode result, parseSourceRef (trimLine (gitStdout result))) of
-        (0, Right ref) -> pure ref
-        _ -> throwE (BranchError "failure" "The worktree HEAD is not a local branch")
+        result <- command at ["symbolic-ref", "--quiet", "HEAD"] Nothing
+        case (gitExitCode result, parseSourceRef (trimLine (gitStdout result))) of
+            (0, Right ref) -> pure ref
+            _ -> throwE (BranchError "failure" "The worktree HEAD is not a local branch")
     currentSelected at = selectedRef git at
     refState at ref = inspect git at ref
     requireDirect at ref = directSource git at ref
     requireValid at ref = validSource git at ref
     nativeRename at name = do
-      result <- command at (disabledHook ++ ["branch", "-m", name]) Nothing
-      if gitExitCode result == 0 then pure () else throwE (BranchError "native-failure"
-        ("Git failed while renaming the branch: " <> trimLine (gitStderr result)))
+        result <- command at (disabledHook ++ ["branch", "-m", name]) Nothing
+        if gitExitCode result == 0
+            then pure ()
+            else
+                throwE
+                    ( BranchError
+                        "native-failure"
+                        ("Git failed while renaming the branch: " <> trimLine (gitStderr result))
+                    )
     renameSelector at old new = do
-      let input = "option no-deref\0symref-update refs/gaw/HEAD\0" <>
-            refNameBytes new <> "\0ref\0" <> refNameBytes old <> "\0"
-      result <- command at (disabledHook ++ ["update-ref", "-m",
-        "git-gaw branch rename", "--stdin", "-z"]) (Just input)
-      if gitExitCode result == 0 then pure () else throwE (BranchError "protocol-failure"
-        ("Failed to update GAW refs: " <> trimLine (gitStderr result)))
+        let input =
+                "option no-deref\0symref-update refs/gaw/HEAD\0"
+                    <> refNameBytes new
+                    <> "\0ref\0"
+                    <> refNameBytes old
+                    <> "\0"
+        result <-
+            command
+                at
+                ( disabledHook
+                    ++ [ "update-ref"
+                       , "-m"
+                       , "git-gaw branch rename"
+                       , "--stdin"
+                       , "-z"
+                       ]
+                )
+                (Just input)
+        if gitExitCode result == 0
+            then pure ()
+            else
+                throwE
+                    ( BranchError
+                        "protocol-failure"
+                        ("Failed to update GAW refs: " <> trimLine (gitStderr result))
+                    )
 
-deleteBranch :: Monad m => Git m -> PosixPath -> BS.ByteString -> Bool
-  -> m (Either BranchError BranchResult)
+deleteBranch ::
+    (Monad m) =>
+    Git m ->
+    PosixPath ->
+    BS.ByteString ->
+    Bool ->
+    m (Either BranchError BranchResult)
 deleteBranch git directory name force = do
-  parsed <- runExceptT (validatedBranch git directory name)
-  case parsed of
-    Left problem -> pure (Left problem)
-    Right source | auxiliaryReserved source -> deleteAuxiliaryBranch git directory source force
-                 | otherwise -> deleteFormalBranch git directory source name force
+    parsed <- runExceptT (validatedBranch git directory name)
+    case parsed of
+        Left problem -> pure (Left problem)
+        Right source
+            | auxiliaryReserved source -> deleteAuxiliaryBranch git directory source force
+            | otherwise -> deleteFormalBranch git directory source name force
 
-deleteFormalBranch :: Monad m => Git m -> PosixPath -> RefName -> BS.ByteString -> Bool
-  -> m (Either BranchError BranchResult)
+deleteFormalBranch ::
+    (Monad m) =>
+    Git m ->
+    PosixPath ->
+    RefName ->
+    BS.ByteString ->
+    Bool ->
+    m (Either BranchError BranchResult)
 deleteFormalBranch git directory source name force = runExceptT $ do
-  directSource git directory source
-  validSource git directory source
-  selector <- inspect git directory selectorRef
-  case selector of
-    RefMissing -> pure ()
-    _ -> do
-      selected <- selectedRef git directory
-      validSource git directory selected
-      if selected == source then throwE (BranchError "selected-branch"
-        "Run git gaw undeploy or select another branch with git gaw deploy --branch before deletion")
-      else pure ()
-  result <- invoke git directory
-    (disabledHook ++ ["branch", if force then "-D" else "-d", name]) Nothing
-  if gitExitCode result == 0 then pure (BranchResult Delete source Nothing [])
-  else throwE (BranchError "native-failure"
-    ("Git failed while deleting the branch: " <> trimLine (gitStderr result)))
+    directSource git directory source
+    validSource git directory source
+    selector <- inspect git directory selectorRef
+    case selector of
+        RefMissing -> pure ()
+        _ -> do
+            selected <- selectedRef git directory
+            validSource git directory selected
+            if selected == source
+                then
+                    throwE
+                        ( BranchError
+                            "selected-branch"
+                            "Run git gaw undeploy or select another branch with git gaw deploy --branch before deletion"
+                        )
+                else pure ()
+    result <-
+        invoke
+            git
+            directory
+            (disabledHook ++ ["branch", if force then "-D" else "-d", name])
+            Nothing
+    if gitExitCode result == 0
+        then pure (BranchResult Delete source Nothing [])
+        else
+            throwE
+                ( BranchError
+                    "native-failure"
+                    ("Git failed while deleting the branch: " <> trimLine (gitStderr result))
+                )
 
 -- Worktree registrations are not protected by ref locks. Recheck independently,
 -- then inspect again after deletion and compensate by create-if-absent if a
 -- registration raced the transaction. Never remove a worktree automatically.
-deleteAuxiliaryBranch :: Monad m => Git m -> PosixPath -> RefName -> Bool
-  -> m (Either BranchError BranchResult)
+deleteAuxiliaryBranch ::
+    (Monad m) =>
+    Git m ->
+    PosixPath ->
+    RefName ->
+    Bool ->
+    m (Either BranchError BranchResult)
 deleteAuxiliaryBranch git directory source force = runExceptT $ do
-  report <- lift (inspectAuxiliary git directory source) >>= either auxFailure pure
-  case deletionProblems force report of
-    [] -> pure ()
-    problems -> throwE (BranchError "not-ready" (BS.intercalate "; " problems))
-  before <- lift (associatedWorktrees git directory source) >>= either auxFailure pure
-  if null before then pure () else throwE (BranchError "worktree-race" "A worktree became associated before deletion")
-  deleted <- invoke git directory (disabledHook ++ ["update-ref", "-m",
-    "git-gaw auxiliary delete", "--stdin", "-z"]) (Just (deletionInput force report))
-  if gitExitCode deleted == 0 then pure () else throwE (BranchError "ref-changed"
-    ("Deletion transaction failed: " <> trimLine (gitStderr deleted)))
-  after <- lift (associatedWorktrees git directory source)
-  case after of
-    Right [] -> pure (BranchResult Delete source Nothing (abandonmentWarning force report))
-    _ -> do
-      restored <- invoke git directory (disabledHook ++ ["update-ref", "--stdin", "-z"])
-        (Just ("option no-deref\0create " <> refNameBytes source <> "\0" <>
-          objectIdBytes (auxiliaryTip report) <> "\0"))
-      throwE (BranchError (if gitExitCode restored == 0 then "worktree-race" else "partial-failure")
-        (if gitExitCode restored == 0
-          then "Worktree association changed or became unreadable; branch restored, retry after resolving worktree activity"
-          else "Worktree association changed or became unreadable and branch restoration failed; inspect branch and worktrees"))
-  where auxFailure = throwE . BranchError "auxiliary-check" . renderAuxiliaryError
+    report <- lift (inspectAuxiliary git directory source) >>= either auxFailure pure
+    case deletionProblems force report of
+        [] -> pure ()
+        problems -> throwE (BranchError "not-ready" (BS.intercalate "; " problems))
+    before <- lift (associatedWorktrees git directory source) >>= either auxFailure pure
+    if null before then pure () else throwE (BranchError "worktree-race" "A worktree became associated before deletion")
+    deleted <-
+        invoke
+            git
+            directory
+            ( disabledHook
+                ++ [ "update-ref"
+                   , "-m"
+                   , "git-gaw auxiliary delete"
+                   , "--stdin"
+                   , "-z"
+                   ]
+            )
+            (Just (deletionInput force report))
+    if gitExitCode deleted == 0
+        then pure ()
+        else
+            throwE
+                ( BranchError
+                    "ref-changed"
+                    ("Deletion transaction failed: " <> trimLine (gitStderr deleted))
+                )
+    after <- lift (associatedWorktrees git directory source)
+    case after of
+        Right [] -> pure (BranchResult Delete source Nothing (abandonmentWarning force report))
+        _ -> do
+            restored <-
+                invoke
+                    git
+                    directory
+                    (disabledHook ++ ["update-ref", "--stdin", "-z"])
+                    ( Just
+                        ( "option no-deref\0create "
+                            <> refNameBytes source
+                            <> "\0"
+                            <> objectIdBytes (auxiliaryTip report)
+                            <> "\0"
+                        )
+                    )
+            throwE
+                ( BranchError
+                    (if gitExitCode restored == 0 then "worktree-race" else "partial-failure")
+                    ( if gitExitCode restored == 0
+                        then "Worktree association changed or became unreadable; branch restored, retry after resolving worktree activity"
+                        else "Worktree association changed or became unreadable and branch restoration failed; inspect branch and worktrees"
+                    )
+                )
+  where
+    auxFailure = throwE . BranchError "auxiliary-check" . renderAuxiliaryError
 
-invoke :: Monad m => Git m -> PosixPath -> [BS.ByteString]
-  -> Maybe BS.ByteString -> ExceptT BranchError m GitResult
+invoke ::
+    (Monad m) =>
+    Git m ->
+    PosixPath ->
+    [BS.ByteString] ->
+    Maybe BS.ByteString ->
+    ExceptT BranchError m GitResult
 invoke git at args input = lift (runGit git (GitInvocation at args input []))
 
-inspect :: Monad m => Git m -> PosixPath -> RefName -> ExceptT BranchError m RefState
+inspect :: (Monad m) => Git m -> PosixPath -> RefName -> ExceptT BranchError m RefState
 inspect git at ref = do
-  result <- lift (inspectRef git at ref)
-  either (const (throwE (BranchError "failure" "Cannot inspect Git ref"))) pure result
+    result <- lift (inspectRef git at ref)
+    either (const (throwE (BranchError "failure" "Cannot inspect Git ref"))) pure result
 
-validatedBranch :: Monad m => Git m -> PosixPath -> BS.ByteString
-  -> ExceptT BranchError m RefName
+validatedBranch ::
+    (Monad m) =>
+    Git m ->
+    PosixPath ->
+    BS.ByteString ->
+    ExceptT BranchError m RefName
 validatedBranch git at name = do
-  result <- invoke git at ["check-ref-format", "--branch", name] Nothing
-  if gitExitCode result /= 0 then throwE (BranchError "invalid-name"
-    ("Invalid branch name " <> quoted name)) else
-    case parseSourceRef ("refs/heads/" <> name) of
-      Right ref -> pure ref
-      Left _ -> throwE (BranchError "invalid-name" ("Invalid branch name " <> quoted name))
+    result <- invoke git at ["check-ref-format", "--branch", name] Nothing
+    if gitExitCode result /= 0
+        then
+            throwE
+                ( BranchError
+                    "invalid-name"
+                    ("Invalid branch name " <> quoted name)
+                )
+        else case parseSourceRef ("refs/heads/" <> name) of
+            Right ref -> pure ref
+            Left _ -> throwE (BranchError "invalid-name" ("Invalid branch name " <> quoted name))
 
-directSource :: Monad m => Git m -> PosixPath -> RefName -> ExceptT BranchError m ()
+directSource :: (Monad m) => Git m -> PosixPath -> RefName -> ExceptT BranchError m ()
 directSource git at source = do
-  state <- inspect git at source
-  case state of
-    RefDirect _ -> pure ()
-    _ -> throwE (BranchError "missing-branch"
-      ("Local branch does not exist: " <> quoted (refNameBytes source)))
+    state <- inspect git at source
+    case state of
+        RefDirect _ -> pure ()
+        _ ->
+            throwE
+                ( BranchError
+                    "missing-branch"
+                    ("Local branch does not exist: " <> quoted (refNameBytes source))
+                )
 
-validSource :: Monad m => Git m -> PosixPath -> RefName -> ExceptT BranchError m ()
+validSource :: (Monad m) => Git m -> PosixPath -> RefName -> ExceptT BranchError m ()
 validSource git at source = do
-  report <- lift (inspectCommittedState git at source)
-  case classifyCommittedState (stateFindings report) of
-    ValidCommittedState _ -> pure ()
-    _ -> throwE (BranchError "invalid-state"
-      ("Branch is not valid GAW committed state: " <> quoted (refNameBytes source)))
+    report <- lift (inspectCommittedState git at source)
+    case classifyCommittedState (stateFindings report) of
+        ValidCommittedState _ -> pure ()
+        _ ->
+            throwE
+                ( BranchError
+                    "invalid-state"
+                    ("Branch is not valid GAW committed state: " <> quoted (refNameBytes source))
+                )
 
-selectedRef :: Monad m => Git m -> PosixPath -> ExceptT BranchError m RefName
+selectedRef :: (Monad m) => Git m -> PosixPath -> ExceptT BranchError m RefName
 selectedRef git at = do
-  selector <- inspect git at selectorRef
-  case selector of
-    RefSymbolic target | isSourceRef target && not (auxiliaryReserved target) -> do
-      state <- inspect git at target
-      case state of
-        RefDirect _ -> pure target
+    selector <- inspect git at selectorRef
+    case selector of
+        RefSymbolic target | isSourceRef target && not (auxiliaryReserved target) -> do
+            state <- inspect git at target
+            case state of
+                RefDirect _ -> pure target
+                _ -> throwE invalidSelector
         _ -> throwE invalidSelector
-    _ -> throwE invalidSelector
-  where invalidSelector = BranchError "invalid-selector" "Cannot resolve GAW selector"
+  where
+    invalidSelector = BranchError "invalid-selector" "Cannot resolve GAW selector"
 
 disabledHook :: [BS.ByteString]
 disabledHook = ["-c", "hook.gaw-reference-transaction.enabled=false"]
@@ -225,7 +388,7 @@ branchTail = BS.drop (BS.length "refs/heads/") . refNameBytes
 
 bareError :: BranchError -> BS.ByteString
 bareError (BranchError reason detail) =
-  "GAW branch operation failed (" <> reason <> "): " <> detail
+    "GAW branch operation failed (" <> reason <> "): " <> detail
 
 quoted :: BS.ByteString -> BS.ByteString
 quoted value = "\"" <> value <> "\""

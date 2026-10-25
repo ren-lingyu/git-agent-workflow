@@ -1,5 +1,4 @@
-{ llib, src }:
-{
+{ llib, src }: {
   overlays = llib.packages.mkOverlays {
     root = ./.;
     overlayFile = "overlay.nix";

@@ -1,11 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Gaw.Application.Init
-  ( InitError (..)
-  , createInitialRoot
-  , initialize
-  , renderInitError
-  ) where
+module Gaw.Application.Init (
+    InitError (..),
+    createInitialRoot,
+    initialize,
+    renderInitError,
+) where
 
 import Control.Monad (when)
 import Control.Monad.Trans.Class (lift)
@@ -23,131 +23,223 @@ import Gaw.System.Repository (inspectRef)
 import System.OsPath.Posix (PosixPath)
 
 data InitError = InitError BS.ByteString BS.ByteString
-  deriving (Eq, Show)
+    deriving (Eq, Show)
 
 renderInitError :: InitError -> BS.ByteString
 renderInitError (InitError reason detail) =
-  "git-gaw: GAW init failed (" <> reason <> "): " <> detail <> "\n"
+    "git-gaw: GAW init failed (" <> reason <> "): " <> detail <> "\n"
 
-initialize :: Monad m => Git m -> FileSystem m -> PosixPath
-  -> BS.ByteString -> Maybe BS.ByteString -> m (Either InitError InitResult)
+initialize ::
+    (Monad m) =>
+    Git m ->
+    FileSystem m ->
+    PosixPath ->
+    BS.ByteString ->
+    Maybe BS.ByteString ->
+    m (Either InitError InitResult)
 initialize git fs directory branch requestedPath = runExceptT $ do
-  source <- validatedBranch
-  probe <- command ["rev-parse", "--git-dir"] Nothing
-  requireSuccess "git-failure" "Git failed while locating the repository: " probe
-  names <- listRefs "refs/heads/"
-  mapM_ inspectHistory names
-  sourceState <- refState source
-  case sourceState of
-    RefMissing -> pure ()
-    _ -> throwE (InitError "branch-exists"
-      ("Source branch already exists: " <> quoted (refNameBytes source)))
-  protocols <- listRefs "refs/gaw/"
-  when (not (null protocols)) (throwE (InitError "existing-metadata"
-    "Local refs/gaw metadata already exists"))
-  preflightHook
-  case requestedPath of
-    Just path -> do
-      when (BS.null path) (throwE (InitError "worktree-conflict" "Worktree path is empty"))
-      exists <- lift (pathExists fs path)
-      when exists (throwE (InitError "worktree-conflict"
-        ("Worktree path already exists: " <> trailingSlash path)))
-      listing <- command ["worktree", "list", "--porcelain", "-z"] Nothing
-      requireSuccess "git-failure" "Git failed while inspecting worktrees: " listing
-      let needle = "worktree " <> trimSlash path <> "\0"
-      when (needle `BS.isInfixOf` gitStdout listing)
-        (throwE (InitError "worktree-conflict"
-          ("Worktree path is already registered: " <> trailingSlash path)))
-    Nothing -> pure ()
-  blob <- writeObject ["hash-object", "-w", "--stdin"] (Just initialConfig)
-    "writing the initial config blob"
-  rootResult <- lift (createInitialRoot git directory Formal blob)
-  commit <- either throwE pure rootResult
-  let createInput = "create " <> refNameBytes source <> "\0" <> objectIdBytes commit <>
-        "\0option no-deref\0symref-create refs/gaw/HEAD\0" <> refNameBytes source <> "\0"
-  created <- command (disabledHook ++ ["update-ref", "-m", "git-gaw init", "--stdin", "-z"])
-    (Just createInput)
-  requireSuccess "failure" "Failed to update GAW refs: " created
-  deployment <- lift (deploy git fs directory (Just branch) requestedPath)
-  case deployment of
-    Right result -> pure (InitResult branch commit result)
-    Left problem -> do
-      let deleteInput = "option no-deref\0symref-delete refs/gaw/HEAD\0" <>
-            refNameBytes source <> "\0delete " <> refNameBytes source <> "\0" <>
-            objectIdBytes commit <> "\0"
-      rollback <- command (disabledHook ++ ["update-ref", "-m", "git-gaw init rollback",
-        "--stdin", "-z"]) (Just deleteInput)
-      let deployDetail = dropPrefix (renderDeployError problem)
-      if gitExitCode rollback == 0
-        then throwE (InitError "deployment-failed" deployDetail)
-        else throwE (InitError "partial-failure"
-          ("Deployment failed (" <> deployDetail <>
-            ") and ref compensation failed: Failed to update GAW refs: " <>
-            trimLine (gitStderr rollback)))
+    source <- validatedBranch
+    probe <- command ["rev-parse", "--git-dir"] Nothing
+    requireSuccess "git-failure" "Git failed while locating the repository: " probe
+    names <- listRefs "refs/heads/"
+    mapM_ inspectHistory names
+    sourceState <- refState source
+    case sourceState of
+        RefMissing -> pure ()
+        _ ->
+            throwE
+                ( InitError
+                    "branch-exists"
+                    ("Source branch already exists: " <> quoted (refNameBytes source))
+                )
+    protocols <- listRefs "refs/gaw/"
+    when
+        (not (null protocols))
+        ( throwE
+            ( InitError
+                "existing-metadata"
+                "Local refs/gaw metadata already exists"
+            )
+        )
+    preflightHook
+    case requestedPath of
+        Just path -> do
+            when (BS.null path) (throwE (InitError "worktree-conflict" "Worktree path is empty"))
+            exists <- lift (pathExists fs path)
+            when
+                exists
+                ( throwE
+                    ( InitError
+                        "worktree-conflict"
+                        ("Worktree path already exists: " <> trailingSlash path)
+                    )
+                )
+            listing <- command ["worktree", "list", "--porcelain", "-z"] Nothing
+            requireSuccess "git-failure" "Git failed while inspecting worktrees: " listing
+            let needle = "worktree " <> trimSlash path <> "\0"
+            when
+                (needle `BS.isInfixOf` gitStdout listing)
+                ( throwE
+                    ( InitError
+                        "worktree-conflict"
+                        ("Worktree path is already registered: " <> trailingSlash path)
+                    )
+                )
+        Nothing -> pure ()
+    blob <-
+        writeObject
+            ["hash-object", "-w", "--stdin"]
+            (Just initialConfig)
+            "writing the initial config blob"
+    rootResult <- lift (createInitialRoot git directory Formal blob)
+    commit <- either throwE pure rootResult
+    let createInput =
+            "create "
+                <> refNameBytes source
+                <> "\0"
+                <> objectIdBytes commit
+                <> "\0option no-deref\0symref-create refs/gaw/HEAD\0"
+                <> refNameBytes source
+                <> "\0"
+    created <-
+        command
+            (disabledHook ++ ["update-ref", "-m", "git-gaw init", "--stdin", "-z"])
+            (Just createInput)
+    requireSuccess "failure" "Failed to update GAW refs: " created
+    deployment <- lift (deploy git fs directory (Just branch) requestedPath)
+    case deployment of
+        Right result -> pure (InitResult branch commit result)
+        Left problem -> do
+            let deleteInput =
+                    "option no-deref\0symref-delete refs/gaw/HEAD\0"
+                        <> refNameBytes source
+                        <> "\0delete "
+                        <> refNameBytes source
+                        <> "\0"
+                        <> objectIdBytes commit
+                        <> "\0"
+            rollback <-
+                command
+                    ( disabledHook
+                        ++ [ "update-ref"
+                           , "-m"
+                           , "git-gaw init rollback"
+                           , "--stdin"
+                           , "-z"
+                           ]
+                    )
+                    (Just deleteInput)
+            let deployDetail = dropPrefix (renderDeployError problem)
+            if gitExitCode rollback == 0
+                then throwE (InitError "deployment-failed" deployDetail)
+                else
+                    throwE
+                        ( InitError
+                            "partial-failure"
+                            ( "Deployment failed ("
+                                <> deployDetail
+                                <> ") and ref compensation failed: Failed to update GAW refs: "
+                                <> trimLine (gitStderr rollback)
+                            )
+                        )
   where
     command args input = lift (runGit git (GitInvocation directory args input []))
     requireSuccess reason prefix result
-      | gitExitCode result == 0 = pure ()
-      | otherwise = throwE (InitError reason (prefix <> trimLine (gitStderr result)))
+        | gitExitCode result == 0 = pure ()
+        | otherwise = throwE (InitError reason (prefix <> trimLine (gitStderr result)))
     validatedBranch = do
-      result <- command ["check-ref-format", "--branch", branch] Nothing
-      if gitExitCode result /= 0 then throwE (InitError "invalid-branch"
-        ("Invalid local branch name " <> quoted branch)) else
-        case parseSourceRef ("refs/heads/" <> branch) of
-          Right ref | not (auxiliaryReserved ref) -> pure ref
-          _ -> throwE (InitError "invalid-branch"
-            ("Invalid local branch name " <> quoted branch))
+        result <- command ["check-ref-format", "--branch", branch] Nothing
+        if gitExitCode result /= 0
+            then
+                throwE
+                    ( InitError
+                        "invalid-branch"
+                        ("Invalid local branch name " <> quoted branch)
+                    )
+            else case parseSourceRef ("refs/heads/" <> branch) of
+                Right ref | not (auxiliaryReserved ref) -> pure ref
+                _ ->
+                    throwE
+                        ( InitError
+                            "invalid-branch"
+                            ("Invalid local branch name " <> quoted branch)
+                        )
     listRefs prefix = do
-      result <- command ["for-each-ref", "--format=%(refname)", prefix] Nothing
-      requireSuccess "git-failure" "Git failed while listing refs: " result
-      pure (filter (not . BS.null) (BS.split 10 (gitStdout result)))
+        result <- command ["for-each-ref", "--format=%(refname)", prefix] Nothing
+        requireSuccess "git-failure" "Git failed while listing refs: " result
+        pure (filter (not . BS.null) (BS.split 10 (gitStdout result)))
     refState ref = do
-      result <- lift (inspectRef git directory ref)
-      either (const (throwE (InitError "git-failure" "Cannot inspect Git ref"))) pure result
+        result <- lift (inspectRef git directory ref)
+        either (const (throwE (InitError "git-failure" "Cannot inspect Git ref"))) pure result
     inspectHistory name = do
-      when ("refs/heads/_gaw_aux_" `BS.isPrefixOf` name) (throwE
-        (InitError "existing-history" "Existing Auxiliary history requires recovery, not init"))
-      marker <- command ["ls-tree", "-z", "--full-tree", name, "--", ".gaw/config"] Nothing
-      requireSuccess "git-failure" "Cannot inspect existing branch marker: " marker
-      when (not (BS.null (gitStdout marker))) $ do
-        ref <- case parseSourceRef name of
-          Right value -> pure value
-          Left _ -> throwE (InitError "git-failure" "Invalid local source ref")
-        report <- lift (inspectCommittedState git directory ref)
-        case classifyCommittedState (stateFindings report) of
-          ValidCommittedState _ -> throwE (InitError "already-initialized"
-            ("Existing branch " <> quoted name <> " already contains valid GAW history"))
-          _ -> throwE (InitError "ambiguous-history"
-            ("Existing branch " <> quoted name <> " contains an invalid GAW marker"))
+        when
+            ("refs/heads/_gaw_aux_" `BS.isPrefixOf` name)
+            ( throwE
+                (InitError "existing-history" "Existing Auxiliary history requires recovery, not init")
+            )
+        marker <- command ["ls-tree", "-z", "--full-tree", name, "--", ".gaw/config"] Nothing
+        requireSuccess "git-failure" "Cannot inspect existing branch marker: " marker
+        when (not (BS.null (gitStdout marker))) $ do
+            ref <- case parseSourceRef name of
+                Right value -> pure value
+                Left _ -> throwE (InitError "git-failure" "Invalid local source ref")
+            report <- lift (inspectCommittedState git directory ref)
+            case classifyCommittedState (stateFindings report) of
+                ValidCommittedState _ ->
+                    throwE
+                        ( InitError
+                            "already-initialized"
+                            ("Existing branch " <> quoted name <> " already contains valid GAW history")
+                        )
+                _ ->
+                    throwE
+                        ( InitError
+                            "ambiguous-history"
+                            ("Existing branch " <> quoted name <> " contains an invalid GAW marker")
+                        )
     preflightHook = do
-      values <- mapM configValues hookKeys
-      case values of
-        [[], [], []] -> pure ()
-        [["reference-transaction"], ["git-gaw --reference-transaction"], ["true"]] ->
-          pure ()
-        _ -> throwE (InitError "hook-conflict"
-          "The gaw-reference-transaction hook configuration is incomplete or divergent")
+        values <- mapM configValues hookKeys
+        case values of
+            [[], [], []] -> pure ()
+            [["reference-transaction"], ["git-gaw --reference-transaction"], ["true"]] ->
+                pure ()
+            _ ->
+                throwE
+                    ( InitError
+                        "hook-conflict"
+                        "The gaw-reference-transaction hook configuration is incomplete or divergent"
+                    )
     configValues key = do
-      let args = ["config", "--local"] ++
-            (if key == "hook.gaw-reference-transaction.enabled"
-              then ["--type=bool"] else []) ++ ["--get-all", key]
-      result <- command args Nothing
-      case gitExitCode result of
-        0 -> pure (BS.split 10 (trimLine (gitStdout result)))
-        1 -> pure []
-        _ -> throwE (InitError "hook-conflict" "Cannot inspect protection hook")
+        let args =
+                ["config", "--local"]
+                    ++ ( if key == "hook.gaw-reference-transaction.enabled"
+                            then ["--type=bool"]
+                            else []
+                       )
+                    ++ ["--get-all", key]
+        result <- command args Nothing
+        case gitExitCode result of
+            0 -> pure (BS.split 10 (trimLine (gitStdout result)))
+            1 -> pure []
+            _ -> throwE (InitError "hook-conflict" "Cannot inspect protection hook")
     writeObject args input operation = do
-      result <- command args input
-      requireSuccess "git-failure" ("Git failed while " <> operation <> ": ") result
-      case parseObjectId (trimLine (gitStdout result)) of
-        Right oid -> pure oid
-        Left _ -> throwE (InitError "git-failure"
-          ("Git returned an invalid object ID while " <> operation))
+        result <- command args input
+        requireSuccess "git-failure" ("Git failed while " <> operation <> ": ") result
+        case parseObjectId (trimLine (gitStdout result)) of
+            Right oid -> pure oid
+            Left _ ->
+                throwE
+                    ( InitError
+                        "git-failure"
+                        ("Git returned an invalid object ID while " <> operation)
+                    )
 
 hookKeys :: [BS.ByteString]
-hookKeys = ["hook.gaw-reference-transaction.event",
-  "hook.gaw-reference-transaction.command",
-  "hook.gaw-reference-transaction.enabled"]
+hookKeys =
+    [ "hook.gaw-reference-transaction.event"
+    , "hook.gaw-reference-transaction.command"
+    , "hook.gaw-reference-transaction.enabled"
+    ]
 
 disabledHook :: [BS.ByteString]
 disabledHook = ["-c", "hook.gaw-reference-transaction.enabled=false"]
@@ -165,33 +257,67 @@ trimSlash :: BS.ByteString -> BS.ByteString
 trimSlash = BS.dropWhileEnd (== 47)
 
 trailingSlash :: BS.ByteString -> BS.ByteString
-trailingSlash path | BS.null path || BS.last path == 47 = path
-                   | otherwise = path <> "/"
+trailingSlash path
+    | BS.null path || BS.last path == 47 = path
+    | otherwise = path <> "/"
 
 -- Config blob identity preserves every original byte, including comments.
-createInitialRoot :: Monad m => Git m -> PosixPath -> HistoryLayout -> ObjectId
-  -> m (Either InitError ObjectId)
+createInitialRoot ::
+    (Monad m) =>
+    Git m ->
+    PosixPath ->
+    HistoryLayout ->
+    ObjectId ->
+    m (Either InitError ObjectId)
 createInitialRoot git directory layout blob = runExceptT $ do
-  gawTree <- writeObject ["mktree", "-z"]
-    (Just (initialTreeEntry "100644 blob" blob "config")) "writing the .gaw tree"
-  logicalTree <- writeObject ["mktree", "-z"]
-    (Just (initialTreeEntry "040000 tree" gawTree ".gaw")) "writing the logical tree"
-  rootTree <- case layout of
-    Formal -> pure logicalTree
-    Auxiliary uuid -> writeObject ["mktree", "-z"]
-      (Just (initialTreeEntry "040000 tree" logicalTree uuid)) "writing the UUID tree"
-  commit <- writeObject
-    ["-c", "user.name=Git Agent Workflow", "-c", "user.email=gaw@invalid",
-     "-c", "commit.gpgSign=false", "commit-tree", objectIdBytes rootTree,
-     "-m", initialMessage] Nothing "writing the independent root commit"
-  report <- lift (inspectCommittedObjectAt git directory layout commit)
-  case classifyCommittedState (stateFindings report) of
-    ValidCommittedState _ -> pure commit
-    _ -> throwE (InitError "invalid-initial-state" "The generated root failed validation")
+    gawTree <-
+        writeObject
+            ["mktree", "-z"]
+            (Just (initialTreeEntry "100644 blob" blob "config"))
+            "writing the .gaw tree"
+    logicalTree <-
+        writeObject
+            ["mktree", "-z"]
+            (Just (initialTreeEntry "040000 tree" gawTree ".gaw"))
+            "writing the logical tree"
+    rootTree <- case layout of
+        Formal -> pure logicalTree
+        Auxiliary uuid ->
+            writeObject
+                ["mktree", "-z"]
+                (Just (initialTreeEntry "040000 tree" logicalTree uuid))
+                "writing the UUID tree"
+    commit <-
+        writeObject
+            [ "-c"
+            , "user.name=Git Agent Workflow"
+            , "-c"
+            , "user.email=gaw@invalid"
+            , "-c"
+            , "commit.gpgSign=false"
+            , "commit-tree"
+            , objectIdBytes rootTree
+            , "-m"
+            , initialMessage
+            ]
+            Nothing
+            "writing the independent root commit"
+    report <- lift (inspectCommittedObjectAt git directory layout commit)
+    case classifyCommittedState (stateFindings report) of
+        ValidCommittedState _ -> pure commit
+        _ -> throwE (InitError "invalid-initial-state" "The generated root failed validation")
   where
     writeObject args input operation = do
-      result <- lift (runGit git (GitInvocation directory args input []))
-      if gitExitCode result /= 0 then throwE (InitError "git-failure"
-        (operation <> ": " <> trimLine (gitStderr result))) else
-        either (const (throwE (InitError "git-failure" "Malformed object ID"))) pure
-          (parseObjectId (trimLine (gitStdout result)))
+        result <- lift (runGit git (GitInvocation directory args input []))
+        if gitExitCode result /= 0
+            then
+                throwE
+                    ( InitError
+                        "git-failure"
+                        (operation <> ": " <> trimLine (gitStderr result))
+                    )
+            else
+                either
+                    (const (throwE (InitError "git-failure" "Malformed object ID")))
+                    pure
+                    (parseObjectId (trimLine (gitStdout result)))

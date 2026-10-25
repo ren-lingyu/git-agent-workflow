@@ -7,10 +7,9 @@
   git,
   python3,
   writeText,
-} : assert
-(lib.assertMsg
-  (lib.versionAtLeast git.version "2.54")
-  "GAW requires Git >= 2.54, but got ${git.version}"
+}:
+assert (
+  lib.assertMsg (lib.versionAtLeast git.version "2.54") "GAW requires Git >= 2.54, but got ${git.version}"
 );
 let
 
@@ -113,13 +112,10 @@ let
     print(f"Verified skill resources ({mode}): {len(files)} files")
   '';
 
-  package_ = haskell.lib.dontHaddock (haskellPackages.callCabal2nix
-    "git-agent-workflow"
-    src
-    { }
-  );
+  package_ = haskell.lib.dontHaddock (haskellPackages.callCabal2nix "git-agent-workflow" src { });
 
-in package_.overrideAttrs (old_ : {
+in
+package_.overrideAttrs (old_: {
   nativeBuildInputs = builtins.concatLists [
     (old_.nativeBuildInputs or [ ])
     [
@@ -168,8 +164,6 @@ in package_.overrideAttrs (old_ : {
 
   meta = lib.mergeAttrsList [
     (old_.meta or { })
-    {
-      platforms = lib.platforms.unix;
-    }
+    { platforms = lib.platforms.unix; }
   ];
 })

@@ -4,70 +4,71 @@ version:            0.7.2
 synopsis:           Git Agent Workflow
 license:            MIT
 build-type:         Simple
-extra-source-files:
-    resources/help/*.txt
+extra-source-files: resources/help/*.txt
 data-files:
-    share/skills/git-agent-workflow/SKILL.md
-    share/skills/git-agent-workflow/references/auxiliary.md
-    share/skills/git-agent-workflow/references/establishment.md
-    share/skills/git-agent-workflow/references/consolidation.md
-    share/skills/git-agent-workflow/references/memory.md
-    share/skills/git-agent-workflow/references/archive.md
-    share/skills/git-agent-workflow/references/skills.md
+  share/skills/git-agent-workflow/references/archive.md
+  share/skills/git-agent-workflow/references/auxiliary.md
+  share/skills/git-agent-workflow/references/consolidation.md
+  share/skills/git-agent-workflow/references/establishment.md
+  share/skills/git-agent-workflow/references/memory.md
+  share/skills/git-agent-workflow/references/skills.md
+  share/skills/git-agent-workflow/SKILL.md
 
 library
   hs-source-dirs:   src
   other-modules:    Paths_git_agent_workflow
   autogen-modules:  Paths_git_agent_workflow
   exposed-modules:
-      Gaw.Cli
-    , Gaw.Application.Hook
-    , Gaw.Application.State
-    , Gaw.Application.Check
-    , Gaw.Application.Status
-    , Gaw.Application.Commit
-    , Gaw.Application.Undeploy
-    , Gaw.Application.Deploy
-    , Gaw.Application.Branch
-    , Gaw.Application.Auxiliary
-    , Gaw.Application.AuxiliaryCheck
-    , Gaw.Protocol.Auxiliary
-    , Gaw.System.Entropy
-    , Gaw.Application.Init
-    , Gaw.Protocol.Layout
-    , Gaw.Protocol.Check
-    , Gaw.Protocol.Commit
-    , Gaw.Protocol.Config
-    , Gaw.Protocol.SExpr
-    , Gaw.Protocol.Hook
-    , Gaw.Protocol.Ref
-    , Gaw.Protocol.Workspace
-    , Gaw.Protocol.Workspace.Types
-    , Gaw.Protocol.State
-    , Gaw.Protocol.Show
-    , Gaw.Protocol.Status
-    , Gaw.Protocol.Undeploy
-    , Gaw.Protocol.Deploy
-    , Gaw.Protocol.Branch
-    , Gaw.Protocol.Init
-    , Gaw.System.Git
-    , Gaw.System.ExternalGit
-    , Gaw.System.Repository
-    , Gaw.System.Config
-    , Gaw.System.FileSystem
-    , Gaw.System.Clock
+    Gaw.Application.Auxiliary
+    Gaw.Application.AuxiliaryCheck
+    Gaw.Application.Branch
+    Gaw.Application.Check
+    Gaw.Application.Commit
+    Gaw.Application.Deploy
+    Gaw.Application.Hook
+    Gaw.Application.Init
+    Gaw.Application.State
+    Gaw.Application.Status
+    Gaw.Application.Undeploy
+    Gaw.Cli
+    Gaw.Protocol.Auxiliary
+    Gaw.Protocol.Branch
+    Gaw.Protocol.Check
+    Gaw.Protocol.Commit
+    Gaw.Protocol.Config
+    Gaw.Protocol.Deploy
+    Gaw.Protocol.Hook
+    Gaw.Protocol.Init
+    Gaw.Protocol.Layout
+    Gaw.Protocol.Ref
+    Gaw.Protocol.SExpr
+    Gaw.Protocol.Show
+    Gaw.Protocol.State
+    Gaw.Protocol.Status
+    Gaw.Protocol.Undeploy
+    Gaw.Protocol.Workspace
+    Gaw.Protocol.Workspace.Types
+    Gaw.System.Clock
+    Gaw.System.Config
+    Gaw.System.Entropy
+    Gaw.System.ExternalGit
+    Gaw.System.FileSystem
+    Gaw.System.Git
+    Gaw.System.Repository
+
   build-depends:
-      base >=4.16 && <5
+    , base              >=4.16 && <5
     , bytestring
     , containers
     , file-embed
     , filepath
     , os-string
-    , text
     , template-haskell
+    , text
     , time
     , transformers
     , unix
+
   default-language: Haskell2010
   ghc-options:      -Wall
 
@@ -76,36 +77,39 @@ test-suite protocol-tests
   hs-source-dirs:   test
   main-is:          Main.hs
   build-depends:
-      base >=4.16 && <5
+    , base                >=4.16 && <5
     , bytestring
     , git-agent-workflow
     , text
+
   default-language: Haskell2010
   ghc-options:      -Wall
 
 test-suite git-adapter-tests
-  type:             exitcode-stdio-1.0
-  hs-source-dirs:   test
-  main-is:          GitAdapter.hs
-  other-modules:    CliConfig
+  type:               exitcode-stdio-1.0
+  hs-source-dirs:     test
+  main-is:            GitAdapter.hs
+  other-modules:      CliConfig
   build-tool-depends: git-agent-workflow:git-gaw
   build-depends:
-      base >=4.16 && <5
+    , base                >=4.16 && <5
     , bytestring
     , directory
+    , filepath
     , git-agent-workflow
     , os-string
-    , filepath
     , process
     , unix
-  default-language: Haskell2010
-  ghc-options:      -Wall
+
+  default-language:   Haskell2010
+  ghc-options:        -Wall
 
 executable git-gaw
   hs-source-dirs:   app
   main-is:          Main.hs
   build-depends:
-      base >=4.16 && <5
+    , base                >=4.16 && <5
     , git-agent-workflow
+
   default-language: Haskell2010
   ghc-options:      -Wall

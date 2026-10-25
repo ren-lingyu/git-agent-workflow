@@ -9,6 +9,9 @@ import Language.Haskell.TH.Syntax (lift, runIO)
 import System.Environment (lookupEnv)
 
 gitExecutable :: BS.ByteString
-gitExecutable = BSC.pack $(do
-  executable <- runIO (fromMaybe "git" <$> lookupEnv "GIT")
-  lift executable)
+gitExecutable =
+    BSC.pack
+        $( do
+            executable <- runIO (fromMaybe "git" <$> lookupEnv "GIT")
+            lift executable
+         )

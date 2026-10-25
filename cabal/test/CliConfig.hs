@@ -3,682 +3,795 @@
 module CliConfig (configCliTests) where
 
 import Control.Exception (finally)
-import Control.Monad (unless, forM_, filterM)
+import Control.Monad (filterM, forM_, unless)
 import qualified Data.ByteString.Char8 as BSC
-import Data.List (isInfixOf, intercalate)
-import Gaw.Application.Undeploy (undeploy)
-import Gaw.Protocol.Undeploy (UndeployResult (..))
+import Data.IORef (modifyIORef', newIORef, readIORef, writeIORef)
+import Data.List (intercalate, isInfixOf)
+import Gaw.Application.Auxiliary (AuxiliaryError (..), initializeAuxiliary)
 import Gaw.Application.Branch (deleteBranch)
-import Gaw.Application.Auxiliary (initializeAuxiliary, AuxiliaryError (..))
-import Gaw.System.FileSystem (posixFileSystem)
-import Gaw.Protocol.Init (initializedBranch)
-import Data.IORef (newIORef, readIORef, writeIORef, modifyIORef')
 import Gaw.Application.State (inspectCommittedState)
-import Gaw.Protocol.Config (parseConfig, configVersion, ConfigVersion (..))
+import Gaw.Application.Undeploy (undeploy)
+import Gaw.Protocol.Config (ConfigVersion (..), configVersion, parseConfig)
+import Gaw.Protocol.Init (initializedBranch)
 import Gaw.Protocol.Ref (parseSourceRef)
 import Gaw.Protocol.State
+import Gaw.Protocol.Undeploy (UndeployResult (..))
+import Gaw.System.FileSystem (posixFileSystem)
 import Gaw.System.Git (Git (..), GitInvocation (..), GitResult (..), runGitPosix)
-import qualified System.OsString.Posix as OS
-import System.Directory (findExecutable, makeAbsolute, createDirectory,
-  createDirectoryIfMissing, removePathForcibly, removeFile, doesPathExist)
-import System.Exit (ExitCode (..))
-import System.FilePath ((</>), getSearchPath)
+import System.Directory (
+    createDirectory,
+    createDirectoryIfMissing,
+    doesPathExist,
+    findExecutable,
+    makeAbsolute,
+    removeFile,
+    removePathForcibly,
+ )
 import System.Environment (getEnvironment)
+import System.Exit (ExitCode (..))
+import System.FilePath (getSearchPath, (</>))
+import qualified System.OsString.Posix as OS
 import System.Process
 
 -- The internal Cabal tool dependency supplies the candidate executable.
 configCliTests :: FilePath -> FilePath -> IO ()
 configCliTests temporary git = do
-  found <- findExecutable "git-gaw" >>= maybe
-    (fail "Cabal did not expose the candidate git-gaw") pure
-  candidate <- makeAbsolute found
-  let root = temporary </> "config-cli"
-  createDirectory root
-  finally (do
-    helpTopics candidate root
-    deploymentLifecycle candidate root
-    auxiliaryLifecycle candidate root
-    layoutChecks candidate root
-    newConfig candidate root
-    boundaryChanges candidate root
-    migrateLegacy candidate root
-    futureVersion candidate root "future-numeric"
-      "(:version 2 :workspace :future-shape)\n" "Unsupported config version 2"
-    futureVersion candidate root "future-syntax"
-      "(:version v2 :workspace #(:future))\n" "Unrecognized config version v2"
-    invalidRecovery candidate root
-    ) (removePathForcibly root)
+    found <-
+        findExecutable "git-gaw"
+            >>= maybe
+                (fail "Cabal did not expose the candidate git-gaw")
+                pure
+    candidate <- makeAbsolute found
+    let root = temporary </> "config-cli"
+    createDirectory root
+    finally
+        ( do
+            helpTopics candidate root
+            deploymentLifecycle candidate root
+            auxiliaryLifecycle candidate root
+            layoutChecks candidate root
+            newConfig candidate root
+            boundaryChanges candidate root
+            migrateLegacy candidate root
+            futureVersion
+                candidate
+                root
+                "future-numeric"
+                "(:version 2 :workspace :future-shape)\n"
+                "Unsupported config version 2"
+            futureVersion
+                candidate
+                root
+                "future-syntax"
+                "(:version v2 :workspace #(:future))\n"
+                "Unrecognized config version v2"
+            invalidRecovery candidate root
+        )
+        (removePathForcibly root)
   where
     invoke directory executable args = do
-      paths <- mapM makeAbsolute =<< getSearchPath
-      environment <- getEnvironment
-      let absoluteEnvironment = ("PATH", intercalate ":" paths) :
-            filter ((/= "PATH") . fst) environment
-      readCreateProcessWithExitCode ((proc executable args)
-        {cwd = Just directory, env = Just absoluteEnvironment}) ""
+        paths <- mapM makeAbsolute =<< getSearchPath
+        environment <- getEnvironment
+        let absoluteEnvironment =
+                ("PATH", intercalate ":" paths)
+                    : filter ((/= "PATH") . fst) environment
+        readCreateProcessWithExitCode
+            ( (proc executable args)
+                { cwd = Just directory
+                , env = Just absoluteEnvironment
+                }
+            )
+            ""
     success directory executable args = do
-      (code, out, err) <- invoke directory executable args
-      unless (code == ExitSuccess) $ fail (show args ++ " failed: " ++ out ++ err)
-      pure out
+        (code, out, err) <- invoke directory executable args
+        unless (code == ExitSuccess) $ fail (show args ++ " failed: " ++ out ++ err)
+        pure out
     failure directory executable args = do
-      (code, out, err) <- invoke directory executable args
-      unless (code /= ExitSuccess) $ fail (show args ++ " unexpectedly succeeded")
-      pure (out ++ err)
+        (code, out, err) <- invoke directory executable args
+        unless (code /= ExitSuccess) $ fail (show args ++ " unexpectedly succeeded")
+        pure (out ++ err)
     cliOkCombined candidate directory args = do
-      (code,out,err) <- invoke directory candidate args
-      require (code == ExitSuccess) (show args ++ " failed: " ++ out ++ err)
-      pure (out ++ err)
+        (code, out, err) <- invoke directory candidate args
+        require (code == ExitSuccess) (show args ++ " failed: " ++ out ++ err)
+        pure (out ++ err)
     gitOk directory = success directory git
     cliOk candidate directory = success directory candidate
     cliFail candidate directory = failure directory candidate
     require condition detail = unless condition (fail detail)
     config directory bytes = do
-      createDirectoryIfMissing True (directory </> ".gaw")
-      writeFile (directory </> ".gaw/config") bytes
-      _ <- gitOk directory ["add", "--", ".gaw/config"]
-      pure ()
+        createDirectoryIfMissing True (directory </> ".gaw")
+        writeFile (directory </> ".gaw/config") bytes
+        _ <- gitOk directory ["add", "--", ".gaw/config"]
+        pure ()
     nativeCommit directory message = do
-      _ <- gitOk directory ["-c", "commit.gpgsign=false", "commit", "-q", "-m", message]
-      pure ()
+        _ <- gitOk directory ["-c", "commit.gpgsign=false", "commit", "-q", "-m", message]
+        pure ()
     seed root name = do
-      let directory = root </> name
-      createDirectory directory
-      _ <- gitOk directory ["init", "-q", "--object-format=sha1", "-b", "main"]
-      _ <- gitOk directory ["config", "user.name", "Config Tests"]
-      _ <- gitOk directory ["config", "user.email", "tests@invalid"]
-      writeFile (directory </> "project.txt") "project\n"
-      _ <- gitOk directory ["add", "--", "project.txt"]
-      nativeCommit directory "project"
-      pure directory
+        let directory = root </> name
+        createDirectory directory
+        _ <- gitOk directory ["init", "-q", "--object-format=sha1", "-b", "main"]
+        _ <- gitOk directory ["config", "user.name", "Config Tests"]
+        _ <- gitOk directory ["config", "user.email", "tests@invalid"]
+        writeFile (directory </> "project.txt") "project\n"
+        _ <- gitOk directory ["add", "--", "project.txt"]
+        nativeCommit directory "project"
+        pure directory
     helpTopics candidate root = do
-      let commands = ["aux", "init", "deploy", "undeploy", "branch", "commit", "show", "check", "status"]
-          helpOnly = ["config", "hooks", "recovery"]
-      overview <- readFile "resources/help/overview.txt"
-      forM_ [["help"], ["--help"], ["-h"]] $ \args -> do
-        (code, out, err) <- invoke root candidate args
-        require (code == ExitSuccess && out == overview && null err)
-          ("overview alias changed: " ++ show args)
-      require (isInfixOf "Help-only topics: config, hooks, recovery." overview)
-        "config help is not discoverable"
-      forM_ (commands ++ helpOnly) $ \topic -> do
-        expected <- readFile ("resources/help/" ++ topic ++ ".txt")
-        (code, out, err) <- invoke root candidate ["help", topic]
-        require (code == ExitSuccess && out == expected && null err)
-          ("embedded help differs: " ++ topic)
-      forM_ commands $ \command -> do
-        topic <- cliOk candidate root ["help", command]
-        alias <- cliOk candidate root [command, "--help"]
-        require (topic == alias) ("command help alias changed: " ++ command)
-      forM_ helpOnly $ \topic -> do
-        usage <- cliFail candidate root [topic, "--help"]
-        require (isInfixOf "git-gaw: Usage:" usage) ("help topic became a command: " ++ topic)
-      forM_ ["not-a-topic", "overview"] $ \topic -> do
-        (code, out, err) <- invoke root candidate ["help", topic]
-        require (code == ExitFailure 1 && null out &&
-          err == "git-gaw: Unknown help topic: " ++ topic ++ "\n")
-          ("unknown-topic behavior changed: " ++ topic)
-      (extraCode, _, extraError) <- invoke root candidate ["help", "config", "extra"]
-      require (extraCode == ExitFailure 1 && isInfixOf "config|hooks|recovery" extraError)
-        "usage does not discover config or accepts extra help arguments"
-      source <- readFile "resources/help/config.txt"
-      let exampleBlocks [] = []
-          exampleBlocks (line:rest)
-            | take 4 line == "    " =
-                let (block, suffix) = span (\item -> take 4 item == "    ") rest
-                in unlines (map (drop 4) (line:block)) : exampleBlocks suffix
-            | otherwise = exampleBlocks rest
-      decoded <- mapM (either (fail . show) pure . parseConfig . BSC.pack)
-        (exampleBlocks (lines source))
-      require (map configVersion decoded == [ConfigV0, ConfigV0, ConfigV1])
-        "published v0/v1 configuration examples do not decode"
+        let commands = ["aux", "init", "deploy", "undeploy", "branch", "commit", "show", "check", "status"]
+            helpOnly = ["config", "hooks", "recovery"]
+        overview <- readFile "resources/help/overview.txt"
+        forM_ [["help"], ["--help"], ["-h"]] $ \args -> do
+            (code, out, err) <- invoke root candidate args
+            require
+                (code == ExitSuccess && out == overview && null err)
+                ("overview alias changed: " ++ show args)
+        require
+            (isInfixOf "Help-only topics: config, hooks, recovery." overview)
+            "config help is not discoverable"
+        forM_ (commands ++ helpOnly) $ \topic -> do
+            expected <- readFile ("resources/help/" ++ topic ++ ".txt")
+            (code, out, err) <- invoke root candidate ["help", topic]
+            require
+                (code == ExitSuccess && out == expected && null err)
+                ("embedded help differs: " ++ topic)
+        forM_ commands $ \command -> do
+            topic <- cliOk candidate root ["help", command]
+            alias <- cliOk candidate root [command, "--help"]
+            require (topic == alias) ("command help alias changed: " ++ command)
+        forM_ helpOnly $ \topic -> do
+            usage <- cliFail candidate root [topic, "--help"]
+            require (isInfixOf "git-gaw: Usage:" usage) ("help topic became a command: " ++ topic)
+        forM_ ["not-a-topic", "overview"] $ \topic -> do
+            (code, out, err) <- invoke root candidate ["help", topic]
+            require
+                ( code == ExitFailure 1
+                    && null out
+                    && err == "git-gaw: Unknown help topic: " ++ topic ++ "\n"
+                )
+                ("unknown-topic behavior changed: " ++ topic)
+        (extraCode, _, extraError) <- invoke root candidate ["help", "config", "extra"]
+        require
+            (extraCode == ExitFailure 1 && isInfixOf "config|hooks|recovery" extraError)
+            "usage does not discover config or accepts extra help arguments"
+        source <- readFile "resources/help/config.txt"
+        let exampleBlocks [] = []
+            exampleBlocks (line : rest)
+                | take 4 line == "    " =
+                    let (block, suffix) = span (\item -> take 4 item == "    ") rest
+                     in unlines (map (drop 4) (line : block)) : exampleBlocks suffix
+                | otherwise = exampleBlocks rest
+        decoded <-
+            mapM
+                (either (fail . show) pure . parseConfig . BSC.pack)
+                (exampleBlocks (lines source))
+        require
+            (map configVersion decoded == [ConfigV0, ConfigV0, ConfigV1])
+            "published v0/v1 configuration examples do not decode"
     deploymentLifecycle candidate root = do
-      directory <- seed root "deployment"
-      let agent = root </> "deployment-formal"
-          aux = root </> "deployment-aux"
-          draft = root </> "deployment-draft"
-      _ <- cliOk candidate directory ["init", "--branch", "agents", "--worktree-path", agent]
-      _ <- cliOk candidate directory ["aux", "init", "--worktree-path", aux]
-      branch <- takeWhile (/= '\n') <$> gitOk aux ["branch", "--show-current"]
-      let uuid = drop 9 branch
-      _ <- cliOk candidate directory ["aux", "init"]
-      status <- cliOk candidate directory ["status", "--diagnose"]
-      require (isInfixOf "Auxiliary GAW branches (2):" status &&
-        isInfixOf "no associated worktree" status && isInfixOf "GAW branches (1):" status)
-        "status did not distinguish branch types or missing worktrees"
-      _ <- gitOk directory ["-c", "hook.gaw-reference-transaction.enabled=false", "symbolic-ref", "refs/gaw/HEAD", "refs/heads/" ++ branch]
-      invalidSelector <- cliOk candidate directory ["status"]
-      require (isInfixOf "Selector: invalid" invalidSelector && isInfixOf "formal GAW branch" invalidSelector)
-        "Auxiliary selector was accepted or diagnosed as an ordinary nonlocal target"
-      _ <- cliFail candidate directory ["aux", "init"]
-      _ <- gitOk directory ["-c", "hook.gaw-reference-transaction.enabled=false", "symbolic-ref", "refs/gaw/HEAD", "refs/heads/agents"]
-      auxiliaryFailures candidate directory root uuid
-      before <- gitOk directory ["for-each-ref", "--format=%(refname) %(objectname)", "refs/heads/"]
-      treesBefore <- gitOk directory ["worktree", "list", "--porcelain", "-z"]
-      cleanup <- cliOk candidate directory ["undeploy"]
-      after <- gitOk directory ["for-each-ref", "--format=%(refname) %(objectname)", "refs/heads/"]
-      treesAfter <- gitOk directory ["worktree", "list", "--porcelain", "-z"]
-      require (before == after && treesBefore == treesAfter &&
-        isInfixOf "Selector: valid -> refs/heads/agents" cleanup &&
-        isInfixOf "Auxiliary GAW branches" cleanup && isInfixOf "protection has been disabled" cleanup)
-        "undeploy lost histories/worktrees or pre-cleanup inventory/warning"
-      again <- cliOk candidate directory ["undeploy"]
-      require (not (isInfixOf "protection has been disabled" again)) "absent hook was reported removed"
-      _ <- cliFail candidate directory ["aux", "init"]
-      _ <- cliFail candidate directory ["aux", "deploy", "--branch", branch]
-      _ <- cliOk candidate aux ["commit", "--allow-empty", "-m", "undeployed Auxiliary commit"]
-      _ <- cliOk candidate agent ["commit", "--allow-empty", "-m", "undeployed formal commit"]
-      _ <- cliOk candidate directory ["deploy", "--branch", "agents"]
-      _ <- cliOk candidate directory ["aux", "deploy", "--branch", branch]
-      _ <- failure directory git ["update-ref", "refs/heads/" ++ branch, "main"]
-      -- Existing formal safe/force behavior and worktree constraints.
-      _ <- gitOk directory ["branch", "formal-merged", "agents"]
-      _ <- gitOk directory ["branch", "--set-upstream-to=agents", "formal-merged"]
-      _ <- cliOk candidate directory ["branch", "-d", "formal-merged"]
-      tip <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", "agents"]
-      tree <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", "agents^{tree}"]
-      future <- takeWhile (/= '\n') <$> gitOk directory ["commit-tree", tree, "-p", tip, "-m", "unmerged formal"]
-      _ <- gitOk directory ["branch", "formal-draft", future]
-      _ <- gitOk directory ["worktree", "add", "--quiet", draft, "formal-draft"]
-      forM_ ["-d", "-D"] $ \mode -> do
-        _ <- cliFail candidate directory ["branch", mode, "formal-draft"]
-        _ <- cliFail candidate directory ["branch", mode, "agents"]
+        directory <- seed root "deployment"
+        let agent = root </> "deployment-formal"
+            aux = root </> "deployment-aux"
+            draft = root </> "deployment-draft"
+        _ <- cliOk candidate directory ["init", "--branch", "agents", "--worktree-path", agent]
+        _ <- cliOk candidate directory ["aux", "init", "--worktree-path", aux]
+        branch <- takeWhile (/= '\n') <$> gitOk aux ["branch", "--show-current"]
+        let uuid = drop 9 branch
+        _ <- cliOk candidate directory ["aux", "init"]
+        status <- cliOk candidate directory ["status", "--diagnose"]
+        require
+            ( isInfixOf "Auxiliary GAW branches (2):" status
+                && isInfixOf "no associated worktree" status
+                && isInfixOf "GAW branches (1):" status
+            )
+            "status did not distinguish branch types or missing worktrees"
+        _ <- gitOk directory ["-c", "hook.gaw-reference-transaction.enabled=false", "symbolic-ref", "refs/gaw/HEAD", "refs/heads/" ++ branch]
+        invalidSelector <- cliOk candidate directory ["status"]
+        require
+            (isInfixOf "Selector: invalid" invalidSelector && isInfixOf "formal GAW branch" invalidSelector)
+            "Auxiliary selector was accepted or diagnosed as an ordinary nonlocal target"
+        _ <- cliFail candidate directory ["aux", "init"]
+        _ <- gitOk directory ["-c", "hook.gaw-reference-transaction.enabled=false", "symbolic-ref", "refs/gaw/HEAD", "refs/heads/agents"]
+        auxiliaryFailures candidate directory root uuid
+        before <- gitOk directory ["for-each-ref", "--format=%(refname) %(objectname)", "refs/heads/"]
+        treesBefore <- gitOk directory ["worktree", "list", "--porcelain", "-z"]
+        cleanup <- cliOk candidate directory ["undeploy"]
+        after <- gitOk directory ["for-each-ref", "--format=%(refname) %(objectname)", "refs/heads/"]
+        treesAfter <- gitOk directory ["worktree", "list", "--porcelain", "-z"]
+        require
+            ( before == after
+                && treesBefore == treesAfter
+                && isInfixOf "Selector: valid -> refs/heads/agents" cleanup
+                && isInfixOf "Auxiliary GAW branches" cleanup
+                && isInfixOf "protection has been disabled" cleanup
+            )
+            "undeploy lost histories/worktrees or pre-cleanup inventory/warning"
+        again <- cliOk candidate directory ["undeploy"]
+        require (not (isInfixOf "protection has been disabled" again)) "absent hook was reported removed"
+        _ <- cliFail candidate directory ["aux", "init"]
+        _ <- cliFail candidate directory ["aux", "deploy", "--branch", branch]
+        _ <- cliOk candidate aux ["commit", "--allow-empty", "-m", "undeployed Auxiliary commit"]
+        _ <- cliOk candidate agent ["commit", "--allow-empty", "-m", "undeployed formal commit"]
+        _ <- cliOk candidate directory ["deploy", "--branch", "agents"]
+        _ <- cliOk candidate directory ["aux", "deploy", "--branch", branch]
+        _ <- failure directory git ["update-ref", "refs/heads/" ++ branch, "main"]
+        -- Existing formal safe/force behavior and worktree constraints.
+        _ <- gitOk directory ["branch", "formal-merged", "agents"]
+        _ <- gitOk directory ["branch", "--set-upstream-to=agents", "formal-merged"]
+        _ <- cliOk candidate directory ["branch", "-d", "formal-merged"]
+        tip <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", "agents"]
+        tree <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", "agents^{tree}"]
+        future <- takeWhile (/= '\n') <$> gitOk directory ["commit-tree", tree, "-p", tip, "-m", "unmerged formal"]
+        _ <- gitOk directory ["branch", "formal-draft", future]
+        _ <- gitOk directory ["worktree", "add", "--quiet", draft, "formal-draft"]
+        forM_ ["-d", "-D"] $ \mode -> do
+            _ <- cliFail candidate directory ["branch", mode, "formal-draft"]
+            _ <- cliFail candidate directory ["branch", mode, "agents"]
+            pure ()
+        _ <- gitOk directory ["worktree", "remove", draft]
+        _ <- cliFail candidate directory ["branch", "-d", "formal-draft"]
+        _ <- cliOk candidate directory ["branch", "-D", "formal-draft"]
+        -- Failure to collect optional inventory must not prevent cleanup.
+        executable <- OS.fromBytes (BSC.pack git)
+        location <- OS.fromBytes (BSC.pack directory)
+        let capability = runGitPosix executable
+            failedInventory = Git $ \request -> case gitArguments request of
+                ["rev-parse", "--path-format=absolute", "--git-common-dir"] -> pure (GitResult 1 "" "injected inventory failure")
+                _ -> runGit capability request
+        report <- undeploy failedInventory location
+        require
+            ( case report of
+                Right value -> null (residuals value) && deploymentBefore value == Nothing && protectionDisabled value
+                _ -> False
+            )
+            "inventory failure blocked cleanup or hid actual hook removal"
         pure ()
-      _ <- gitOk directory ["worktree", "remove", draft]
-      _ <- cliFail candidate directory ["branch", "-d", "formal-draft"]
-      _ <- cliOk candidate directory ["branch", "-D", "formal-draft"]
-      -- Failure to collect optional inventory must not prevent cleanup.
-      executable <- OS.fromBytes (BSC.pack git)
-      location <- OS.fromBytes (BSC.pack directory)
-      let capability = runGitPosix executable
-          failedInventory = Git $ \request -> case gitArguments request of
-            ["rev-parse", "--path-format=absolute", "--git-common-dir"] -> pure (GitResult 1 "" "injected inventory failure")
-            _ -> runGit capability request
-      report <- undeploy failedInventory location
-      require (case report of
-        Right value -> null (residuals value) && deploymentBefore value == Nothing && protectionDisabled value
-        _ -> False)
-        "inventory failure blocked cleanup or hid actual hook removal"
-      pure ()
     auxiliaryFailures candidate directory root existingUuid = do
-      executable <- OS.fromBytes (BSC.pack git)
-      location <- OS.fromBytes (BSC.pack directory)
-      let capability = runGitPosix executable
-          freshUuid = "11111111-1111-4111-8111-111111111111"
-          source = "refs/heads/_gaw_aux_" <> freshUuid
-          path = root </> "auxiliary-failure"
-          requested = Just (BSC.pack path)
-          create entropy wrapped target = initializeAuxiliary wrapped posixFileSystem entropy location target
-          failValidation request = gitArguments request == ["rev-parse", "--show-toplevel"] &&
-            gitDirectory request /= location
-          failingGit preserve = Git $ \request ->
-            if failValidation request || (preserve && "worktree" `elem` gitArguments request && "remove" `elem` gitArguments request)
-            then pure (GitResult 1 "" "injected worktree failure") else runGit capability request
-      failed <- create (pure (Right freshUuid)) (failingGit False) requested
-      require (case failed of Left (AuxiliaryError reason _) -> reason == "deployment-failed"; _ -> False)
-        "Auxiliary init failed without compensated-deployment diagnostic"
-      exists <- doesPathExist path
-      require (not exists) "failed deployment left its worktree"
-      _ <- failure directory git ["show-ref", "--verify", BSC.unpack source]
-      partial <- create (pure (Right freshUuid)) (failingGit True) requested
-      require (case partial of
-        Left (AuxiliaryError reason detail) -> reason == "partial-failure" && BSC.isInfixOf "Branch retained" detail
-        _ -> False) "partial deploy did not retain/report attached branch"
-      _ <- gitOk directory ["show-ref", "--verify", BSC.unpack source]
-      _ <- gitOk directory ["worktree", "remove", path]
-      _ <- cliOk candidate directory ["branch", "-D", "_gaw_aux_" ++ BSC.unpack freshUuid]
-      -- Existing-name collision regenerates identity instead of replacing refs.
-      choices <- newIORef [BSC.pack existingUuid, freshUuid]
-      let entropy = do
-            values <- readIORef choices
-            case values of
-              value:rest -> writeIORef choices rest >> pure (Right value)
-              [] -> pure (Left "unexpected extra entropy request")
-      retried <- create entropy capability Nothing
-      require (case retried of Right value -> initializedBranch value == "_gaw_aux_" <> freshUuid; _ -> False)
-        "UUID collision did not create a fresh independent history"
-      _ <- cliOk candidate directory ["branch", "-D", "_gaw_aux_" ++ BSC.unpack freshUuid]
-      let formal = root </> "deployment-formal"
-          otherUuid = "22222222-2222-4222-8222-222222222222"
-      config formal ("(:version 1 :workspace ((:directory \"" ++ BSC.unpack freshUuid ++ "/nested\")))\n")
-      _ <- cliOk candidate formal ["commit", "-m", "UUID path reserved by formal workspace"]
-      pathChoices <- newIORef [freshUuid, otherUuid]
-      let pathEntropy = do
-            values <- readIORef pathChoices
-            case values of
-              value:rest -> writeIORef pathChoices rest >> pure (Right value)
-              [] -> pure (Left "unexpected extra entropy request")
-      pathRetry <- create pathEntropy capability Nothing
-      require (case pathRetry of Right value -> initializedBranch value == "_gaw_aux_" <> otherUuid; _ -> False)
-        "UUID colliding with formal workspace was not regenerated"
-      _ <- cliOk candidate directory ["branch", "-D", "_gaw_aux_" ++ BSC.unpack otherUuid]
-      config formal "(:version 1 :workspace ())\n"
-      _ <- cliOk candidate formal ["commit", "-m", "restore source config"]
-      -- A ref rollback failure is distinct from complete compensation.
-      let failedRollback = Git $ \request ->
-            if failValidation request || maybe False (BSC.isInfixOf ("delete " <> source)) (gitInput request)
-            then pure (GitResult 1 "" "injected rollback failure") else runGit capability request
-      residual <- create (pure (Right freshUuid)) failedRollback requested
-      require (case residual of Left (AuxiliaryError reason _) -> reason == "partial-failure"; _ -> False)
-        "ref rollback failure was hidden"
-      _ <- cliOk candidate directory ["branch", "-D", "_gaw_aux_" ++ BSC.unpack freshUuid]
-      pure ()
-    deletionRaces directory branch = do
-      executable <- OS.fromBytes (BSC.pack git)
-      location <- OS.fromBytes (BSC.pack directory)
-      let capability = runGitPosix executable
-          controlled args = gitOk directory (["-c", "hook.gaw-reference-transaction.enabled=false"] ++ args)
-          source = "refs/heads/" ++ branch
-          failDelete wrapped force = do
-            result <- deleteBranch wrapped location (BSC.pack branch) force
-            require (case result of Left _ -> True; _ -> False) "raced deletion unexpectedly succeeded"
-          atDelete action = do
-            done <- newIORef False
-            pure (Git $ \request -> do
-              fired <- readIORef done
-              if not fired && "git-gaw auxiliary delete" `elem` gitArguments request then
-                writeIORef done True >> action else pure ()
-              runGit capability request)
-      old <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", branch]
-      formal <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", "agents"]
-      _ <- gitOk directory ["branch", "alternate-formal", "agents"]
-      selectorRace <- atDelete $ do
-        _ <- controlled ["symbolic-ref", "refs/gaw/HEAD", "refs/heads/alternate-formal"]
-        pure ()
-      failDelete selectorRace False
-      _ <- controlled ["symbolic-ref", "refs/gaw/HEAD", "refs/heads/agents"]
-      tree <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", "agents^{tree}"]
-      future <- takeWhile (/= '\n') <$> gitOk directory ["commit-tree", tree, "-p", formal, "-m", "formal race"]
-      formalRace <- atDelete $ do
-        _ <- controlled ["update-ref", "refs/heads/agents", future, formal]
-        pure ()
-      failDelete formalRace False
-      _ <- controlled ["update-ref", "refs/heads/agents", formal, future]
-      auxTree <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", branch ++ "^{tree}"]
-      auxFuture <- takeWhile (/= '\n') <$> gitOk directory ["commit-tree", auxTree, "-p", old, "-m", "aux race"]
-      forM_ [False, True] $ \force -> do
-        auxRace <- atDelete $ do
-          _ <- controlled ["update-ref", source, auxFuture, old]
-          pure ()
-        failDelete auxRace force
-        actual <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", branch]
-        require (actual == auxFuture) "raced delete removed or restored over the new Auxiliary tip"
-        _ <- controlled ["update-ref", source, old, auxFuture]
-        pure ()
-      forM_ ([(2,False),(2,True),(3,False),(3,True)] :: [(Int,Bool)]) $ \(stage,force) -> do
-        count <- newIORef (0 :: Int)
-        let path = directory ++ "-worktree-race-" ++ show stage ++ show force
-            raced = Git $ \request -> do
-              if gitArguments request == ["worktree", "list", "--porcelain", "-z"] then do
-                modifyIORef' count (+1)
-                observed <- readIORef count
-                if observed == stage then do
-                  _ <- controlled ["worktree", "add", "--quiet", "--detach", path, old]
-                  _ <- gitOk path ["-c", "hook.gaw-reference-transaction.enabled=false", "symbolic-ref", "HEAD", source]
-                  pure ()
-                else pure ()
-              else pure ()
-              runGit capability request
-        failDelete raced force
-        actual <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", branch]
-        require (actual == old) "worktree race lost the Auxiliary branch"
+        executable <- OS.fromBytes (BSC.pack git)
+        location <- OS.fromBytes (BSC.pack directory)
+        let capability = runGitPosix executable
+            freshUuid = "11111111-1111-4111-8111-111111111111"
+            source = "refs/heads/_gaw_aux_" <> freshUuid
+            path = root </> "auxiliary-failure"
+            requested = Just (BSC.pack path)
+            create entropy wrapped target = initializeAuxiliary wrapped posixFileSystem entropy location target
+            failValidation request =
+                gitArguments request == ["rev-parse", "--show-toplevel"]
+                    && gitDirectory request /= location
+            failingGit preserve = Git $ \request ->
+                if failValidation request || (preserve && "worktree" `elem` gitArguments request && "remove" `elem` gitArguments request)
+                    then pure (GitResult 1 "" "injected worktree failure")
+                    else runGit capability request
+        failed <- create (pure (Right freshUuid)) (failingGit False) requested
+        require
+            (case failed of Left (AuxiliaryError reason _) -> reason == "deployment-failed"; _ -> False)
+            "Auxiliary init failed without compensated-deployment diagnostic"
+        exists <- doesPathExist path
+        require (not exists) "failed deployment left its worktree"
+        _ <- failure directory git ["show-ref", "--verify", BSC.unpack source]
+        partial <- create (pure (Right freshUuid)) (failingGit True) requested
+        require
+            ( case partial of
+                Left (AuxiliaryError reason detail) -> reason == "partial-failure" && BSC.isInfixOf "Branch retained" detail
+                _ -> False
+            )
+            "partial deploy did not retain/report attached branch"
+        _ <- gitOk directory ["show-ref", "--verify", BSC.unpack source]
         _ <- gitOk directory ["worktree", "remove", path]
+        _ <- cliOk candidate directory ["branch", "-D", "_gaw_aux_" ++ BSC.unpack freshUuid]
+        -- Existing-name collision regenerates identity instead of replacing refs.
+        choices <- newIORef [BSC.pack existingUuid, freshUuid]
+        let entropy = do
+                values <- readIORef choices
+                case values of
+                    value : rest -> writeIORef choices rest >> pure (Right value)
+                    [] -> pure (Left "unexpected extra entropy request")
+        retried <- create entropy capability Nothing
+        require
+            (case retried of Right value -> initializedBranch value == "_gaw_aux_" <> freshUuid; _ -> False)
+            "UUID collision did not create a fresh independent history"
+        _ <- cliOk candidate directory ["branch", "-D", "_gaw_aux_" ++ BSC.unpack freshUuid]
+        let formal = root </> "deployment-formal"
+            otherUuid = "22222222-2222-4222-8222-222222222222"
+        config formal ("(:version 1 :workspace ((:directory \"" ++ BSC.unpack freshUuid ++ "/nested\")))\n")
+        _ <- cliOk candidate formal ["commit", "-m", "UUID path reserved by formal workspace"]
+        pathChoices <- newIORef [freshUuid, otherUuid]
+        let pathEntropy = do
+                values <- readIORef pathChoices
+                case values of
+                    value : rest -> writeIORef pathChoices rest >> pure (Right value)
+                    [] -> pure (Left "unexpected extra entropy request")
+        pathRetry <- create pathEntropy capability Nothing
+        require
+            (case pathRetry of Right value -> initializedBranch value == "_gaw_aux_" <> otherUuid; _ -> False)
+            "UUID colliding with formal workspace was not regenerated"
+        _ <- cliOk candidate directory ["branch", "-D", "_gaw_aux_" ++ BSC.unpack otherUuid]
+        config formal "(:version 1 :workspace ())\n"
+        _ <- cliOk candidate formal ["commit", "-m", "restore source config"]
+        -- A ref rollback failure is distinct from complete compensation.
+        let failedRollback = Git $ \request ->
+                if failValidation request || maybe False (BSC.isInfixOf ("delete " <> source)) (gitInput request)
+                    then pure (GitResult 1 "" "injected rollback failure")
+                    else runGit capability request
+        residual <- create (pure (Right freshUuid)) failedRollback requested
+        require
+            (case residual of Left (AuxiliaryError reason _) -> reason == "partial-failure"; _ -> False)
+            "ref rollback failure was hidden"
+        _ <- cliOk candidate directory ["branch", "-D", "_gaw_aux_" ++ BSC.unpack freshUuid]
         pure ()
+    deletionRaces directory branch = do
+        executable <- OS.fromBytes (BSC.pack git)
+        location <- OS.fromBytes (BSC.pack directory)
+        let capability = runGitPosix executable
+            controlled args = gitOk directory (["-c", "hook.gaw-reference-transaction.enabled=false"] ++ args)
+            source = "refs/heads/" ++ branch
+            failDelete wrapped force = do
+                result <- deleteBranch wrapped location (BSC.pack branch) force
+                require (case result of Left _ -> True; _ -> False) "raced deletion unexpectedly succeeded"
+            atDelete action = do
+                done <- newIORef False
+                pure
+                    ( Git $ \request -> do
+                        fired <- readIORef done
+                        if not fired && "git-gaw auxiliary delete" `elem` gitArguments request
+                            then
+                                writeIORef done True >> action
+                            else pure ()
+                        runGit capability request
+                    )
+        old <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", branch]
+        formal <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", "agents"]
+        _ <- gitOk directory ["branch", "alternate-formal", "agents"]
+        selectorRace <- atDelete $ do
+            _ <- controlled ["symbolic-ref", "refs/gaw/HEAD", "refs/heads/alternate-formal"]
+            pure ()
+        failDelete selectorRace False
+        _ <- controlled ["symbolic-ref", "refs/gaw/HEAD", "refs/heads/agents"]
+        tree <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", "agents^{tree}"]
+        future <- takeWhile (/= '\n') <$> gitOk directory ["commit-tree", tree, "-p", formal, "-m", "formal race"]
+        formalRace <- atDelete $ do
+            _ <- controlled ["update-ref", "refs/heads/agents", future, formal]
+            pure ()
+        failDelete formalRace False
+        _ <- controlled ["update-ref", "refs/heads/agents", formal, future]
+        auxTree <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", branch ++ "^{tree}"]
+        auxFuture <- takeWhile (/= '\n') <$> gitOk directory ["commit-tree", auxTree, "-p", old, "-m", "aux race"]
+        forM_ [False, True] $ \force -> do
+            auxRace <- atDelete $ do
+                _ <- controlled ["update-ref", source, auxFuture, old]
+                pure ()
+            failDelete auxRace force
+            actual <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", branch]
+            require (actual == auxFuture) "raced delete removed or restored over the new Auxiliary tip"
+            _ <- controlled ["update-ref", source, old, auxFuture]
+            pure ()
+        forM_ ([(2, False), (2, True), (3, False), (3, True)] :: [(Int, Bool)]) $ \(stage, force) -> do
+            count <- newIORef (0 :: Int)
+            let path = directory ++ "-worktree-race-" ++ show stage ++ show force
+                raced = Git $ \request -> do
+                    if gitArguments request == ["worktree", "list", "--porcelain", "-z"]
+                        then do
+                            modifyIORef' count (+ 1)
+                            observed <- readIORef count
+                            if observed == stage
+                                then do
+                                    _ <- controlled ["worktree", "add", "--quiet", "--detach", path, old]
+                                    _ <- gitOk path ["-c", "hook.gaw-reference-transaction.enabled=false", "symbolic-ref", "HEAD", source]
+                                    pure ()
+                                else pure ()
+                        else pure ()
+                    runGit capability request
+            failDelete raced force
+            actual <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", branch]
+            require (actual == old) "worktree race lost the Auxiliary branch"
+            _ <- gitOk directory ["worktree", "remove", path]
+            pure ()
     auxiliaryLifecycle candidate root = forM_ [0 :: Int, 1] $ \version -> do
-      directory <- seed root ("auxiliary-" ++ show version)
-      let agent = root </> ("formal-" ++ show version)
-          aux = root </> ("aux-" ++ show version)
-          other = root </> ("aux-other-" ++ show version)
-          sourceConfig = "; exact committed config bytes\n(:version " ++ show version ++
-            " :workspace ((:directory \"memory\")))\n"
-      _ <- cliFail candidate directory ["aux", "init"]
-      before <- gitOk directory ["for-each-ref", "refs/heads/_gaw_aux_"]
-      require (null before) "failed init left a branch"
-      _ <- cliOk candidate directory ["init", "--branch", "agents", "--worktree-path", agent]
-      config agent sourceConfig
-      _ <- cliOk candidate agent ["commit", "-m", "source config"]
-      config agent "(:version 1 :workspace ())\n"
-      -- Uncommitted config in the formal index must not be inherited.
-      _ <- cliOk candidate directory ["aux", "init", "--worktree-path", aux]
-      branch <- takeWhile (/= '\n') <$> gitOk aux ["branch", "--show-current"]
-      let uuid = drop (length ("_gaw_aux_" :: String)) branch
-          logical = aux </> uuid
-      inherited <- readFile (logical </> ".gaw/config")
-      require (inherited == sourceConfig) "Auxiliary init changed config bytes or copied the index"
-      tracked <- gitOk aux ["ls-tree", "-r", "--name-only", "HEAD"]
-      require (tracked == uuid ++ "/.gaw/config\n") "Auxiliary root copied workspace content"
-      parents <- words <$> gitOk aux ["rev-list", "--parents", "-n", "1", "HEAD"]
-      require (length parents == 1) "Auxiliary root acquired a formal parent"
-      _ <- cliOk candidate aux ["check"]
-      _ <- cliOk candidate directory ["aux", "deploy", "--branch", branch]
-      _ <- cliFail candidate directory ["deploy", "--branch", branch]
-      _ <- cliFail candidate aux ["branch", "-m", "renamed-aux"]
-      _ <- cliOk candidate directory ["aux", "init", "--worktree-path", other]
-      otherBranch <- gitOk other ["branch", "--show-current"]
-      require (otherBranch /= branch ++ "\n") "Auxiliary UUIDs collided"
-      createDirectory (logical </> "memory")
-      writeFile (logical </> "memory/current.md") "source evidence\n"
-      _ <- gitOk aux ["add", "--", uuid ++ "/memory/current.md"]
-      _ <- cliOk candidate aux ["commit", "-m", "source checkpoint", "--", "agents"]
-      writeFile (logical </> ".gaw/meta") "protocol\n"
-      writeFile (logical </> "memory/current.md") "changed source\n"
-      _ <- gitOk aux ["add", "--", uuid ++ "/.gaw/meta", uuid ++ "/memory/current.md"]
-      mixed <- cliFail candidate aux ["commit", "-m", "mixed"]
-      require (isInfixOf "MIXED-PROTOCOL-CHANGES" mixed) "Auxiliary lost the logical protocol boundary"
-      _ <- gitOk aux ["restore", "--staged", "--", uuid ++ "/.gaw/meta"]
-      _ <- cliOk candidate aux ["commit", "-m", "workspace checkpoint"]
-      _ <- cliFail candidate logical ["commit", "--allow-empty", "-m", "wrong root"]
-      _ <- failure aux git ["update-ref", "refs/heads/" ++ branch, "main"]
-      writeFile (aux </> "foreign") "outside UUID\n"
-      _ <- gitOk aux ["add", "--", "foreign"]
-      _ <- cliFail candidate aux ["check"]
-      _ <- cliFail candidate aux ["commit", "-m", "foreign root"]
-      _ <- gitOk aux ["restore", "--staged", "--", "foreign"]
-      _ <- cliOk candidate directory ["check", "--branch", branch]
-      _ <- cliFail candidate directory ["aux", "check"]
-      checkReport <- cliOk candidate aux ["aux", "check"]
-      require (isInfixOf "History structure: valid" checkReport &&
-        isInfixOf "Safe deletion: not ready" checkReport) "aux check conflated structure and retention"
-      forM_ ["-d", "-D"] $ \mode -> do
-        _ <- cliFail candidate directory ["branch", mode, branch]
-        pure ()
-      _ <- gitOk agent ["restore", "--staged", "--worktree", "--", ".gaw/config"]
-      createDirectory (agent </> "memory")
-      writeFile (agent </> "memory/current.md") ("Adopted intermediate source: " ++ uuid ++ "/memory/current.md\n")
-      _ <- gitOk agent ["add", "--", "memory/current.md"]
-      _ <- cliOk candidate agent ["commit", "-m", "integrate intermediate", "--", branch ++ "~1"]
-      removeFile (logical </> ".gaw/meta")
-      removeFile (aux </> "foreign")
-      _ <- gitOk directory ["worktree", "remove", aux]
-      _ <- cliOk candidate directory ["aux", "check", "--branch", branch]
-      _ <- gitOk directory ["branch", "retainer", branch]
-      _ <- gitOk directory ["branch", "--set-upstream-to=retainer", branch]
-      _ <- gitOk directory ["checkout", "retainer"]
-      unretained <- cliFail candidate directory ["branch", "-d", branch]
-      require (isInfixOf "not retained" unretained) "safe delete used upstream or caller HEAD"
-      _ <- gitOk directory ["checkout", "main"]
-      writeFile (agent </> "memory/current.md") ("Adopted current source: " ++ uuid ++ "/memory/current.md\n")
-      _ <- gitOk agent ["add", "--", "memory/current.md"]
-      _ <- cliOk candidate agent ["commit", "-m", "integrate tip", "--", branch]
-      -- Inject ref and worktree changes after report collection.
-      deletionRaces directory branch
-      ready <- cliOk candidate directory ["aux", "check", "--branch", branch]
-      require (isInfixOf "Safe deletion: ready" ready) "integrated tip is not deletion-ready"
-      oldTip <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", branch]
-      _ <- cliOk candidate directory ["branch", "-d", branch]
-      _ <- gitOk directory ["merge-base", "--is-ancestor", oldTip, "agents"]
-      integration <- takeWhile (/= '\n') <$> gitOk directory
-        ["log", "--first-parent", "-n", "1", "--format=%H", "agents", "--", "memory/current.md"]
-      parentList <- words <$> gitOk directory ["show", "--no-patch", "--format=%P", integration]
-      let sourcePath = uuid ++ "/memory/current.md"
-      sourceParents <- filterM (\parent -> do
-        trackedPath <- gitOk directory ["ls-tree", "--name-only", parent, "--", sourcePath]
-        pure (trackedPath == sourcePath ++ "\n")) parentList
-      sourceParent <- case sourceParents of
-        [parent] -> pure parent
-        _ -> fail "could not discover the retained source through formal path history"
-      recovered <- gitOk directory ["show", sourceParent ++ ":" ++ sourcePath]
-      require (recovered == "changed source\n") "retained source recovery lost its bytes"
+        directory <- seed root ("auxiliary-" ++ show version)
+        let agent = root </> ("formal-" ++ show version)
+            aux = root </> ("aux-" ++ show version)
+            other = root </> ("aux-other-" ++ show version)
+            sourceConfig =
+                "; exact committed config bytes\n(:version "
+                    ++ show version
+                    ++ " :workspace ((:directory \"memory\")))\n"
+        _ <- cliFail candidate directory ["aux", "init"]
+        before <- gitOk directory ["for-each-ref", "refs/heads/_gaw_aux_"]
+        require (null before) "failed init left a branch"
+        _ <- cliOk candidate directory ["init", "--branch", "agents", "--worktree-path", agent]
+        config agent sourceConfig
+        _ <- cliOk candidate agent ["commit", "-m", "source config"]
+        config agent "(:version 1 :workspace ())\n"
+        -- Uncommitted config in the formal index must not be inherited.
+        _ <- cliOk candidate directory ["aux", "init", "--worktree-path", aux]
+        branch <- takeWhile (/= '\n') <$> gitOk aux ["branch", "--show-current"]
+        let uuid = drop (length ("_gaw_aux_" :: String)) branch
+            logical = aux </> uuid
+        inherited <- readFile (logical </> ".gaw/config")
+        require (inherited == sourceConfig) "Auxiliary init changed config bytes or copied the index"
+        tracked <- gitOk aux ["ls-tree", "-r", "--name-only", "HEAD"]
+        require (tracked == uuid ++ "/.gaw/config\n") "Auxiliary root copied workspace content"
+        parents <- words <$> gitOk aux ["rev-list", "--parents", "-n", "1", "HEAD"]
+        require (length parents == 1) "Auxiliary root acquired a formal parent"
+        _ <- cliOk candidate aux ["check"]
+        _ <- cliOk candidate directory ["aux", "deploy", "--branch", branch]
+        _ <- cliFail candidate directory ["deploy", "--branch", branch]
+        _ <- cliFail candidate aux ["branch", "-m", "renamed-aux"]
+        _ <- cliOk candidate directory ["aux", "init", "--worktree-path", other]
+        otherBranch <- gitOk other ["branch", "--show-current"]
+        require (otherBranch /= branch ++ "\n") "Auxiliary UUIDs collided"
+        createDirectory (logical </> "memory")
+        writeFile (logical </> "memory/current.md") "source evidence\n"
+        _ <- gitOk aux ["add", "--", uuid ++ "/memory/current.md"]
+        _ <- cliOk candidate aux ["commit", "-m", "source checkpoint", "--", "agents"]
+        writeFile (logical </> ".gaw/meta") "protocol\n"
+        writeFile (logical </> "memory/current.md") "changed source\n"
+        _ <- gitOk aux ["add", "--", uuid ++ "/.gaw/meta", uuid ++ "/memory/current.md"]
+        mixed <- cliFail candidate aux ["commit", "-m", "mixed"]
+        require (isInfixOf "MIXED-PROTOCOL-CHANGES" mixed) "Auxiliary lost the logical protocol boundary"
+        _ <- gitOk aux ["restore", "--staged", "--", uuid ++ "/.gaw/meta"]
+        _ <- cliOk candidate aux ["commit", "-m", "workspace checkpoint"]
+        _ <- cliFail candidate logical ["commit", "--allow-empty", "-m", "wrong root"]
+        _ <- failure aux git ["update-ref", "refs/heads/" ++ branch, "main"]
+        writeFile (aux </> "foreign") "outside UUID\n"
+        _ <- gitOk aux ["add", "--", "foreign"]
+        _ <- cliFail candidate aux ["check"]
+        _ <- cliFail candidate aux ["commit", "-m", "foreign root"]
+        _ <- gitOk aux ["restore", "--staged", "--", "foreign"]
+        _ <- cliOk candidate directory ["check", "--branch", branch]
+        _ <- cliFail candidate directory ["aux", "check"]
+        checkReport <- cliOk candidate aux ["aux", "check"]
+        require
+            ( isInfixOf "History structure: valid" checkReport
+                && isInfixOf "Safe deletion: not ready" checkReport
+            )
+            "aux check conflated structure and retention"
+        forM_ ["-d", "-D"] $ \mode -> do
+            _ <- cliFail candidate directory ["branch", mode, branch]
+            pure ()
+        _ <- gitOk agent ["restore", "--staged", "--worktree", "--", ".gaw/config"]
+        createDirectory (agent </> "memory")
+        writeFile (agent </> "memory/current.md") ("Adopted intermediate source: " ++ uuid ++ "/memory/current.md\n")
+        _ <- gitOk agent ["add", "--", "memory/current.md"]
+        _ <- cliOk candidate agent ["commit", "-m", "integrate intermediate", "--", branch ++ "~1"]
+        removeFile (logical </> ".gaw/meta")
+        removeFile (aux </> "foreign")
+        _ <- gitOk directory ["worktree", "remove", aux]
+        _ <- cliOk candidate directory ["aux", "check", "--branch", branch]
+        _ <- gitOk directory ["branch", "retainer", branch]
+        _ <- gitOk directory ["branch", "--set-upstream-to=retainer", branch]
+        _ <- gitOk directory ["checkout", "retainer"]
+        unretained <- cliFail candidate directory ["branch", "-d", branch]
+        require (isInfixOf "not retained" unretained) "safe delete used upstream or caller HEAD"
+        _ <- gitOk directory ["checkout", "main"]
+        writeFile (agent </> "memory/current.md") ("Adopted current source: " ++ uuid ++ "/memory/current.md\n")
+        _ <- gitOk agent ["add", "--", "memory/current.md"]
+        _ <- cliOk candidate agent ["commit", "-m", "integrate tip", "--", branch]
+        -- Inject ref and worktree changes after report collection.
+        deletionRaces directory branch
+        ready <- cliOk candidate directory ["aux", "check", "--branch", branch]
+        require (isInfixOf "Safe deletion: ready" ready) "integrated tip is not deletion-ready"
+        oldTip <- takeWhile (/= '\n') <$> gitOk directory ["rev-parse", branch]
+        _ <- cliOk candidate directory ["branch", "-d", branch]
+        _ <- gitOk directory ["merge-base", "--is-ancestor", oldTip, "agents"]
+        integration <-
+            takeWhile (/= '\n')
+                <$> gitOk
+                    directory
+                    ["log", "--first-parent", "-n", "1", "--format=%H", "agents", "--", "memory/current.md"]
+        parentList <- words <$> gitOk directory ["show", "--no-patch", "--format=%P", integration]
+        let sourcePath = uuid ++ "/memory/current.md"
+        sourceParents <-
+            filterM
+                ( \parent -> do
+                    trackedPath <- gitOk directory ["ls-tree", "--name-only", parent, "--", sourcePath]
+                    pure (trackedPath == sourcePath ++ "\n")
+                )
+                parentList
+        sourceParent <- case sourceParents of
+            [parent] -> pure parent
+            _ -> fail "could not discover the retained source through formal path history"
+        recovered <- gitOk directory ["show", sourceParent ++ ":" ++ sourcePath]
+        require (recovered == "changed source\n") "retained source recovery lost its bytes"
 
-      _ <- gitOk directory ["branch", branch, oldTip]
-      _ <- failure directory git ["branch", "-D", branch]
-      _ <- cliOk candidate directory ["branch", "-d", branch]
-      let discarded = takeWhile (/= '\n') otherBranch
-      _ <- gitOk directory ["worktree", "remove", other]
-      _ <- cliFail candidate directory ["branch", "-d", discarded]
-      warning <- cliOkCombined candidate directory ["branch", "-D", discarded]
-      require (isInfixOf "Active abandonment" warning && isInfixOf "not guaranteed" warning)
-        "forced deletion hid abandonment consequences"
-      pure ()
+        _ <- gitOk directory ["branch", branch, oldTip]
+        _ <- failure directory git ["branch", "-D", branch]
+        _ <- cliOk candidate directory ["branch", "-d", branch]
+        let discarded = takeWhile (/= '\n') otherBranch
+        _ <- gitOk directory ["worktree", "remove", other]
+        _ <- cliFail candidate directory ["branch", "-d", discarded]
+        warning <- cliOkCombined candidate directory ["branch", "-D", discarded]
+        require
+            (isInfixOf "Active abandonment" warning && isInfixOf "not guaranteed" warning)
+            "forced deletion hid abandonment consequences"
+        pure ()
     layoutChecks candidate root = do
-      directory <- seed root "layout"
-      let uuid = "01234567-89ab-4cde-8fab-0123456789ab"
-          branch = "_gaw_aux_" ++ uuid
-          logical = directory </> uuid
-      _ <- gitOk directory ["checkout", "--orphan", branch]
-      _ <- gitOk directory ["rm", "-f", "--", "project.txt"]
-      config logical "(:workspace ((:directory \"memory\")))\n"
-      _ <- gitOk directory ["add", "--", uuid ++ "/.gaw/config"]
-      nativeCommit directory "Auxiliary root"
-      _ <- gitOk directory ["checkout", "main"]
-      report <- cliOk candidate directory ["check", "--branch", branch]
-      require (isInfixOf "committed state is valid" report &&
-        not (isInfixOf "worktree is ready" report) && not (isInfixOf "[ok] index:" report))
-        "branch check claimed worktree readiness"
-      _ <- gitOk directory ["checkout", branch]
-      writeFile (directory </> "outside") "foreign root\n"
-      _ <- gitOk directory ["add", "--", "outside"]
-      nativeCommit directory "invalid outer path"
-      _ <- cliFail candidate directory ["check", "--branch", branch]
-      _ <- gitOk directory ["rm", "--", "outside", uuid ++ "/.gaw/config"]
-      nativeCommit directory "missing config"
-      _ <- cliFail candidate directory ["check", "--branch", branch]
-      -- Even a damaged Auxiliary with no config is protected by its name.
-      _ <- gitOk directory ["config", "hook.gaw-reference-transaction.event", "reference-transaction"]
-      _ <- gitOk directory ["config", "hook.gaw-reference-transaction.command", candidate ++ " --reference-transaction"]
-      _ <- gitOk directory ["config", "hook.gaw-reference-transaction.enabled", "true"]
-      _ <- failure directory git ["update-ref", "refs/heads/" ++ branch, "main"]
-      _ <- gitOk directory ["checkout", "main"]
-      _ <- cliFail candidate directory ["branch", "-D", branch]
-      _ <- failure directory git ["branch", "-D", branch]
-      _ <- failure directory git ["branch", "-m", branch, "renamed-aux"]
-      _ <- gitOk directory ["branch", "ordinary", "main"]
-      pure ()
+        directory <- seed root "layout"
+        let uuid = "01234567-89ab-4cde-8fab-0123456789ab"
+            branch = "_gaw_aux_" ++ uuid
+            logical = directory </> uuid
+        _ <- gitOk directory ["checkout", "--orphan", branch]
+        _ <- gitOk directory ["rm", "-f", "--", "project.txt"]
+        config logical "(:workspace ((:directory \"memory\")))\n"
+        _ <- gitOk directory ["add", "--", uuid ++ "/.gaw/config"]
+        nativeCommit directory "Auxiliary root"
+        _ <- gitOk directory ["checkout", "main"]
+        report <- cliOk candidate directory ["check", "--branch", branch]
+        require
+            ( isInfixOf "committed state is valid" report
+                && not (isInfixOf "worktree is ready" report)
+                && not (isInfixOf "[ok] index:" report)
+            )
+            "branch check claimed worktree readiness"
+        _ <- gitOk directory ["checkout", branch]
+        writeFile (directory </> "outside") "foreign root\n"
+        _ <- gitOk directory ["add", "--", "outside"]
+        nativeCommit directory "invalid outer path"
+        _ <- cliFail candidate directory ["check", "--branch", branch]
+        _ <- gitOk directory ["rm", "--", "outside", uuid ++ "/.gaw/config"]
+        nativeCommit directory "missing config"
+        _ <- cliFail candidate directory ["check", "--branch", branch]
+        -- Even a damaged Auxiliary with no config is protected by its name.
+        _ <- gitOk directory ["config", "hook.gaw-reference-transaction.event", "reference-transaction"]
+        _ <- gitOk directory ["config", "hook.gaw-reference-transaction.command", candidate ++ " --reference-transaction"]
+        _ <- gitOk directory ["config", "hook.gaw-reference-transaction.enabled", "true"]
+        _ <- failure directory git ["update-ref", "refs/heads/" ++ branch, "main"]
+        _ <- gitOk directory ["checkout", "main"]
+        _ <- cliFail candidate directory ["branch", "-D", branch]
+        _ <- failure directory git ["branch", "-D", branch]
+        _ <- failure directory git ["branch", "-m", branch, "renamed-aux"]
+        _ <- gitOk directory ["branch", "ordinary", "main"]
+        pure ()
     newConfig candidate root = do
-      directory <- seed root "new"
-      let agent = root </> "agent"
-      _ <- cliOk candidate directory ["init", "--branch", "agents", "--worktree-path", agent]
-      initial <- readFile (agent </> ".gaw/config")
-      require (initial == "(:version 1 :workspace ())\n") "init must emit explicit v1"
-      config agent "(:version 1 :workspace ((:research ((:directory \"notes\")))) :description \"extra\")\n"
-      staged <- cliOk candidate agent ["check"]
-      require (isInfixOf "[warning] index-config:" staged &&
-        not (isInfixOf "[warning] head-config:" staged)) "HEAD/index warnings were conflated"
-      committed <- cliOk candidate agent ["commit", "-m", "v1 roles", "--", "main"]
-      require (not (isInfixOf "Ignoring" committed)) "commit printed a config warning"
-      checked <- cliOk candidate agent ["check"]
-      require (isInfixOf "[warning] head-config:" checked &&
-        isInfixOf "[warning] index-config:" checked) "check lost config warnings"
-      status <- cliOk candidate directory ["status"]
-      require (isInfixOf " valid" status &&
-        isInfixOf "warning: Ignoring unknown top-level config field :description" status)
-        "status lost warnings or invalidated a valid branch"
-      _ <- cliOk candidate directory ["status", "--diagnose"]
-      before <- gitOk agent ["rev-parse", "HEAD"]
-      _ <- failure agent git ["update-ref", "refs/heads/agents", "main"]
-      after <- gitOk agent ["rev-parse", "HEAD"]
-      require (before == after) "native Git moved the valid v1 branch"
-      createDirectory (directory </> "notes")
-      writeFile (directory </> "notes/conflict") "collision\n"
-      _ <- gitOk directory ["add", "--", "notes/conflict"]
-      nativeCommit directory "conflicting project"
-      conflict <- cliFail candidate agent ["commit", "-m", "collision", "--", "main"]
-      require (isInfixOf "PATH-CONFLICT" conflict) "role path collision was accepted"
-      unchanged <- gitOk agent ["rev-parse", "HEAD"]
-      require (unchanged == before) "failed parent validation changed HEAD"
-      writeFile (agent </> "notes") "must be a directory\n"
-      _ <- gitOk agent ["add", "--", "notes"]
-      _ <- cliFail candidate agent ["check"]
-      _ <- cliFail candidate agent ["commit", "-m", "wrong kind"]
-      _ <- gitOk agent ["restore", "--staged", "--", "notes"]
-      removeFile (agent </> "notes")
-      config agent "(:version 2 :workspace :future-shape)\n"
-      unsupported <- cliFail candidate agent ["check"]
-      require (isInfixOf "Unsupported config version 2" unsupported) "check hid unsupported version"
-      unsupportedCommit <- cliFail candidate agent ["commit", "-m", "future"]
-      require (isInfixOf "Unsupported config version 2" unsupportedCommit) "commit hid unsupported version"
-      still <- gitOk agent ["rev-parse", "HEAD"]
-      require (still == before) "rejected candidates changed HEAD"
-      _ <- cliFail candidate agent ["branch", "-m", "_gaw_aux_reserved"]
-      _ <- cliFail candidate agent ["branch", "-m", "_gaw_aux_01234567-89ab-4cde-8fab-0123456789ab"]
-      _ <- cliOk candidate agent ["branch", "-m", "renamed"]
-      _ <- cliOk candidate agent ["branch", "-m", "agents"]
-      pure ()
+        directory <- seed root "new"
+        let agent = root </> "agent"
+        _ <- cliOk candidate directory ["init", "--branch", "agents", "--worktree-path", agent]
+        initial <- readFile (agent </> ".gaw/config")
+        require (initial == "(:version 1 :workspace ())\n") "init must emit explicit v1"
+        config agent "(:version 1 :workspace ((:research ((:directory \"notes\")))) :description \"extra\")\n"
+        staged <- cliOk candidate agent ["check"]
+        require
+            ( isInfixOf "[warning] index-config:" staged
+                && not (isInfixOf "[warning] head-config:" staged)
+            )
+            "HEAD/index warnings were conflated"
+        committed <- cliOk candidate agent ["commit", "-m", "v1 roles", "--", "main"]
+        require (not (isInfixOf "Ignoring" committed)) "commit printed a config warning"
+        checked <- cliOk candidate agent ["check"]
+        require
+            ( isInfixOf "[warning] head-config:" checked
+                && isInfixOf "[warning] index-config:" checked
+            )
+            "check lost config warnings"
+        status <- cliOk candidate directory ["status"]
+        require
+            ( isInfixOf " valid" status
+                && isInfixOf "warning: Ignoring unknown top-level config field :description" status
+            )
+            "status lost warnings or invalidated a valid branch"
+        _ <- cliOk candidate directory ["status", "--diagnose"]
+        before <- gitOk agent ["rev-parse", "HEAD"]
+        _ <- failure agent git ["update-ref", "refs/heads/agents", "main"]
+        after <- gitOk agent ["rev-parse", "HEAD"]
+        require (before == after) "native Git moved the valid v1 branch"
+        createDirectory (directory </> "notes")
+        writeFile (directory </> "notes/conflict") "collision\n"
+        _ <- gitOk directory ["add", "--", "notes/conflict"]
+        nativeCommit directory "conflicting project"
+        conflict <- cliFail candidate agent ["commit", "-m", "collision", "--", "main"]
+        require (isInfixOf "PATH-CONFLICT" conflict) "role path collision was accepted"
+        unchanged <- gitOk agent ["rev-parse", "HEAD"]
+        require (unchanged == before) "failed parent validation changed HEAD"
+        writeFile (agent </> "notes") "must be a directory\n"
+        _ <- gitOk agent ["add", "--", "notes"]
+        _ <- cliFail candidate agent ["check"]
+        _ <- cliFail candidate agent ["commit", "-m", "wrong kind"]
+        _ <- gitOk agent ["restore", "--staged", "--", "notes"]
+        removeFile (agent </> "notes")
+        config agent "(:version 2 :workspace :future-shape)\n"
+        unsupported <- cliFail candidate agent ["check"]
+        require (isInfixOf "Unsupported config version 2" unsupported) "check hid unsupported version"
+        unsupportedCommit <- cliFail candidate agent ["commit", "-m", "future"]
+        require (isInfixOf "Unsupported config version 2" unsupportedCommit) "commit hid unsupported version"
+        still <- gitOk agent ["rev-parse", "HEAD"]
+        require (still == before) "rejected candidates changed HEAD"
+        _ <- cliFail candidate agent ["branch", "-m", "_gaw_aux_reserved"]
+        _ <- cliFail candidate agent ["branch", "-m", "_gaw_aux_01234567-89ab-4cde-8fab-0123456789ab"]
+        _ <- cliOk candidate agent ["branch", "-m", "renamed"]
+        _ <- cliOk candidate agent ["branch", "-m", "agents"]
+        pure ()
     stageRawPath directory path = do
-      blob <- gitOk directory ["hash-object", "-w", "--stdin"]
-      executable <- OS.fromBytes (BSC.pack git)
-      location <- OS.fromBytes (BSC.pack directory)
-      result <- runGit (runGitPosix executable) (GitInvocation location
-        ["update-index", "--add", "--cacheinfo", "100644",
-          BSC.pack (takeWhile (/= '\n') blob), path] Nothing [])
-      require (gitExitCode result == 0) "could not stage the raw-byte fixture path"
+        blob <- gitOk directory ["hash-object", "-w", "--stdin"]
+        executable <- OS.fromBytes (BSC.pack git)
+        location <- OS.fromBytes (BSC.pack directory)
+        result <-
+            runGit
+                (runGitPosix executable)
+                ( GitInvocation
+                    location
+                    [ "update-index"
+                    , "--add"
+                    , "--cacheinfo"
+                    , "100644"
+                    , BSC.pack (takeWhile (/= '\n') blob)
+                    , path
+                    ]
+                    Nothing
+                    []
+                )
+        require (gitExitCode result == 0) "could not stage the raw-byte fixture path"
     removeRawPath directory path = do
-      executable <- OS.fromBytes (BSC.pack git)
-      location <- OS.fromBytes (BSC.pack directory)
-      result <- runGit (runGitPosix executable) (GitInvocation location
-        ["update-index", "--force-remove", path] Nothing [])
-      require (gitExitCode result == 0) "could not unstage the raw-byte fixture path"
+        executable <- OS.fromBytes (BSC.pack git)
+        location <- OS.fromBytes (BSC.pack directory)
+        result <-
+            runGit
+                (runGitPosix executable)
+                ( GitInvocation
+                    location
+                    ["update-index", "--force-remove", path]
+                    Nothing
+                    []
+                )
+        require (gitExitCode result == 0) "could not unstage the raw-byte fixture path"
     boundaryChanges candidate root = do
-      directory <- seed root "boundary"
-      let agent = root </> "boundary-agent"
-          metadata = agent </> ".gaw/meta"
-          note = agent </> "memory/old"
-          rawPath = BSC.pack "memory/" <> BSC.singleton '\255'
-          rejectMixed label = do
-            before <- gitOk agent ["rev-parse", "HEAD"]
-            errorText <- cliFail candidate agent ["commit", "-m", label]
-            require (isInfixOf ":MIXED-PROTOCOL-CHANGES" errorText)
-              ("missing mixed-change error for " ++ label)
-            after <- gitOk agent ["rev-parse", "HEAD"]
-            require (before == after) ("mixed change moved HEAD for " ++ label)
-      _ <- cliOk candidate directory ["init", "--branch", "agents", "--worktree-path", agent]
-      config agent "(:version 1 :workspace ((:memory ((:directory \"memory\")))))\n"
-      _ <- cliOk candidate agent ["commit", "-m", "config only"]
-      createDirectory (agent </> "memory")
-      writeFile metadata "metadata\n"
-      writeFile note "memory\n"
-      _ <- gitOk agent ["add", "--", ".gaw/meta", "memory/old"]
-      rejectMixed "mixed additions"
-      _ <- gitOk agent ["restore", "--staged", "--", "memory/old"]
-      _ <- cliOk candidate agent ["commit", "-m", "protocol addition"]
-      _ <- gitOk agent ["add", "--", "memory/old"]
-      _ <- cliOk candidate agent ["commit", "-m", "workspace addition"]
-      -- Existing files on both sides do not count as changed paths.
-      writeFile metadata "changed metadata\n"
-      writeFile note "changed memory\n"
-      _ <- gitOk agent ["add", "--", ".gaw/meta", "memory/old"]
-      rejectMixed "mixed content"
-      _ <- gitOk agent ["restore", "--staged", "--", ".gaw/meta"]
-      _ <- cliOk candidate agent ["commit", "-m", "workspace content only"]
-      _ <- gitOk agent ["add", "--", ".gaw/meta"]
-      _ <- cliOk candidate agent ["commit", "-m", "protocol content only"]
-      -- Only mode bits change here; filesystem chmod is unnecessary.
-      _ <- gitOk agent ["update-index", "--chmod=+x", "--", ".gaw/meta", "memory/old"]
-      rejectMixed "mixed modes"
-      _ <- gitOk agent ["restore", "--staged", "--", "memory/old"]
-      _ <- cliOk candidate agent ["commit", "-m", "protocol mode only"]
-      _ <- gitOk agent ["update-index", "--chmod=+x", "--", "memory/old"]
-      _ <- cliOk candidate agent ["commit", "-m", "workspace mode only"]
-      removeFile metadata
-      removeFile note
-      _ <- gitOk agent ["add", "-u", "--", ".gaw/meta", "memory/old"]
-      rejectMixed "mixed deletions"
-      _ <- gitOk agent ["restore", "--staged", "--", "memory/old"]
-      _ <- cliOk candidate agent ["commit", "-m", "protocol deletion"]
-      _ <- gitOk agent ["add", "-u", "--", "memory/old"]
-      _ <- cliOk candidate agent ["commit", "-m", "workspace deletion"]
-      -- Explicitly enable renames to test the query's override.
-      _ <- gitOk agent ["config", "diff.renames", "true"]
-      writeFile (agent </> ".gaw/source") "move me\n"
-      _ <- gitOk agent ["add", "--", ".gaw/source"]
-      _ <- cliOk candidate agent ["commit", "-m", "protocol source"]
-      _ <- gitOk agent ["mv", "--", ".gaw/source", "memory/moved"]
-      rejectMixed "cross-boundary move"
-      _ <- gitOk agent ["restore", "--staged", "--", "memory/moved"]
-      _ <- cliOk candidate agent ["commit", "-m", "remove protocol source"]
-      _ <- gitOk agent ["add", "--", "memory/moved"]
-      _ <- cliOk candidate agent ["commit", "-m", "add workspace destination"]
-      _ <- gitOk agent ["mv", "--", "memory/moved", "memory/renamed"]
-      _ <- cliOk candidate agent ["commit", "-m", "workspace rename"]
-      _ <- gitOk agent ["mv", "--", "memory/renamed", ".gaw/destination"]
-      rejectMixed "reverse cross-boundary move"
-      _ <- gitOk agent ["restore", "--staged", "--", ".gaw/destination"]
-      _ <- cliOk candidate agent ["commit", "-m", "remove workspace source"]
-      _ <- gitOk agent ["add", "--", ".gaw/destination"]
-      _ <- cliOk candidate agent ["commit", "-m", "add protocol destination"]
-      _ <- gitOk agent ["mv", "--", ".gaw/destination", ".gaw/renamed"]
-      _ <- cliOk candidate agent ["commit", "-m", "protocol rename"]
-      writeFile (agent </> "memory/line\nbreak") "newline path\n"
-      writeFile (agent </> ".gaw/unusual") "metadata\n"
-      _ <- gitOk agent ["add", "--", ".gaw/unusual", "memory/line\nbreak"]
-      rejectMixed "newline path"
-      _ <- gitOk agent ["restore", "--staged", "--", "memory/line\nbreak"]
-      stageRawPath agent rawPath
-      rejectMixed "non-UTF8 path"
-      removeRawPath agent rawPath
-      _ <- cliOk candidate agent ["commit", "-m", "protocol with raw paths unstaged"]
-      _ <- gitOk agent ["add", "--", "memory/line\nbreak"]
-      stageRawPath agent rawPath
-      _ <- cliOk candidate agent ["commit", "-m", "unusual workspace paths"]
-      previous <- gitOk agent ["rev-parse", "HEAD"]
-      tree <- gitOk agent ["rev-parse", "HEAD^{tree}"]
-      project <- gitOk directory ["rev-parse", "main"]
-      _ <- cliOk candidate agent ["commit", "-m", "unchanged tree association", "--", "main"]
-      sameTree <- gitOk agent ["rev-parse", "HEAD^{tree}"]
-      first <- gitOk agent ["rev-parse", "HEAD^1"]
-      second <- gitOk agent ["rev-parse", "HEAD^2"]
-      require (tree == sameTree && first == previous && second == project)
-        "unchanged-tree project association regressed"
-      _ <- cliOk candidate agent ["commit", "--allow-empty", "-m", "intentional empty"]
-      noChange <- cliFail candidate agent ["commit", "-m", "empty without flag"]
-      require (isInfixOf ":EMPTY-COMMIT" noChange) "empty-commit behavior changed"
-      _ <- cliOk candidate agent ["check"]
-      pure ()
+        directory <- seed root "boundary"
+        let agent = root </> "boundary-agent"
+            metadata = agent </> ".gaw/meta"
+            note = agent </> "memory/old"
+            rawPath = BSC.pack "memory/" <> BSC.singleton '\255'
+            rejectMixed label = do
+                before <- gitOk agent ["rev-parse", "HEAD"]
+                errorText <- cliFail candidate agent ["commit", "-m", label]
+                require
+                    (isInfixOf ":MIXED-PROTOCOL-CHANGES" errorText)
+                    ("missing mixed-change error for " ++ label)
+                after <- gitOk agent ["rev-parse", "HEAD"]
+                require (before == after) ("mixed change moved HEAD for " ++ label)
+        _ <- cliOk candidate directory ["init", "--branch", "agents", "--worktree-path", agent]
+        config agent "(:version 1 :workspace ((:memory ((:directory \"memory\")))))\n"
+        _ <- cliOk candidate agent ["commit", "-m", "config only"]
+        createDirectory (agent </> "memory")
+        writeFile metadata "metadata\n"
+        writeFile note "memory\n"
+        _ <- gitOk agent ["add", "--", ".gaw/meta", "memory/old"]
+        rejectMixed "mixed additions"
+        _ <- gitOk agent ["restore", "--staged", "--", "memory/old"]
+        _ <- cliOk candidate agent ["commit", "-m", "protocol addition"]
+        _ <- gitOk agent ["add", "--", "memory/old"]
+        _ <- cliOk candidate agent ["commit", "-m", "workspace addition"]
+        -- Existing files on both sides do not count as changed paths.
+        writeFile metadata "changed metadata\n"
+        writeFile note "changed memory\n"
+        _ <- gitOk agent ["add", "--", ".gaw/meta", "memory/old"]
+        rejectMixed "mixed content"
+        _ <- gitOk agent ["restore", "--staged", "--", ".gaw/meta"]
+        _ <- cliOk candidate agent ["commit", "-m", "workspace content only"]
+        _ <- gitOk agent ["add", "--", ".gaw/meta"]
+        _ <- cliOk candidate agent ["commit", "-m", "protocol content only"]
+        -- Only mode bits change here; filesystem chmod is unnecessary.
+        _ <- gitOk agent ["update-index", "--chmod=+x", "--", ".gaw/meta", "memory/old"]
+        rejectMixed "mixed modes"
+        _ <- gitOk agent ["restore", "--staged", "--", "memory/old"]
+        _ <- cliOk candidate agent ["commit", "-m", "protocol mode only"]
+        _ <- gitOk agent ["update-index", "--chmod=+x", "--", "memory/old"]
+        _ <- cliOk candidate agent ["commit", "-m", "workspace mode only"]
+        removeFile metadata
+        removeFile note
+        _ <- gitOk agent ["add", "-u", "--", ".gaw/meta", "memory/old"]
+        rejectMixed "mixed deletions"
+        _ <- gitOk agent ["restore", "--staged", "--", "memory/old"]
+        _ <- cliOk candidate agent ["commit", "-m", "protocol deletion"]
+        _ <- gitOk agent ["add", "-u", "--", "memory/old"]
+        _ <- cliOk candidate agent ["commit", "-m", "workspace deletion"]
+        -- Explicitly enable renames to test the query's override.
+        _ <- gitOk agent ["config", "diff.renames", "true"]
+        writeFile (agent </> ".gaw/source") "move me\n"
+        _ <- gitOk agent ["add", "--", ".gaw/source"]
+        _ <- cliOk candidate agent ["commit", "-m", "protocol source"]
+        _ <- gitOk agent ["mv", "--", ".gaw/source", "memory/moved"]
+        rejectMixed "cross-boundary move"
+        _ <- gitOk agent ["restore", "--staged", "--", "memory/moved"]
+        _ <- cliOk candidate agent ["commit", "-m", "remove protocol source"]
+        _ <- gitOk agent ["add", "--", "memory/moved"]
+        _ <- cliOk candidate agent ["commit", "-m", "add workspace destination"]
+        _ <- gitOk agent ["mv", "--", "memory/moved", "memory/renamed"]
+        _ <- cliOk candidate agent ["commit", "-m", "workspace rename"]
+        _ <- gitOk agent ["mv", "--", "memory/renamed", ".gaw/destination"]
+        rejectMixed "reverse cross-boundary move"
+        _ <- gitOk agent ["restore", "--staged", "--", ".gaw/destination"]
+        _ <- cliOk candidate agent ["commit", "-m", "remove workspace source"]
+        _ <- gitOk agent ["add", "--", ".gaw/destination"]
+        _ <- cliOk candidate agent ["commit", "-m", "add protocol destination"]
+        _ <- gitOk agent ["mv", "--", ".gaw/destination", ".gaw/renamed"]
+        _ <- cliOk candidate agent ["commit", "-m", "protocol rename"]
+        writeFile (agent </> "memory/line\nbreak") "newline path\n"
+        writeFile (agent </> ".gaw/unusual") "metadata\n"
+        _ <- gitOk agent ["add", "--", ".gaw/unusual", "memory/line\nbreak"]
+        rejectMixed "newline path"
+        _ <- gitOk agent ["restore", "--staged", "--", "memory/line\nbreak"]
+        stageRawPath agent rawPath
+        rejectMixed "non-UTF8 path"
+        removeRawPath agent rawPath
+        _ <- cliOk candidate agent ["commit", "-m", "protocol with raw paths unstaged"]
+        _ <- gitOk agent ["add", "--", "memory/line\nbreak"]
+        stageRawPath agent rawPath
+        _ <- cliOk candidate agent ["commit", "-m", "unusual workspace paths"]
+        previous <- gitOk agent ["rev-parse", "HEAD"]
+        tree <- gitOk agent ["rev-parse", "HEAD^{tree}"]
+        project <- gitOk directory ["rev-parse", "main"]
+        _ <- cliOk candidate agent ["commit", "-m", "unchanged tree association", "--", "main"]
+        sameTree <- gitOk agent ["rev-parse", "HEAD^{tree}"]
+        first <- gitOk agent ["rev-parse", "HEAD^1"]
+        second <- gitOk agent ["rev-parse", "HEAD^2"]
+        require
+            (tree == sameTree && first == previous && second == project)
+            "unchanged-tree project association regressed"
+        _ <- cliOk candidate agent ["commit", "--allow-empty", "-m", "intentional empty"]
+        noChange <- cliFail candidate agent ["commit", "-m", "empty without flag"]
+        require (isInfixOf ":EMPTY-COMMIT" noChange) "empty-commit behavior changed"
+        _ <- cliOk candidate agent ["check"]
+        pure ()
     migrateLegacy candidate root = do
-      directory <- seed root "legacy"
-      _ <- gitOk directory ["checkout", "-q", "-b", "agents"]
-      let legacy = "(:workspace ((:directory \"memory\")))\n"
-      config directory legacy
-      _ <- gitOk directory ["rm", "--", "project.txt"]
-      nativeCommit directory "implicit v0"
-      previous <- gitOk directory ["rev-parse", "HEAD"]
-      _ <- cliOk candidate directory ["deploy", "--branch", "agents"]
-      config directory "(:version 1 :workspace ((:memory ((:directory \"memory\")))))\n"
-      _ <- cliOk candidate directory ["commit", "-m", "adopt v1"]
-      _ <- cliOk candidate directory ["check"]
-      preserved <- gitOk directory ["show", takeWhile (/= '\n') previous ++ ":.gaw/config"]
-      parent <- gitOk directory ["rev-parse", "HEAD^1"]
-      require (preserved == legacy && parent == previous) "v1 adoption changed its v0 parent"
+        directory <- seed root "legacy"
+        _ <- gitOk directory ["checkout", "-q", "-b", "agents"]
+        let legacy = "(:workspace ((:directory \"memory\")))\n"
+        config directory legacy
+        _ <- gitOk directory ["rm", "--", "project.txt"]
+        nativeCommit directory "implicit v0"
+        previous <- gitOk directory ["rev-parse", "HEAD"]
+        _ <- cliOk candidate directory ["deploy", "--branch", "agents"]
+        config directory "(:version 1 :workspace ((:memory ((:directory \"memory\")))))\n"
+        _ <- cliOk candidate directory ["commit", "-m", "adopt v1"]
+        _ <- cliOk candidate directory ["check"]
+        preserved <- gitOk directory ["show", takeWhile (/= '\n') previous ++ ":.gaw/config"]
+        parent <- gitOk directory ["rev-parse", "HEAD^1"]
+        require (preserved == legacy && parent == previous) "v1 adoption changed its v0 parent"
     futureVersion candidate root name sourceConfig detail = do
-      directory <- seed root name
-      _ <- gitOk directory ["checkout", "-q", "-b", "agents"]
-      config directory sourceConfig
-      nativeCommit directory "future config"
-      executable <- OS.fromBytes (BSC.pack git)
-      location <- OS.fromBytes (BSC.pack directory)
-      source <- either (fail . show) pure (parseSourceRef "refs/heads/agents")
-      report <- inspectCommittedState (runGitPosix executable) location source
-      require (case classifyCommittedState (stateFindings report) of
-        IndeterminateCommittedState _ -> True
-        _ -> False) "future version was classified as determinate"
-      status <- cliOk candidate directory ["status"]
-      require (isInfixOf "indeterminate" status &&
-        isInfixOf detail status) "status hid future-version branch"
-      _ <- cliFail candidate directory ["check"]
-      _ <- cliFail candidate directory ["deploy", "--branch", "agents"]
-      -- Retaining the marker must not allow native Git to move an unknown-version branch.
-      _ <- gitOk directory ["config", "hook.gaw-reference-transaction.event", "reference-transaction"]
-      _ <- gitOk directory ["config", "hook.gaw-reference-transaction.command", candidate ++ " --reference-transaction"]
-      _ <- gitOk directory ["config", "hook.gaw-reference-transaction.enabled", "true"]
-      before <- gitOk directory ["rev-parse", "HEAD"]
-      writeFile (directory </> "another") "same marker\n"
-      _ <- gitOk directory ["add", "--", "another"]
-      _ <- failure directory git ["-c", "commit.gpgsign=false", "commit", "-q", "-m", "must reject"]
-      after <- gitOk directory ["rev-parse", "HEAD"]
-      require (before == after) "future-version protection was weakened"
+        directory <- seed root name
+        _ <- gitOk directory ["checkout", "-q", "-b", "agents"]
+        config directory sourceConfig
+        nativeCommit directory "future config"
+        executable <- OS.fromBytes (BSC.pack git)
+        location <- OS.fromBytes (BSC.pack directory)
+        source <- either (fail . show) pure (parseSourceRef "refs/heads/agents")
+        report <- inspectCommittedState (runGitPosix executable) location source
+        require
+            ( case classifyCommittedState (stateFindings report) of
+                IndeterminateCommittedState _ -> True
+                _ -> False
+            )
+            "future version was classified as determinate"
+        status <- cliOk candidate directory ["status"]
+        require
+            ( isInfixOf "indeterminate" status
+                && isInfixOf detail status
+            )
+            "status hid future-version branch"
+        _ <- cliFail candidate directory ["check"]
+        _ <- cliFail candidate directory ["deploy", "--branch", "agents"]
+        -- Retaining the marker must not allow native Git to move an unknown-version branch.
+        _ <- gitOk directory ["config", "hook.gaw-reference-transaction.event", "reference-transaction"]
+        _ <- gitOk directory ["config", "hook.gaw-reference-transaction.command", candidate ++ " --reference-transaction"]
+        _ <- gitOk directory ["config", "hook.gaw-reference-transaction.enabled", "true"]
+        before <- gitOk directory ["rev-parse", "HEAD"]
+        writeFile (directory </> "another") "same marker\n"
+        _ <- gitOk directory ["add", "--", "another"]
+        _ <- failure directory git ["-c", "commit.gpgsign=false", "commit", "-q", "-m", "must reject"]
+        after <- gitOk directory ["rev-parse", "HEAD"]
+        require (before == after) "future-version protection was weakened"
     invalidRecovery candidate root = do
-      directory <- seed root "invalid-recovery"
-      _ <- gitOk directory ["checkout", "-q", "-b", "agents"]
-      let invalid = "(:version 1 :workspace #(:future))\n"
-      config directory invalid
-      nativeCommit directory "invalid config"
-      _ <- gitOk directory ["config", "hook.gaw-reference-transaction.event", "reference-transaction"]
-      _ <- gitOk directory ["config", "hook.gaw-reference-transaction.command", candidate ++ " --reference-transaction"]
-      _ <- gitOk directory ["config", "hook.gaw-reference-transaction.enabled", "true"]
-      before <- gitOk directory ["rev-parse", "HEAD"]
-      writeFile (directory </> "another") "same marker\n"
-      _ <- gitOk directory ["add", "--", "another"]
-      nativeCommit directory "recover while preserving marker"
-      after <- gitOk directory ["rev-parse", "HEAD"]
-      require (before /= after) "invalid-state recovery was blocked"
-      preserved <- gitOk directory ["show", "HEAD:.gaw/config"]
-      require (preserved == invalid) "invalid-state recovery changed the marker"
+        directory <- seed root "invalid-recovery"
+        _ <- gitOk directory ["checkout", "-q", "-b", "agents"]
+        let invalid = "(:version 1 :workspace #(:future))\n"
+        config directory invalid
+        nativeCommit directory "invalid config"
+        _ <- gitOk directory ["config", "hook.gaw-reference-transaction.event", "reference-transaction"]
+        _ <- gitOk directory ["config", "hook.gaw-reference-transaction.command", candidate ++ " --reference-transaction"]
+        _ <- gitOk directory ["config", "hook.gaw-reference-transaction.enabled", "true"]
+        before <- gitOk directory ["rev-parse", "HEAD"]
+        writeFile (directory </> "another") "same marker\n"
+        _ <- gitOk directory ["add", "--", "another"]
+        nativeCommit directory "recover while preserving marker"
+        after <- gitOk directory ["rev-parse", "HEAD"]
+        require (before /= after) "invalid-state recovery was blocked"
+        preserved <- gitOk directory ["show", "HEAD:.gaw/config"]
+        require (preserved == invalid) "invalid-state recovery changed the marker"
