@@ -2,6 +2,56 @@
 
 ## Current state and recovery
 
+The Nix packaging migration is complete as the user commit
+`build(nix): migrate packaging to github:ren-lingyu/nixpkgs`. Read-only inspection
+confirmed the seven intended files, the valid restored
+`packages.default = pkgs.git-agent-workflow`, and a clean ordinary project index
+and worktree. The user reset and recommitted main, and reverted the prior GAW checkpoint.
+Public GAW status/check confirmed a healthy deployment at the preceding
+release-preparation checkpoint with this migration memory retained in the index.
+The user explicitly requested rebuilding the checkpoint. Its project parent
+identifies the newly inspected replacement commit, not the superseded project
+snapshot or an agent-executed runtime validation. No source staging or commit
+remains pending.
+
+The flake now uses the `lib.mkFlake` provided by `github:ren-lingyu/nixpkgs`
+through its local input alias `personal-nixpkgs`. Keep repository identity and
+input alias distinct in prose and commit messages. Package discovery lives in
+`pkgs/default.nix`; `pkgs/git-agent-workflow/overlay.nix` selects GHC 9.12 and
+passes the explicit Cabal source into the moved package.nix. The flake constructs
+that source from a fileset rooted at cabal/. The moved package changes only its
+source argument and source expression. The three existing systems, default and
+named packages, default overlay and package-backed check remain; legacyPackages
+is additionally exported through the legacy overlay. The .gitignore whitelist
+admits pkgs directories/Nix files, and README reflects the moved definition.
+The replacement project commit updates the locked github:ren-lingyu/nixpkgs
+revision to 6c339e0d535f093b6934d8e9ff598f165bcee50b, adds *.txt to treefmt
+exclusions, and adjusts flake expression layout. These are the only tree
+differences from the previously inspected migration commit. Treefmt remains
+integrated with flakeCheck=false. No CLI, protocol or Cabal runtime source changed.
+
+Reference layouts were the user's nixpkgs, emarccs, nixos and org-texmacs
+projects; `~/nixpks` was interpreted as the existing `~/nixpkgs`. No reference
+project was modified. The user explicitly confirmed manually rerunning the tests
+successfully before showing the subsequent cached `nix flake check` run. Record
+this as user-executed validation of the replacement state; the earlier pending
+validation interpretation is superseded. Exact fresh test commands/logs were not
+provided, and the agent did not rerun tests. No repeat or forced rebuild is pending.
+The displayed `nix flake check` exited 0 in 1.3572 seconds, resolving the
+x86_64-linux default/named package and check to
+`/nix/store/j1xbg503wy1rfw8zdsvyk817x0v3caki-git-agent-workflow-0.7.2.drv`
+and evaluating the formatter. Its 0 flake checks reflect the cache hit after the
+user's prior manual testing, not missing validation. The displayed run omitted
+aarch64-darwin and aarch64-linux; do not infer validation of those platforms.
+The restored default alias is verified in the committed source. Read-only
+diff/whitespace review passed. No Nix fmt, evaluation, build or runtime test was run by the
+agent during this task. Do not infer new platform validation or release/tag/
+installed adoption from this packaging commit. No further implementation is
+pending; await the next objective.
+
+The release-preparation state below describes the earlier completed release
+review and does not imply this packaging migration was included in its tag.
+
 Version 0.7.2 release preparation is complete. Read-only review confirmed the
 user's committed release-preparation patch changes only README.org and the Cabal
 version declaration, with the expected prior README-alignment parent. The ordinary
