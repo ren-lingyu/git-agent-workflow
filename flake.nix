@@ -55,7 +55,7 @@
               checks = { inherit (pkgs) git-agent-workflow; };
 
               treefmt = {
-                flakeCheck = false;
+                flakeCheck = true;
                 settings.excludes = [
                   "*.txt"
                   ".gitignore"
