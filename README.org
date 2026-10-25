@@ -762,7 +762,8 @@ cd cabal
 cabal test
 #+end_src
 
-The Nix package is defined by =package.nix=.  The flake selects GHC 9.12;
+The Nix package is defined by =pkgs/git-agent-workflow/package.nix=.
+Its =overlay.nix= selects GHC 9.12;
 Nix selects Git 2.54 or newer and exposes its executable as =GIT= while
 compiling the Cabal project.
 =Gaw.System.ExternalGit= captures that value at compile time; ordinary Cabal
@@ -771,7 +772,7 @@ the selected Nix Git in the runtime closure without duplicating the Cabal
 executable name in Nix packaging.
 
 The Cabal =data-files= declaration is the source of truth for bundled data,
-including agent skills.  =package.nix= disables the automatic source-tree scan
+including agent skills.  The package disables the automatic source-tree scan
 from nixpkgs' =installAgentSkills= hook, then runs that hook against Cabal's
 installed data output.  A Cabal package that declares no installed skill fails
 the Nix package build; concrete skill names and member paths remain Cabal

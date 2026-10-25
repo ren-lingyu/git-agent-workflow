@@ -20,6 +20,33 @@
         "url": "https://github.com/hercules-ci/flake-parts.git"
       }
     },
+    "local-nixpkgs": {
+      "inputs": {
+        "flake-parts": [
+          "personal-nixpkgs",
+          "flake-parts"
+        ],
+        "nixpkgs": [
+          "personal-nixpkgs",
+          "nixpkgs"
+        ],
+        "treefmt-nix": [
+          "personal-nixpkgs",
+          "treefmt-nix"
+        ]
+      },
+      "locked": {
+        "path": "./pkgs",
+        "type": "path"
+      },
+      "original": {
+        "path": "./pkgs",
+        "type": "path"
+      },
+      "parent": [
+        "personal-nixpkgs"
+      ]
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1790981744,
@@ -52,10 +79,58 @@
         "type": "github"
       }
     },
-    "root": {
+    "personal-nixpkgs": {
       "inputs": {
         "flake-parts": "flake-parts",
-        "nixpkgs": "nixpkgs"
+        "local-nixpkgs": "local-nixpkgs",
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "treefmt-nix": "treefmt-nix"
+      },
+      "locked": {
+        "lastModified": 1792941142,
+        "narHash": "sha256-/M9m0D4N5hh6NFDll7Qg4jwPFVLnT/pNIA04l1NIhVM=",
+        "ref": "refs/heads/main",
+        "rev": "6c339e0d535f093b6934d8e9ff598f165bcee50b",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/ren-lingyu/nixpkgs"
+      },
+      "original": {
+        "ref": "refs/heads/main",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/ren-lingyu/nixpkgs"
+      }
+    },
+    "root": {
+      "inputs": {
+        "nixpkgs": "nixpkgs",
+        "personal-nixpkgs": "personal-nixpkgs"
+      }
+    },
+    "treefmt-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "personal-nixpkgs",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1791885023,
+        "narHash": "sha256-C3alQ2MEt0zVrUSho5NUDo3jmhbff72++bfwoqT9Omo=",
+        "ref": "refs/heads/main",
+        "rev": "0d6d739a833ba9a9c93034862e4a7b061a062a1c",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/numtide/treefmt-nix.git"
+      },
+      "original": {
+        "ref": "refs/heads/main",
+        "shallow": true,
+        "type": "git",
+        "url": "https://github.com/numtide/treefmt-nix.git"
       }
     }
   },

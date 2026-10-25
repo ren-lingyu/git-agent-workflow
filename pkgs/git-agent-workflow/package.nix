@@ -1,5 +1,6 @@
 {
   lib,
+  src,
   haskell,
   haskellPackages,
   installAgentSkills,
@@ -114,7 +115,7 @@ let
 
   package_ = haskell.lib.dontHaddock (haskellPackages.callCabal2nix
     "git-agent-workflow"
-    ./cabal
+    src
     { }
   );
 

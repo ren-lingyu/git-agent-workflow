@@ -5,43 +5,67 @@
     nixpkgs = {
       url = "git+https://github.com/NixOS/nixpkgs.git?ref=refs/heads/nixpkgs-unstable&shallow=1";
     };
-    flake-parts = {
-      url = "git+https://github.com/hercules-ci/flake-parts.git?ref=refs/heads/main&shallow=1";
+    personal-nixpkgs = {
+      url = "git+https://github.com/ren-lingyu/nixpkgs?ref=refs/heads/main&shallow=1";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = { self, ... }@inputs : let
+  outputs =
+    { self, ... }@inputs:
+    inputs.personal-nixpkgs.lib.mkFlake inputs.nixpkgs
+      ({ lib }: rec {
+        inherit inputs;
+        moduleLocation = __curPos.file;
+        llib = inputs.personal-nixpkgs.lib.mergeAttrsRecursive { allowOverrides = false; } [
+          { inherit (inputs.personal-nixpkgs.lib) packages; }
+        ];
+        lpkgs = import ./pkgs {
+          inherit llib;
+          inherit (specialArgs) src;
+        };
+        specialArgs = {
+          src = lib.fileset.toSource {
+            root = ./cabal;
+            fileset = lib.fileset.unions [ ./cabal ];
+          };
+        };
+      })
+      (
+        { lpkgs, ... }: {
+          config = {
+            systems = [
+              "x86_64-linux"
+              "aarch64-linux"
+              "aarch64-darwin"
+            ];
 
-    mkPackage_ = pkgs_ : pkgs_.callPackage ./package.nix {
-      haskellPackages = pkgs_.haskell.packages.ghc912;
-    };
+            flake.overlays.default = lpkgs.overlays.default;
 
-  in inputs.flake-parts.lib.mkFlake { inherit inputs; } {
-    systems = [
-      "x86_64-linux"
-      "aarch64-linux"
-      "aarch64-darwin"
-    ];
+            perSystem = { pkgs, config, ... }: {
+              nixpkgs.overlays = [ lpkgs.overlays.legacy ];
 
-    flake = {
-      overlays.default = final_ : prev_ : {
-        git-agent-workflow = mkPackage_ final_;
-      };
-    };
+              legacyPackages = pkgs.legacyPackages;
 
-    perSystem = { pkgs, ... } : let
+              packages = {
+                inherit (pkgs) git-agent-workflow;
+                default = pkgs.git-agent-workflow;
+              };
 
-      package_ = mkPackage_ pkgs;
+              checks = { inherit (pkgs) git-agent-workflow; };
 
-    in {
-      packages = {
-        default = package_;
-        git-agent-workflow = package_;
-      };
-
-      checks = {
-        git-agent-workflow = package_;
-      };
-    };
-  };
+              treefmt = {
+                flakeCheck = false;
+                settings.excludes = [
+                  "*.txt"
+                  ".gitignore"
+                  "LICENSE"
+                  "README.org"
+                  "flake.lock"
+                ];
+              };
+            };
+          };
+        }
+      );
 }
