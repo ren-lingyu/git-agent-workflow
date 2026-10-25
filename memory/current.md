@@ -20,18 +20,24 @@ After enabling treefmt.flakeCheck, another supplied successful run (exit 0,
 results and 0 checks executed in that displayed run. Both omitted aarch64-linux
 and aarch64-darwin. These are user-run checks; no agent test rerun occurred.
 
-Both checks used the working tree containing a newer nixpkgs lock revision
-than the committed baseline. That lock update is now staged separately as the
-only ordinary-project change; it is not part of either completed commit. Do not
-attribute those runs to the committed lockfile alone or silently include the
-pending lock update in an unrelated commit. No remaining change to flake.nix
-was observed. The user now requests a checkpoint. Its project parent grounds
-the inspected committed formatting/check configuration, not the uncommitted
-lock revision used in the user-run checks. No further formatting or check
-enablement work is pending; await the user's next task.
+The previously pending lock update is now committed by the user as
+`chore(flake): refresh nixpkgs lock`, directly after the treefmt-check enablement
+commit. Read-only review confirms only flake.lock changed: nixpkgs advances from
+55ba7f49ef2962b42cbd126522b7df5f95037679 to
+674a2028661e550a97400c1cc992b9cca9a668a1 with matching lastModified/narHash;
+the input URL and nixpkgs-unstable ref remain unchanged. Ordinary project index
+and worktree are clean. No pending lock update, source staging or commit remains.
 
-The following migration/release sections describe earlier completed states;
-the clean-index statements there do not describe the pending staged lock update.
+Both supplied checks used this newer lock revision before its commit. The final
+successful treefmt-enabled working tree is now represented by committed source
+and lockfile together; no additional test rerun was performed or is required by
+this completion review. The prior checkpoint's project association remains the
+inspected formatting/check configuration and is not rewritten. Current memory
+records the subsequent lock completion. The user explicitly requests a new
+checkpoint; its project parent grounds the inspected committed lock update and
+completed source/configuration state. Await the user's next task.
+
+The following migration/release sections describe earlier completed states.
 
 The Nix packaging migration is complete as the user commit
 `build(nix): migrate packaging to github:ren-lingyu/nixpkgs`. Read-only inspection
