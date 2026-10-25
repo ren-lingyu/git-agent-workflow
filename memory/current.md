@@ -2,6 +2,37 @@
 
 ## Current state and recovery
 
+Formatting and treefmt-check enablement are now committed by the user:
+`style: format Haskell, Cabal, Nix and Markdown files`, followed by
+`build(nix): enable treefmt flake check`. Read-only inspection of the latter
+confirmed it changes only treefmt.flakeCheck from false to true. The formatting
+review covered 43 staged files: Haskell source/tests, Cabal configuration, Nix
+package definitions and a bundled-skill Markdown table. Inspection found
+formatting/import ordering and merging; no runtime feature change was intended.
+The current setting is flakeCheck=true, superseding the migration-era false below.
+
+The user supplied a successful `nix flake check` after formatting (exit 0,
+30.4146 seconds): it ran one flake check and built the package derivation
+`/nix/store/k17cpbr8l14xdf9g97z778p6saq2c2rk-git-agent-workflow-0.7.2.drv`.
+After enabling treefmt.flakeCheck, another supplied successful run (exit 0,
+1.5679 seconds) also resolved checks.x86_64-linux.treefmt to
+`/nix/store/z5ag5hgl3qmycldsrxz4c2yhrjjrcqnc-treefmt-check.drv`, with cached
+results and 0 checks executed in that displayed run. Both omitted aarch64-linux
+and aarch64-darwin. These are user-run checks; no agent test rerun occurred.
+
+Both checks used the working tree containing a newer nixpkgs lock revision
+than the committed baseline. That lock update is now staged separately as the
+only ordinary-project change; it is not part of either completed commit. Do not
+attribute those runs to the committed lockfile alone or silently include the
+pending lock update in an unrelated commit. No remaining change to flake.nix
+was observed. The user now requests a checkpoint. Its project parent grounds
+the inspected committed formatting/check configuration, not the uncommitted
+lock revision used in the user-run checks. No further formatting or check
+enablement work is pending; await the user's next task.
+
+The following migration/release sections describe earlier completed states;
+the clean-index statements there do not describe the pending staged lock update.
+
 The Nix packaging migration is complete as the user commit
 `build(nix): migrate packaging to github:ren-lingyu/nixpkgs`. Read-only inspection
 confirmed the seven intended files, the valid restored
