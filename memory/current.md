@@ -2,16 +2,43 @@
 
 ## Current state and recovery
 
-The four proposed general Skill improvements are recorded in
-[the Skill improvement backlog](backlog.md), which owns their motivation,
-priority, design boundaries, practice references and related-issue findings.
-Checkpoint message defaults are high priority; entry-trigger coverage and
-entry-content boundaries are medium priority, all favored for future
-implementation. Native initialization support for Establishment is only a
-nonblocking, abandonable research candidate. None of these proposals has been
-implemented or made a present behavioral requirement. This maintenance only
-registers the plan; no implementation, release or external issue action follows
-automatically. Existing unrelated follow-ups below retain their original scope.
+Checkpoint message defaults are complete as the user commit
+`feat(skill): define checkpoint message type and scope defaults`. Read-only
+verification confirmed the expected preceding lock-refresh parent, only the
+bundled SKILL.md changed, and the ordinary index/worktree are clean. The final
+committed text includes the project-convention precedence clarification; the
+prepared message remains accurate and was used for the commit. No source
+staging or ordinary commit remains pending.
+
+Established project commit-message conventions take precedence; otherwise the
+Skill supplies Conventional Commit defaults. Choose type by checkpoint purpose,
+including substantive workspace changes and meaningful external historical
+associations, not by workspace role or an associated project commit's type.
+The chore/fix/refactor/feat defaults distinguish recording, material correction,
+meaning-preserving organization and reusable capability. Roles supply default
+scopes directly, including skills and custom roles. Across roles, use the main
+maintenance purpose without archive priority; omit an unreasonable scope rather
+than inventing one. Ungrouped entries use established maintenance categories
+without inferring roles from directory names; meaningful subscopes remain valid.
+An unchanged-tree external-parent association, including Auxiliary history,
+does not require artificial file changes. Message selection does not change
+checkpoint eligibility, Archive coordination, CLI/protocol or authorization.
+
+The skill-creator quick validator, all eight reference links and diff whitespace
+checks passed during implementation; final committed whitespace review passed.
+The initial ten scenarios and the eight revised acceptance cases were reviewed
+as tabletop reasoning, not runtime or independent-agent tests. No build or
+forced rebuild was needed or run. The installed Skill and published release
+were not updated or verified. This completion checkpoint associates the directly
+inspected committed instruction, not a new runtime result.
+
+The completed checkpoint-message item has been removed from
+[the Skill improvement backlog](backlog.md). Its three remaining proposals retain
+their motivation, practice references and related-issue findings: entry-trigger
+coverage and entry-content boundaries are medium-priority favored improvements;
+native initialization support for Establishment remains nonblocking, undecided
+and abandonable. Do not begin those tasks automatically. Existing unrelated
+follow-ups below retain their original scope; await the next user objective.
 
 Use the git-maintenance commit-message workflow for GAW checkpoint messages as
 explicitly requested by the user, including Conventional Commit formatting.

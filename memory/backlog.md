@@ -3,66 +3,20 @@
 ## Status and scope
 
 These are recoverable development proposals, not implemented GAW requirements
-or authorization to implement them. The first three improvements are favored
-for implementation; the fourth is an optional, nonblocking research candidate
-that may be abandoned. Their priorities describe this plan, not a new universal
+or authorization to implement them. The entry-trigger and entry-content
+improvements are favored for implementation; native initialization support is
+an optional, nonblocking research candidate that may be abandoned. Their
+priorities describe this plan, not a new universal
 priority protocol, identity system or fixed milestone schedule. Existing B0-B3
 examples in current memory retain their original note-local meaning.
 
-This file owns these four proposals. Current progress and verification remain
-in [current.md](current.md); earlier follow-ups and issue boundaries already
+This file owns the three remaining proposals from the original four-item plan.
+Checkpoint message defaults are committed and summarized in
+[current.md](current.md), which also owns current progress and verification.
+Earlier follow-ups and issue boundaries already
 recorded there are not duplicated here. Implementation should preserve the
 installed Skill's existing baseline and distinguish enhancements from completed
-work. No Skill, CLI, protocol, configuration, tests or ordinary project source
-was changed to register this backlog.
-
-## Checkpoint type and scope defaults
-
-Priority: high. Status: favored for implementation, not yet implemented.
-
-Repeated checkpoint preparation has exposed inconsistent or misleading
-Conventional Commit type/scope selection. Provide portable default semantics
-in the general Skill's checkpoint guidance, while preserving project-specific
-message conventions and reuse of an available commit-message workflow such as
-git-maintenance. This complements message preparation rather than duplicating
-its complete formatting workflow or adding CLI parsing/enforcement.
-
-Candidate Conventional Commit types describe the actual GAW snapshot change,
-not the type of a project commit discussed in memory:
-
-- `chore`: ordinary knowledge recording, current-state updates, design
-  decisions, pending work and verification results.
-- `fix`: correction of materially wrong knowledge or faulty workflow guidance.
-- `refactor`: reorganization without changing substantive meaning.
-- `feat`: a new capability with real reusable value; new knowledge or a change
-  to a Skill file does not alone make a feature.
-
-Distinguish Conventional Commit type from workspace semantic type (the role
-metadata in role-aware config). Default scope to the workspace semantic type's
-name, including custom types, rather than imposing a closed list or renaming
-types mechanically. Thus `:memory`, `:skills` and `:archive` suggest `memory`,
-`skills` and `archive`. For changes across several types, choose the main
-change's type: adding archive material with an accompanying memory update
-normally suggests `archive`. If dominance is unclear, use the change's main
-intent; if still unclear, assess the concrete case. Do not invent a fixed
-cross-type priority order, concatenate every type, or enumerate paths.
-
-For entries without a declared semantic type, follow established project
-classification and maintenance intent rather than inferring a type from a
-directory name. If a project uses subscopes, they should represent real
-maintenance areas, preferably existing ones, rather than mechanical path lists
-or invented subdivisions. Put the concrete topic in the subject.
-
-Practice reference: [nixos checkpoint-message Skill on its _agents branch](https://github.com/ren-lingyu/nixos/blob/_agents/skills/nixos-gaw-checkpoint-message/SKILL.md).
-That project practice distinguishes snapshot changes and real maintenance
-areas; its scope spelling/examples are not a universal taxonomy. In particular,
-the proposed direct workspace-type naming need not copy its singular `skill`
-scope for the `:skills` role.
-
-Expected implementation area: the general SKILL.md checkpoint section. Keep
-this at the Skill layer, with no CLI validation, protocol change or retroactive
-history cleanup. The project's existing use of git-maintenance for checkpoint
-messages is a baseline, not proof that these general defaults already exist.
+work. Registering this backlog did not itself implement any proposal.
 
 ## Entry-point trigger coverage
 
