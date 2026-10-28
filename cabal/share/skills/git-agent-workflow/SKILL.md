@@ -180,9 +180,44 @@ files, and must run at the GAW worktree root. Before a checkpoint:
 4. Use public `git gaw commit` with an appropriate message and only justified
    external parents. Inspect the result with `git gaw show` when needed.
 
-GAW determines recovery value, not commit-message style. Reuse a suitable
-message workflow when applicable, without forcing a nonempty-diff requirement
-onto a meaningful unchanged-tree project association.
+### Checkpoint messages
+
+Follow established project commit-message conventions when present;
+otherwise use the Conventional Commit type/scope defaults below.
+Reuse a suitable message workflow when available.
+No particular external skill is required. These defaults guide
+message selection; they do not add CLI validation or determine whether a state
+deserves a checkpoint. Do not let a message workflow's nonempty-diff requirement
+reject a meaningful unchanged-tree external-parent association.
+
+Choose the Conventional Commit type from the checkpoint's actual purpose.
+Consider substantive workspace changes, meaningful new historical associations
+and the knowledge state or maintenance intent it expresses.
+Do not inherit the type of an associated project commit. A history association
+without a workspace-tree change can have an appropriate type without inventing
+file changes. Use these defaults:
+
+- `chore`: record knowledge, decisions, current state, pending work or
+  verification results; make minor wording, formatting or link adjustments.
+- `fix`: correct materially wrong knowledge or faulty workflow guidance.
+- `refactor`: reorganize memory or guidance without changing substantive meaning.
+- `feat`: add a capability with real reusable value. New findings or a change
+  to a Skill file alone do not make a feature.
+
+Default the scope to the declared GAW workspace role: `memory`, `skills`,
+`archive`, or a custom role. Roles guide scope selection, not type classification.
+For a checkpoint spanning roles, choose one appropriate scope by its main
+maintenance purpose. Do not impose a fixed
+role priority or concatenate role names. If no reasonable scope can be chosen,
+omit it rather than inventing a classification.
+
+For entries without declared roles, use established project classifications
+and actual maintenance intent rather than inferring roles from directory names.
+Prefer the shortest scope that accurately identifies the maintenance area.
+Project subscopes may name real, preferably existing maintenance areas; do not
+invent subdivisions or enumerate changed paths merely to make scope more
+specific. Put the concrete topic in the subject rather than using `gaw` just
+to name the workflow.
 
 ## Lifecycle and authority
 
