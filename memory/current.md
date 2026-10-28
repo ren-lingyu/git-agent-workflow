@@ -2,6 +2,73 @@
 
 ## Current state and recovery
 
+Use the git-maintenance commit-message workflow for GAW checkpoint messages as
+explicitly requested by the user, including Conventional Commit formatting.
+
+The lock refresh is complete as the user commit
+`chore(flake): refresh nixpkgs and personal-nixpkgs locks`. After waiting for
+HEAD to move, read-only verification confirmed its sole parent is the reviewed
+input-override-removal commit, only flake.lock changed, and its committed blob
+matches the staged lock reviewed for the message. The ordinary project index
+and worktree are clean. nixpkgs and personal-nixpkgs advance together; the lock
+also moves flake-parts/treefmt-nix dependency connections under local-nixpkgs
+and adjusts treefmt-nix's nixpkgs follows path. No source staging or ordinary
+commit remains pending. The user requests a GAW checkpoint for this completion;
+its project association grounds the inspected committed lock update.
+
+The successful project checks described below used this commit's immediate
+parent, before the latest lock refresh. They are not validation of the refreshed
+lock. No check/build of the new lock or project-local .#nix shell was performed
+in this commit-message/checkpoint phase. This distinction is a validation limit,
+not an instruction to force a rebuild or reopen completed earlier checks.
+
+The nested path-input override removal is committed as
+`build(flake): remove local-nixpkgs Git input override`. On 2026-10-29,
+read-only inspection found a clean ordinary project worktree/index and confirmed
+that flake.nix no longer overrides personal-nixpkgs/local-nixpkgs with a Git URL.
+The lock now represents that input as ./pkgs relative to personal-nixpkgs.
+The user explains that a Nix patch in personal-nixpkgs enables this change;
+the patch's stability was previously uncertain. Keep this motivation out of
+the ordinary commit message, as explicitly requested.
+
+The user authorized Nix checks/builds and explicitly accepts cache hits as
+evidence of prior successful execution; do not force rebuilds merely to avoid
+cached results. Agent-run `timeout 120s nix flake check --no-write-lock-file`
+passed: the package resolved to the previously recorded k17cpbr8 package
+derivation, and one treefmt check was actually built and passed. The check
+omitted aarch64-linux and aarch64-darwin. Agent-run
+`timeout 120s nix build --no-link --no-write-lock-file .#default` also exited 0
+without rebuilding. Its first sandboxed attempt failed opening the Nix fetcher
+cache SQLite database; the approved identical rerun outside the sandbox passed.
+No lock update, result link or ordinary project modification was made.
+
+Authorized source inspection of the user's personal-nixpkgs checkout found the
+committed nix-flake-patched package, with a circular-import patch and a fetched
+nested-relative-path fix restricted to src/libflake/flake.cc. Its source comment
+targets Nix 2.35.3. The initial checks used the terminal's Nix 2.34.9; the user
+then identified the upstream development shell as the patched-Nix entry point.
+Source inspection confirmed devShells.<system>.nix in the upstream
+pkgs/flake.nix, containing nix-flake-patched. The project's pre-refresh locked
+upstream did not expose .#nix, so validation used the local upstream shell
+without overriding or updating project inputs:
+`nix develop --no-write-lock-file path:/home/lingyu/nixpkgs#nix -c nix ...`.
+Its version command reported Nix 2.35.3+2. Through that shell, both
+`flake check --no-write-lock-file` and
+`build --no-link --no-write-lock-file .#default` exited 0 within their 120-second
+limits. Flake checks and the package reused successful cached results; the
+check omitted aarch64-linux and aarch64-darwin. Sandbox cache/daemon access
+failures were resolved by approved runs outside the sandbox. This supersedes
+the earlier uncertainty about whether the project was tested with patched Nix:
+the nested path configuration now passes with the upstream shell's patched
+Nix as well. Broader patch stability is not established by this project alone;
+no independent Nix patch regression suite or forced rebuild was run. Both the
+ordinary project and personal-nixpkgs checkout remained unmodified during those
+checks. That pre-refresh validation is complete; the later lock-refresh
+validation boundary is stated above.
+
+The following sections describe earlier completed states; their clean-state and
+validation observations belong to their respective reviews.
+
 Formatting and treefmt-check enablement are now committed by the user:
 `style: format Haskell, Cabal, Nix and Markdown files`, followed by
 `build(nix): enable treefmt flake check`. Read-only inspection of the latter
