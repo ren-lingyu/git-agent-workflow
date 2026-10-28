@@ -22,18 +22,12 @@
     },
     "local-nixpkgs": {
       "inputs": {
-        "flake-parts": [
-          "personal-nixpkgs",
-          "flake-parts"
-        ],
+        "flake-parts": "flake-parts",
         "nixpkgs": [
           "personal-nixpkgs",
           "nixpkgs"
         ],
-        "treefmt-nix": [
-          "personal-nixpkgs",
-          "treefmt-nix"
-        ]
+        "treefmt-nix": "treefmt-nix"
       },
       "locked": {
         "path": "./pkgs",
@@ -49,10 +43,10 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1792842277,
-        "narHash": "sha256-pGPnZGi8y9d76xNeracniXO3dsYVROEmMkMc8jD0Ihc=",
+        "lastModified": 1793136825,
+        "narHash": "sha256-2pkE69JpFRInaARSczZytcfPw83IL82E2KdhbWGwdMs=",
         "ref": "refs/heads/nixpkgs-unstable",
-        "rev": "d3b13ad75cc492690728f9307e443dec9ef9a20e",
+        "rev": "f05535a0efcb2134c478d1e88434fadf486d42b5",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/NixOS/nixpkgs.git"
@@ -81,18 +75,16 @@
     },
     "personal-nixpkgs": {
       "inputs": {
-        "flake-parts": "flake-parts",
         "local-nixpkgs": "local-nixpkgs",
         "nixpkgs": [
           "nixpkgs"
-        ],
-        "treefmt-nix": "treefmt-nix"
+        ]
       },
       "locked": {
-        "lastModified": 1793044596,
-        "narHash": "sha256-ztmqdLnDecBlVYdWb+dIxAoaXVrvfjqgqdNhRmwZZlY=",
+        "lastModified": 1793106151,
+        "narHash": "sha256-ntsu4fHDrDu2Q3NWC/4URM29JBzgHV3JaH46iP43ayY=",
         "ref": "refs/heads/main",
-        "rev": "a9cc71a5233b6885ec66613c7f1f3a45bc2931c6",
+        "rev": "b7879c696e8052cdc0d872ccce0e99fa972791c3",
         "shallow": true,
         "type": "git",
         "url": "https://github.com/ren-lingyu/nixpkgs.git"
@@ -114,6 +106,7 @@
       "inputs": {
         "nixpkgs": [
           "personal-nixpkgs",
+          "local-nixpkgs",
           "nixpkgs"
         ]
       },
