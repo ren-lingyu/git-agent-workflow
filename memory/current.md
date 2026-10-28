@@ -2,6 +2,17 @@
 
 ## Current state and recovery
 
+The four proposed general Skill improvements are recorded in
+[the Skill improvement backlog](backlog.md), which owns their motivation,
+priority, design boundaries, practice references and related-issue findings.
+Checkpoint message defaults are high priority; entry-trigger coverage and
+entry-content boundaries are medium priority, all favored for future
+implementation. Native initialization support for Establishment is only a
+nonblocking, abandonable research candidate. None of these proposals has been
+implemented or made a present behavioral requirement. This maintenance only
+registers the plan; no implementation, release or external issue action follows
+automatically. Existing unrelated follow-ups below retain their original scope.
+
 Use the git-maintenance commit-message workflow for GAW checkpoint messages as
 explicitly requested by the user, including Conventional Commit formatting.
 
@@ -734,15 +745,17 @@ into a current blocker or silently broaden this work into environment tests.
 ## Existing issue references
 
 These identities/positions come from the user's handoff plus established
-memory; only #5 was freshly read before N5 and was open at that observation.
-Other live GitHub open/closed states were not queried. Use stable issue links
-for detailed requirements rather than copying complete issue text here.
+memory; #5 was freshly read before N5 and was open at that earlier observation.
+The later scoped issue review for the Skill improvement plan is recorded in
+[backlog.md](backlog.md#related-issue-review), including refreshed #5/#10 states.
+Other live GitHub open/closed states were not refreshed by that review. Use
+stable issue links for details rather than copying complete issue text here.
 
 | Issue | Position and current boundary |
 | --- | --- |
 | [#3](https://github.com/ren-lingyu/git-agent-workflow/issues/3) | Restricted GAW-aware rebase, later design/implementation; not routine memory maintenance. |
 | [#4](https://github.com/ren-lingyu/git-agent-workflow/issues/4) | Exploratory interactive DAG visualization, no current release gate. |
-| [#5](https://github.com/ren-lingyu/git-agent-workflow/issues/5) | Cross-session/agent knowledge integration; Auxiliary implementation and workflow are complete with isolated tests, committed through N5 with a Closes footer after checking the requirement. Remote closure and release availability are not inferred. |
+| [#5](https://github.com/ren-lingyu/git-agent-workflow/issues/5) | Cross-session/agent knowledge integration; Auxiliary implementation and workflow are complete with isolated tests, committed through N5 with a Closes footer after checking the requirement. See backlog's later issue review for observed remote closure; release availability is not inferred. |
 | [#6](https://github.com/ren-lingyu/git-agent-workflow/issues/6) | Optional checker deferred; bundled OID semantic guidance is complete. |
 | [#9](https://github.com/ren-lingyu/git-agent-workflow/issues/9) | Long-term history-model evaluation, not a decided split/fusion feature. |
 | [#10](https://github.com/ren-lingyu/git-agent-workflow/issues/10) | Optional explicit bidirectional AGENTS maintenance research. |
