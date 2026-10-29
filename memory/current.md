@@ -2,6 +2,43 @@
 
 ## Current state and recovery
 
+Entry-trigger coverage and entry-content boundaries are complete together as
+the user commit `feat(skill): guide memory entry triggers and content boundaries`.
+After waiting for HEAD to move, read-only verification confirmed the expected
+checkpoint-message-guidance parent, only references/skills.md changed, and its
+committed blob matches the staged version reviewed for the prepared message.
+The ordinary project index/worktree are clean; no staging or source commit is
+pending. The completion checkpoint associates the inspected committed guidance,
+not a new runtime or host-trigger validation.
+
+Descriptions should identify the project boundary and substantive tasks such
+as implementation, review, debugging, planning and recovery, even without
+explicit GAW/Memory wording. Avoid unrelated-task activation and select relevant
+knowledge rather than loading all Memory. Entry content focuses on navigation,
+workflow references and stable interpretation conventions. Concrete project
+facts, architecture, motivations, investigations, case-specific verification
+results/limits and progress belong in Memory. Stable evidence interpretation
+methods may remain in Skills. Limit full general-workflow duplication in the
+entry point; specialized task Skills may retain self-contained project
+procedures and supply entry responsibilities without an extra fixed-name Skill.
+Judge responsibilities rather than a word limit or fixed Skill count. Existing
+roleless, Auxiliary and selective entry-maintenance guidance is unchanged.
+
+Review refreshed nixos, org-roam-include and nixpkgs practices without modifying
+them. The skill-creator validator, 22 local reference targets and whitespace
+review passed during implementation. Final staged and committed whitespace
+review also passed for the user's replacement commit. Ten cases were reviewed
+as tabletop reasoning, not runtime or
+independent-agent tests or proof of a particular host's automatic triggering.
+No build or forced rebuild was needed or run. Source completion does not
+establish installed adoption, release availability or cross-project migration.
+
+Both completed entries have been removed from [backlog.md](backlog.md), retaining
+their separate goals here. The original plan's first three improvements are
+now committed; only the native-initialization candidate remains, undecided,
+nonblocking and abandonable. No further implementation is pending in this task;
+await the next user objective without automatically starting that candidate.
+
 Checkpoint message defaults are complete as the user commit
 `feat(skill): define checkpoint message type and scope defaults`. Read-only
 verification confirmed the expected preceding lock-refresh parent, only the
@@ -32,16 +69,17 @@ forced rebuild was needed or run. The installed Skill and published release
 were not updated or verified. This completion checkpoint associates the directly
 inspected committed instruction, not a new runtime result.
 
-The completed checkpoint-message item has been removed from
-[the Skill improvement backlog](backlog.md). Its three remaining proposals retain
-their motivation, practice references and related-issue findings: entry-trigger
-coverage and entry-content boundaries are medium-priority favored improvements;
-native initialization support for Establishment remains nonblocking, undecided
-and abandonable. Do not begin those tasks automatically. Existing unrelated
-follow-ups below retain their original scope; await the next user objective.
+The completed checkpoint-message item was removed from the Skill improvement
+backlog after its verification. Entry-guidance completion is recorded above;
+the remaining candidate and related-issue boundaries are in backlog.md.
+Existing unrelated follow-ups below retain their original scope.
 
 Use the git-maintenance commit-message workflow for GAW checkpoint messages as
 explicitly requested by the user, including Conventional Commit formatting.
+Keep ordinary-project and GAW checkpoint message drafts separate: use the
+ordinary project root's tmp/commit.md for main and tmp/gaw-checkpoint.md for
+GAW. These are temporary draft locations, not durable knowledge dependencies;
+preparing a checkpoint message must not overwrite the main commit draft.
 
 The lock refresh is complete as the user commit
 `chore(flake): refresh nixpkgs and personal-nixpkgs locks`. After waiting for
