@@ -1,5 +1,5 @@
-#+TITLE: Git Agent Workflow (GAW)
-#+AUTHOR: Lingyu Ren
+#+title: Git Agent Workflow (GAW)
+#+author: Lingyu Ren
 
 * Git Agent Workflow
 Git Agent Workflow (GAW) is a Git-native workflow for maintaining persistent
@@ -73,15 +73,15 @@ used by branch protection.
 Build the default package from a checkout:
 
 #+begin_src sh
-nix build .#default
-./result/bin/git-gaw --help
+  nix build .#default
+  ./result/bin/git-gaw --help
 #+end_src
 
 The executable must be available on =PATH= under the name =git-gaw= for Git to
 discover it as the =git gaw= subcommand:
 
 #+begin_src sh
-git gaw --help
+  git gaw --help
 #+end_src
 
 The flake also exports the package as =packages.x86_64-linux.default= and as
@@ -93,9 +93,9 @@ path when the calling environment provides GHC, Cabal, the declared Haskell
 dependencies, and Git 2.54 or newer:
 
 #+begin_src sh
-cd cabal
-cabal build git-gaw
-cabal run git-gaw -- --help
+  cd cabal
+  cabal build git-gaw
+  cabal run git-gaw -- --help
 #+end_src
 
 ** Upgrading to 0.7.2
@@ -153,7 +153,7 @@ fetched.
 The =refs/gaw/*= namespace contains one canonical local deployment ref:
 
 #+begin_src text
-refs/gaw/HEAD -> refs/heads/<name>
+  refs/gaw/HEAD -> refs/heads/<name>
 #+end_src
 
 Branch identity comes from complete committed-state validation.  The selector
@@ -180,9 +180,9 @@ independent GAW history.  The CLI supports versioned configuration while
 continuing to read the original format as implicit v0:
 
 #+begin_src lisp
-(:workspace
- ((:file "AGENTS.md")
-  (:directory "notes")))
+  (:workspace
+   ((:file "AGENTS.md")
+    (:directory "notes")))
 #+end_src
 
 Adding =:version 0= is equivalent.  V0 has no role information, and directory
@@ -192,12 +192,12 @@ start with =(:version 1 :workspace ())= and no predefined directories.
 V1 optionally groups paths by role:
 
 #+begin_src lisp
-(:version 1
- :workspace
- ((:memory ((:directory "notes") (:file "CONTEXT.md")))
-  (:archive ((:directory "history")))
-  (:skills ((:directory "agents/skills")))
-  (:directory "misc")))
+  (:version 1
+   :workspace
+   ((:memory ((:directory "notes") (:file "CONTEXT.md")))
+    (:archive ((:directory "history")))
+    (:skills ((:directory "agents/skills")))
+    (:directory "misc")))
 #+end_src
 
 Role names match =[a-z][a-z0-9-]*=; =file= and =directory= are reserved for
@@ -287,7 +287,7 @@ restriction on unrelated branches.
 deployment path:
 
 #+begin_src text
-git gaw init --branch <name> [--worktree-path <path>]
+  git gaw init --branch <name> [--worktree-path <path>]
 #+end_src
 
 It first performs read-only checks for existing valid or GAW-like history,
@@ -310,7 +310,7 @@ Workflow <gaw@invalid>=; inherited signing configuration is not used.
 history already present in a local ordinary branch:
 
 #+begin_src text
-git gaw deploy [--branch <name>] [--worktree-path <path>]
+  git gaw deploy [--branch <name>] [--worktree-path <path>]
 #+end_src
 
 With =--branch=, the named =refs/heads/*= branch must already exist and pass
@@ -333,9 +333,9 @@ protection hook.  Repeating deploy against the same valid state is safe.
 GAW-owned branch lifecycle operations are exposed through:
 
 #+begin_src text
-git gaw branch -m <new-name>
-git gaw branch -d <name>
-git gaw branch -D <name>
+  git gaw branch -m <new-name>
+  git gaw branch -d <name>
+  git gaw branch -D <name>
 #+end_src
 
 Rename operates on the valid GAW branch checked out by the current worktree
@@ -369,9 +369,9 @@ Auxiliary GAW preserves independent source evolution while formal GAW remains
 the only authority for project-current memory:
 
 #+begin_src text
-git gaw aux init [--worktree-path <path>]
-git gaw aux deploy --branch <name> [--worktree-path <path>]
-git gaw aux check [--branch <name>]
+  git gaw aux init [--worktree-path <path>]
+  git gaw aux deploy --branch <name> [--worktree-path <path>]
+  git gaw aux check [--branch <name>]
 #+end_src
 
 Init uses secure random UUIDv4 identity and atomic create-if-absent branch
@@ -434,9 +434,9 @@ the protocol paths and declared workspace within its formal or UUID root.  Gitli
 The command syntax is:
 
 #+begin_src text
-git gaw commit [--allow-empty] [--allow-empty-message]
-               (-m <message> | -F <file>)...
-               [--] [project-commit...]
+  git gaw commit [--allow-empty] [--allow-empty-message]
+                 (-m <message> | -F <file>)...
+                 [--] [project-commit...]
 #+end_src
 
 Message options may be repeated and mixed.  =-m= values are encoded as UTF-8;
@@ -470,10 +470,10 @@ installed or validated by =git gaw init= and =git gaw deploy=.  Its canonical
 repository-local configuration is:
 
 #+begin_src sh
-git config --local hook.gaw-reference-transaction.event reference-transaction
-git config --local hook.gaw-reference-transaction.command \
-  'git-gaw --reference-transaction'
-git config --local hook.gaw-reference-transaction.enabled true
+  git config --local hook.gaw-reference-transaction.event reference-transaction
+  git config --local hook.gaw-reference-transaction.command \
+    'git-gaw --reference-transaction'
+  git config --local hook.gaw-reference-transaction.enabled true
 #+end_src
 
 The machine-facing option is intentionally absent from command help.  During
@@ -513,7 +513,7 @@ The command =git gaw show= delegates object display and formatting to =git
 show= while enforcing the canonical GAW history semantics:
 
 #+begin_src text
-git gaw show [git-show-options] [object-or-range...] [-- pathspec...]
+  git gaw show [git-show-options] [object-or-range...] [-- pathspec...]
 #+end_src
 
 History traversal follows only first-parent edges, and a merge commit's patch
@@ -613,7 +613,7 @@ For a new repository, initialize a source branch and optionally materialize a
 linked worktree:
 
 #+begin_src text
-git gaw init --branch agents --worktree-path .agents
+  git gaw init --branch agents --worktree-path .agents
 #+end_src
 
 After cloning history which contains a GAW branch, first ensure the ordinary
@@ -621,7 +621,7 @@ source branch exists locally, then deploy it without any implicit network
 operation:
 
 #+begin_src text
-git gaw deploy --branch agents --worktree-path .agents
+  git gaw deploy --branch agents --worktree-path .agents
 #+end_src
 
 Use =git gaw status= when repository lifecycle state is unknown, and read its
@@ -631,16 +631,16 @@ use =git gaw check= for worktree readiness.  When new durable memory merits a
 checkpoint, the loop is:
 
 #+begin_src text
-git gaw check
-read and edit declared workspace files
-git status
-git diff
-git diff --cached
-git add <explicit-workspace-paths>
-git diff --cached
-git gaw check
-git gaw commit [options] [project-commit...]
-git gaw show
+  git gaw check
+  read and edit declared workspace files
+  git status
+  git diff
+  git diff --cached
+  git add <explicit-workspace-paths>
+  git diff --cached
+  git gaw check
+  git gaw commit [options] [project-commit...]
+  git gaw show
 #+end_src
 
 The complete current index, not just the paths most recently staged, becomes
@@ -758,8 +758,8 @@ package, which runs these suites as part of its check phase.
 Run the native Cabal suites with:
 
 #+begin_src sh
-cd cabal
-cabal test
+  cd cabal
+  cabal test
 #+end_src
 
 The Nix package is defined by =pkgs/git-agent-workflow/package.nix=.
@@ -781,8 +781,8 @@ concerns.
 Run the supported Linux release check with:
 
 #+begin_src sh
-nix flake check -L
-nix build --rebuild -L .#checks.x86_64-linux.git-agent-workflow
+  nix flake check -L
+  nix build --rebuild -L .#checks.x86_64-linux.git-agent-workflow
 #+end_src
 
 The flake's =git-agent-workflow= check points to the package derivation, whose
@@ -797,7 +797,7 @@ kept on the separate =haskell_differential_test= branch at project commit
 CLI and repository-state comparison on Linux, check out that branch and run:
 
 #+begin_src sh
-nix build .#checks.x86_64-linux.haskell-cli-differential
+  nix build .#checks.x86_64-linux.haskell-cli-differential
 #+end_src
 
 * License

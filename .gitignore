@@ -1,15 +1,16 @@
 *
 */
 
-!/README.org
 !/.gitignore
 !/.gitmodules
 !/LICENSE
-!/flake.nix
+!/README.org
 !/flake.lock
-!/pkgs/
-!/pkgs/**/
-!/pkgs/**/*.nix
+!/flake.nix
+
+!/.github/
+!/.github/**/
+!/.github/**/*.yaml
 
 !/cabal/
 !/cabal/**/
@@ -19,10 +20,10 @@
 !/cabal/resources/**/*.txt
 !/cabal/share/**/*.md
 
-!/.github/
-!/.github/**/
-!/.github/**/*.yaml
+!/pkgs/
+!/pkgs/**/
+!/pkgs/**/*.nix
 
-*~
 *#
 **/tmp/
+*~
