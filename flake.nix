@@ -58,9 +58,7 @@
                 flakeCheck = true;
                 settings.excludes = [
                   "*.txt"
-                  ".gitignore"
                   "LICENSE"
-                  "README.org"
                   "flake.lock"
                 ];
               };
