@@ -13,11 +13,29 @@ GAW memory, even if it is otherwise minimal. Do not infer this role from a
 directory name or impose the convention without an explicit role declaration.
 
 This entry-point skill supports knowledge navigation and interpretation; it
-need not provide a separate reusable engineering procedure. Describe where to
-begin reading, the relevant memory organization, useful reading order and
-project-specific conventions. Reference existing memory rather than duplicating
-its contents or maintaining static indexes derived from Git history. No fixed
-skill name or memory file layout is required.
+need not provide a separate reusable engineering procedure. Its description
+should identify the project boundary and substantive tasks such as
+implementation, review, debugging, planning and recovery, so it can be selected
+even when the request does not mention GAW or memory. Keep those triggers
+specific to relevant project work rather than attracting unrelated tasks.
+
+Describe where to begin reading, the relevant memory organization, useful
+reading order and project-specific interpretation conventions. Activation does
+not require loading all memory: select the material relevant to the task.
+Reference existing memory rather than duplicating its contents or maintaining
+static indexes derived from Git history. No fixed skill name or memory file
+layout is required.
+
+Keep the entry point focused on triggers, reading navigation, tool/workflow
+references and necessary stable interpretation conventions. Concrete project
+knowledge, architecture facts, design motivations, historical investigation
+results, case-specific verification results and limits, and current work state
+belong in memory. In the entry point, refer to general GAW workflows rather
+than reproducing them in full. Specialized task skills may retain self-contained
+project-specific procedures when warranted.
+Route specialized work to those skills when helpful. An existing task skill
+may supply the memory entry responsibilities without requiring another skill.
+Judge the content by its responsibility, not a fixed length or skill count.
 
 Prefer updating an existing suitable entry-point skill over creating another.
 When absent, establish a minimal useful entry point within the declared workspace
