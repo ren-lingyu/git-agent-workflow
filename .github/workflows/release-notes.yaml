@@ -1,0 +1,38 @@
+name: Release notes
+
+on:
+  push:
+    branches:
+      - _automation
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-notes-${{ github.repository }}
+  queue: max
+  cancel-in-progress: false
+
+jobs:
+  release-notes:
+    if: startsWith(github.event.head_commit.message, 'release(')
+    runs-on: ubuntu-24.04
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ github.token }}
+
+      - name: Run release automation
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: nix run .#release-notes
