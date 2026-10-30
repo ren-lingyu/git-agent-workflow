@@ -57,7 +57,6 @@
               treefmt = {
                 flakeCheck = true;
                 settings.excludes = [
-                  "*.txt"
                   "LICENSE"
                   "flake.lock"
                 ];
