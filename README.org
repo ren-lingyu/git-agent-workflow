@@ -11,7 +11,7 @@ context as the primary store of working state, GAW keeps selected agent state
 in Git and lets Git provide its history and reachability model.
 
 * Status
-The current source version is =0.7.2=.  The bundled agent-memory skill maintains
+The current source version is =0.7.3=.  The bundled agent-memory skill maintains
 current workspace state as substantive work evolves, recovers relevant
 history across sessions, and creates selective, evidence-backed checkpoints.
 Formal GAW branch identity follows validated branch content rather than local
@@ -22,41 +22,22 @@ without removing history or worktrees.  =git gaw branch= handles
 selected formal branch rename and deletion of valid formal/Auxiliary branches.  The
 =check=, edit, stage, =commit=, and =show= loop remains the daily interface.
 
-Version 0.7.0 adds independent Auxiliary source histories through =aux init=,
-=aux deploy= and =aux check=, committed-state inspection through =check --branch=,
-and Auxiliary deletion through =branch -d/-D=. Status separates formal,
-Auxiliary and ordinary branches; undeploy reports its pre-cleanup inventory
-and shared protection removal. The bundled skill guides cross-session/agent
-source reconstruction, formal knowledge integration and retained-source recovery.
+Auxiliary histories preserve independent source evolution through =aux init=,
+=aux deploy= and =aux check=. Formal memory can integrate selected source
+knowledge while those histories continue developing. Named =check --branch=
+inspects committed state, while ordinary =check= reports worktree readiness.
 
-Version 0.7.1 extends the bundled skill with knowledge establishment for formal
-and Auxiliary GAW and consolidation into formal memory. It supports ongoing
-discovery lines and interleaved integration of intermediate source checkpoints,
-while assessing knowledge integration, evidence archival and source-history
-retention separately. The skill screens material before persistence, narrows
-archives to bounded independent evidence, reassesses each acquisition, and
-prefers English for newly authored GAW content. This release changes skill
-guidance without changing CLI commands, configuration or Git history semantics.
+The bundled skill covers knowledge establishment, ongoing maintenance,
+historical reconstruction and cross-source consolidation. It guides selective
+archival assessment, sensitive-content screening, project memory entry points
+and checkpoint-message conventions. These are agent workflows within host
+authorization; the CLI treats workspace prose as opaque. Versioned v0/v1
+configuration and protocol/workspace change isolation remain supported.
 
-Version 0.7.2 clarifies parent edges as historical dependencies of knowledge
-states while preserving established parent-selection criteria. Auxiliary UUIDs
-provide structural separation rather than knowledge-source identity; recover
-Git relationships from the DAG instead of maintaining parallel static indexes.
-For formal GAW with an explicit =:skills= role, the skill recommends a minimal
-project-level memory entry point, preferring an existing suitable skill.
-
-Archival assessment is conditional: routine source inspection and memory
-maintenance do not trigger it, but an explicit preservation request or a concrete
-independent evidence need can. Reassess newly acquired candidates within an
-active archival evaluation; no per-acquisition archive decision or record is
-required otherwise. Source references do not automatically expand capture scope.
-These skill and documentation changes do not alter CLI commands, configuration
-or the Git protocol. Source, published release and installed skill may differ.
-
-Versioned v0/v1 workspace configuration, protocol-change isolation, and the
-memory, archive and project-skill workflows introduced in 0.6.0 remain available.
-Source version, published release and installed executable are separate states;
-verify =git gaw --version= and =git gaw help aux= in the CLI actually being used.
+See [[file:CHANGELOG.org][the changelog]] for categorized version summaries and historical release
+manuscripts. Source version, published release, installed executable and adopted
+skill may differ; verify =git gaw --version= and =git gaw help aux= in the CLI
+actually being used.
 
 The repository protocol and user-facing interface may still change before a
 stable release.  Remote-side enforcement, automatic fetching, arbitrary
@@ -98,13 +79,18 @@ dependencies, and Git 2.54 or newer:
   cabal run git-gaw -- --help
 #+end_src
 
-** Upgrading to 0.7.2
-Upgrading from 0.7.0 or 0.7.1 requires no workspace migration or history rewriting.
-Refresh the installed bundled skill to use the current parent interpretation,
-memory entry-point and conditional archival guidance, alongside establishment
-and consolidation. Updating the executable alone does not establish that an
-agent environment has adopted the new skill. Existing checkpoints and archive
-snapshots keep their original conventions.
+** Upgrading to 0.7.3
+Upgrading from 0.7.0, 0.7.1 or 0.7.2 requires no workspace migration or history
+rewriting. Refresh the installed bundled skill to adopt checkpoint-message
+defaults and the refined memory-entry trigger and content guidance, alongside
+the existing historical-dependency interpretation, conditional archival
+assessment, establishment and consolidation workflows.
+
+Existing project commit-message conventions take precedence over skill defaults.
+These defaults do not add CLI message validation or change checkpoint eligibility.
+Updating the executable alone does not establish that an agent environment has
+adopted the new skill. Existing checkpoints and archive snapshots keep their
+original conventions.
 
 ** Upgrading from versions before 0.7.0
 Existing formal GAW history and v0/v1 configuration remain supported without
@@ -667,6 +653,29 @@ not start archival assessment. Explicit preservation requests or concrete
 independent evidence needs can trigger it; only selected original evidence is
 captured using the existing archive snapshot workflow.
 
+For formal GAW with an explicit =:skills= workspace role, prefer an existing
+suitable project skill as the memory entry point. Its description should cover
+relevant implementation, review, debugging, planning and recovery work, even
+when a request does not mention GAW or memory. Activation selects the knowledge
+needed for the task rather than loading all memory.
+
+Keep entry content focused on triggers, reading navigation, workflow references
+and stable interpretation conventions. Concrete project facts, architecture,
+motivations, investigation results, verification limits and progress belong in
+memory. Specialized task skills may keep complete procedures and serve as the
+entry point without an additional fixed-name skill. An Auxiliary's inherited
+=:skills= role does not independently require another entry point.
+
+Checkpoint messages follow established project conventions. Otherwise, choose
+Conventional Commit types from the checkpoint's purpose and default scopes from
+declared workspace roles. Recording knowledge usually uses =chore=; material
+corrections use =fix=, meaning-preserving reorganization uses =refactor=, and a
+capability with reusable value may use =feat=. A role or an associated project's
+commit type does not determine the checkpoint type. Across roles, use the main
+maintenance purpose; roleless entries use established project classifications.
+Message conventions do not change when a checkpoint is useful, and an
+unchanged-tree historical association needs no artificial workspace edit.
+
 When substantive work predates usable GAW memory history, the skill treats the
 session as evidence for current memory and any distinct, recoverable durable
 states.  Before choosing checkpoints it establishes the full session horizon,
@@ -748,6 +757,19 @@ process, filesystem, and clock adapters live in =Gaw.System.*=.  The system
 boundary uses small capability records and raw-byte Git I/O with POSIX path
 representations.
 
+** Repository Layout
+- =cabal/=: executable, library, native tests, embedded help and bundled skill.
+- =pkgs/=: Nix package definitions and overlay composition, rooted at
+  =pkgs/default.nix=.
+- =flake.nix= and =flake.lock=: flake inputs, package/check outputs, formatting
+  configuration and locked dependency state.
+- =CHANGELOG.org=: categorized release summaries and version preparation state.
+- =CHANGELOGS/=: complete per-version release manuscripts.
+
+The repository uses a root-anchored ignore whitelist. New source or document
+files must match its allowed paths and extensions before Git can track them.
+
+** Building and Checking
 The two Cabal test suites cover different boundaries: =protocol-tests= checks
 config, refs, workspace, hook, and other pure protocol decisions, while
 =git-adapter-tests= exercises real Git and injected Git failures around
@@ -777,6 +799,16 @@ from nixpkgs' =installAgentSkills= hook, then runs that hook against Cabal's
 installed data output.  A Cabal package that declares no installed skill fails
 the Nix package build; concrete skill names and member paths remain Cabal
 concerns.
+
+The flake uses the locked =personal-nixpkgs= library for flake construction and
+overlay composition. =pkgs/default.nix= discovers package overlays, and the
+package receives a source fileset rooted at =cabal/=. Repository-level release
+documentation is outside that package input; bundled skill resources remain
+inside it.
+
+Treefmt is enabled as a flake check alongside the package check. The local
+exclusion list contains =LICENSE= and =flake.lock=; README, the ignore file and
+=.txt= resources are not excluded by the repository's treefmt configuration.
 
 Run the supported Linux release check with:
 

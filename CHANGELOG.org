@@ -12,6 +12,28 @@ records use the tagged commit's committer time in UTC, to minute precision;
 they are not platform publication timestamps. Version numbers retain the
 project's historical release choices.
 
+* NEXT v0.7.3
+:PROPERTIES:
+:CUSTOM_ID: v0.7.3
+:END:
+** Changed
+- Refine project memory-entry skill guidance so descriptions cover relevant
+  implementation, review, debugging, planning and recovery tasks, including
+  requests that do not explicitly mention GAW or memory.
+- Keep memory entry points focused on navigation, workflow references and
+  interpretation conventions. Project facts and current progress belong in
+  memory; specialized task skills may retain their own complete procedures.
+
+** Added
+- Checkpoint-message guidance that follows existing project conventions, with
+  purpose-based Conventional Commit types and workspace-role scope defaults
+  when no convention exists. Meaningful unchanged-tree associations do not
+  require artificial file changes.
+- Org changelog summaries and complete historical release manuscripts for
+  v0.1.0 through v0.7.2.
+- A treefmt flake check alongside the package check, adding formatting
+  validation to the contributor check workflow.
+
 * DONE v0.7.2
 CLOSED: [2026-10-20 Tue 13:30]
 :PROPERTIES:
