@@ -12,6 +12,23 @@ records use the tagged commit's committer time in UTC, to minute precision;
 they are not platform publication timestamps. Version numbers retain the
 project's historical release choices.
 
+* TODO *unreleased*
+** Changed
+- *Breaking:* Require new nonempty =git gaw commit= messages to use
+  printable ASCII titles in =type(scope): subject= form, with a required
+  scope, exactly one space after the colon and no subject edge spaces. Update
+  agent title generation and refresh the bundled skill; message bodies may
+  still use other languages. Truly empty messages retain the explicit
+  =--allow-empty-message= exception; existing history and parent-association
+  rules remain unchanged. Type and scope meanings are not validated.
+- Use =chore(init): initialize GAW history= for new Formal and Auxiliary roots
+  without rewriting existing root commits or changing initialization configs.
+
+** Fixed
+- Preserve messages read through =git gaw commit -F -= when the Git adapter's
+  pipes reuse the consumed stdin descriptor, instead of creating an empty
+  commit message.
+
 * DONE v0.7.3
 CLOSED: [2026-10-30 Fri 11:40]
 :PROPERTIES:

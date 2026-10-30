@@ -22,7 +22,7 @@ initialConfig :: BS.ByteString
 initialConfig = "(:version 1 :workspace ())\n"
 
 initialMessage :: BS.ByteString
-initialMessage = "Initialize GAW"
+initialMessage = "chore(init): initialize GAW history"
 
 initialTreeEntry :: BS.ByteString -> ObjectId -> BS.ByteString -> BS.ByteString
 initialTreeEntry mode oid name =

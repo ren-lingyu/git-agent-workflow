@@ -6,6 +6,15 @@ Create a commit on a valid GAW branch from the complete current index.
 Unstaged and untracked files are not included.  The command must run at the
 GAW worktree root.
 
+Nonempty messages require a printable ASCII title: type(scope): subject
+Type and scope are nonempty tokens without spaces, parentheses or colons;
+custom values and scopes such as skills/example are allowed. Use exactly one
+space after the colon and a nonempty subject without leading or trailing spaces.
+The title ends at EOF, LF or CRLF. The body is not format-checked or rewritten.
+Review "Checkpoint messages" in the git-agent-workflow skill for semantics.
+--allow-empty-message permits only a zero-byte message to skip this check.
+Existing history is not revalidated against these title rules.
+
 Options:
    -m, --message <message>    append a UTF-8 commit message fragment
    -F, --file <file>          append exact message bytes; '-' reads stdin

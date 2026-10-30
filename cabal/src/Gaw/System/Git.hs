@@ -68,9 +68,11 @@ invoke executable invocation = do
         void (dupTo stdinRead stdInput)
         void (dupTo stdoutWrite stdOutput)
         void (dupTo stderrWrite stdError)
-        closeFd stdinRead
-        closeFd stdoutWrite
-        closeFd stderrWrite
+        -- Reading -F - may close stdin, letting a pipe reuse a standard fd.
+        -- After dupTo, those fds are the child's live standard streams.
+        mapM_
+            closeFd
+            (filter (`notElem` [stdInput, stdOutput, stdError]) [stdinRead, stdoutWrite, stderrWrite])
         Process.executeFile executable True actualArgs (Just posixEnvironment)
             `catch` childFailure
     closeFd stdinRead

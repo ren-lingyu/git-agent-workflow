@@ -47,6 +47,7 @@ configCliTests temporary git = do
     finally
         ( do
             helpTopics candidate root
+            commitMessages candidate root
             deploymentLifecycle candidate root
             auxiliaryLifecycle candidate root
             layoutChecks candidate root
@@ -69,7 +70,8 @@ configCliTests temporary git = do
         )
         (removePathForcibly root)
   where
-    invoke directory executable args = do
+    invoke directory executable args = invokeWithInput directory executable args ""
+    invokeWithInput directory executable args input = do
         paths <- mapM makeAbsolute =<< getSearchPath
         environment <- getEnvironment
         let absoluteEnvironment =
@@ -81,7 +83,7 @@ configCliTests temporary git = do
                 , env = Just absoluteEnvironment
                 }
             )
-            ""
+            input
     success directory executable args = do
         (code, out, err) <- invoke directory executable args
         unless (code == ExitSuccess) $ fail (show args ++ " failed: " ++ out ++ err)
@@ -209,8 +211,8 @@ configCliTests temporary git = do
         require (not (isInfixOf "protection has been disabled" again)) "absent hook was reported removed"
         _ <- cliFail candidate directory ["aux", "init"]
         _ <- cliFail candidate directory ["aux", "deploy", "--branch", branch]
-        _ <- cliOk candidate aux ["commit", "--allow-empty", "-m", "undeployed Auxiliary commit"]
-        _ <- cliOk candidate agent ["commit", "--allow-empty", "-m", "undeployed formal commit"]
+        _ <- cliOk candidate aux ["commit", "--allow-empty", "-m", "chore(test): undeployed Auxiliary commit"]
+        _ <- cliOk candidate agent ["commit", "--allow-empty", "-m", "chore(test): undeployed formal commit"]
         _ <- cliOk candidate directory ["deploy", "--branch", "agents"]
         _ <- cliOk candidate directory ["aux", "deploy", "--branch", branch]
         _ <- failure directory git ["update-ref", "refs/heads/" ++ branch, "main"]
@@ -293,7 +295,7 @@ configCliTests temporary git = do
         let formal = root </> "deployment-formal"
             otherUuid = "22222222-2222-4222-8222-222222222222"
         config formal ("(:version 1 :workspace ((:directory \"" ++ BSC.unpack freshUuid ++ "/nested\")))\n")
-        _ <- cliOk candidate formal ["commit", "-m", "UUID path reserved by formal workspace"]
+        _ <- cliOk candidate formal ["commit", "-m", "chore(test): UUID path reserved by formal workspace"]
         pathChoices <- newIORef [freshUuid, otherUuid]
         let pathEntropy = do
                 values <- readIORef pathChoices
@@ -306,7 +308,7 @@ configCliTests temporary git = do
             "UUID colliding with formal workspace was not regenerated"
         _ <- cliOk candidate directory ["branch", "-D", "_gaw_aux_" ++ BSC.unpack otherUuid]
         config formal "(:version 1 :workspace ())\n"
-        _ <- cliOk candidate formal ["commit", "-m", "restore source config"]
+        _ <- cliOk candidate formal ["commit", "-m", "chore(test): restore source config"]
         -- A ref rollback failure is distinct from complete compensation.
         let failedRollback = Git $ \request ->
                 if failValidation request || maybe False (BSC.isInfixOf ("delete " <> source)) (gitInput request)
@@ -399,7 +401,7 @@ configCliTests temporary git = do
         require (null before) "failed init left a branch"
         _ <- cliOk candidate directory ["init", "--branch", "agents", "--worktree-path", agent]
         config agent sourceConfig
-        _ <- cliOk candidate agent ["commit", "-m", "source config"]
+        _ <- cliOk candidate agent ["commit", "-m", "chore(test): source config"]
         config agent "(:version 1 :workspace ())\n"
         -- Uncommitted config in the formal index must not be inherited.
         _ <- cliOk candidate directory ["aux", "init", "--worktree-path", aux]
@@ -422,20 +424,20 @@ configCliTests temporary git = do
         createDirectory (logical </> "memory")
         writeFile (logical </> "memory/current.md") "source evidence\n"
         _ <- gitOk aux ["add", "--", uuid ++ "/memory/current.md"]
-        _ <- cliOk candidate aux ["commit", "-m", "source checkpoint", "--", "agents"]
+        _ <- cliOk candidate aux ["commit", "-m", "chore(test): source checkpoint", "--", "agents"]
         writeFile (logical </> ".gaw/meta") "protocol\n"
         writeFile (logical </> "memory/current.md") "changed source\n"
         _ <- gitOk aux ["add", "--", uuid ++ "/.gaw/meta", uuid ++ "/memory/current.md"]
-        mixed <- cliFail candidate aux ["commit", "-m", "mixed"]
+        mixed <- cliFail candidate aux ["commit", "-m", "chore(test): mixed"]
         require (isInfixOf "MIXED-PROTOCOL-CHANGES" mixed) "Auxiliary lost the logical protocol boundary"
         _ <- gitOk aux ["restore", "--staged", "--", uuid ++ "/.gaw/meta"]
-        _ <- cliOk candidate aux ["commit", "-m", "workspace checkpoint"]
-        _ <- cliFail candidate logical ["commit", "--allow-empty", "-m", "wrong root"]
+        _ <- cliOk candidate aux ["commit", "-m", "chore(test): workspace checkpoint"]
+        _ <- cliFail candidate logical ["commit", "--allow-empty", "-m", "chore(test): wrong root"]
         _ <- failure aux git ["update-ref", "refs/heads/" ++ branch, "main"]
         writeFile (aux </> "foreign") "outside UUID\n"
         _ <- gitOk aux ["add", "--", "foreign"]
         _ <- cliFail candidate aux ["check"]
-        _ <- cliFail candidate aux ["commit", "-m", "foreign root"]
+        _ <- cliFail candidate aux ["commit", "-m", "chore(test): foreign root"]
         _ <- gitOk aux ["restore", "--staged", "--", "foreign"]
         _ <- cliOk candidate directory ["check", "--branch", branch]
         _ <- cliFail candidate directory ["aux", "check"]
@@ -452,7 +454,7 @@ configCliTests temporary git = do
         createDirectory (agent </> "memory")
         writeFile (agent </> "memory/current.md") ("Adopted intermediate source: " ++ uuid ++ "/memory/current.md\n")
         _ <- gitOk agent ["add", "--", "memory/current.md"]
-        _ <- cliOk candidate agent ["commit", "-m", "integrate intermediate", "--", branch ++ "~1"]
+        _ <- cliOk candidate agent ["commit", "-m", "chore(test): integrate intermediate", "--", branch ++ "~1"]
         removeFile (logical </> ".gaw/meta")
         removeFile (aux </> "foreign")
         _ <- gitOk directory ["worktree", "remove", aux]
@@ -465,7 +467,7 @@ configCliTests temporary git = do
         _ <- gitOk directory ["checkout", "main"]
         writeFile (agent </> "memory/current.md") ("Adopted current source: " ++ uuid ++ "/memory/current.md\n")
         _ <- gitOk agent ["add", "--", "memory/current.md"]
-        _ <- cliOk candidate agent ["commit", "-m", "integrate tip", "--", branch]
+        _ <- cliOk candidate agent ["commit", "-m", "chore(test): integrate tip", "--", branch]
         -- Inject ref and worktree changes after report collection.
         deletionRaces directory branch
         ready <- cliOk candidate directory ["aux", "check", "--branch", branch]
@@ -541,6 +543,100 @@ configCliTests temporary git = do
         _ <- failure directory git ["branch", "-m", branch, "renamed-aux"]
         _ <- gitOk directory ["branch", "ordinary", "main"]
         pure ()
+    commitMessages candidate root = do
+        directory <- seed root "messages"
+        let agent = root </> "messages-formal"
+            aux = root </> "messages-aux"
+            messageFile = root </> "message.txt"
+            initialTitle = "chore(init): initialize GAW history\n"
+            workspaceConfig = "(:version 1 :workspace ((:memory ((:directory \"memory\")))))\n"
+            assertRoot location = do
+                title <- gitOk location ["show", "-s", "--format=%s", "HEAD"]
+                parents <- gitOk location ["show", "-s", "--format=%P", "HEAD"]
+                require (title == initialTitle && parents == "\n") "initial root message or parents changed"
+                _ <- cliOk candidate location ["check"]
+                pure ()
+            checkMessage location expected = do
+                object <- gitOk location ["cat-file", "commit", "HEAD"]
+                let body bytes = case break (== '\n') bytes of
+                        (_, '\n' : '\n' : rest) -> rest
+                        (_, '\n' : rest) -> body rest
+                        _ -> error "commit lacks header separator"
+                require
+                    (body object == expected)
+                    ("commit message bytes changed: expected " ++ show expected ++ ", got " ++ show (body object))
+        _ <- cliOk candidate directory ["init", "--branch", "agents", "--worktree-path", agent]
+        assertRoot agent
+        initial <- readFile (agent </> ".gaw/config")
+        require (initial == "(:version 1 :workspace ())\n") "Formal initial config changed"
+        config agent workspaceConfig
+        _ <- cliOk candidate agent ["commit", "-m", "chore(memory): declare workspace"]
+        _ <- cliOk candidate directory ["aux", "init", "--worktree-path", aux]
+        assertRoot aux
+        branch <- takeWhile (/= '\n') <$> gitOk aux ["branch", "--show-current"]
+        copied <- readFile (aux </> drop 9 branch </> ".gaw/config")
+        require (copied == workspaceConfig) "Auxiliary root did not copy Formal config"
+        forM_ [agent, aux] $ \location -> do
+            before <- gitOk location ["rev-parse", "HEAD"]
+            forM_ [False, True] $ \allow ->
+                forM_
+                    [ "free form"
+                    , "(scope): subject"
+                    , "type(): subject"
+                    , "type(scope):"
+                    , "type(scope):subject"
+                    , "type(scope):  subject"
+                    , "type(scope): subject "
+                    , "type(scope): \t"
+                    , "type((scope)): subject"
+                    , "type(scope): sub\rject"
+                    , "type(scope): 中文标题"
+                    , "\n"
+                    , " "
+                    ]
+                    $ \message -> do
+                        diagnostic <- cliFail candidate location (["commit", "--allow-empty", "-m", message] ++ ["--allow-empty-message" | allow])
+                        require
+                            (all (`isInfixOf` diagnostic) [":INVALID-COMMIT-MESSAGE", "type(scope): subject", "Checkpoint messages", "git-agent-workflow skill"])
+                            "invalid message lacks format or skill diagnostic"
+            after <- gitOk location ["rev-parse", "HEAD"]
+            require (before == after) "invalid message moved HEAD/ref"
+        emptyError <- cliFail candidate agent ["commit", "--allow-empty", "-m", ""]
+        require (isInfixOf ":EMPTY-MESSAGE" emptyError) "empty message classification changed"
+        _ <- cliOk candidate agent ["commit", "--allow-empty", "--allow-empty-message", "-m", ""]
+        checkMessage agent ""
+        writeFile messageFile ""
+        _ <- cliOk candidate agent ["commit", "--allow-empty", "--allow-empty-message", "-F", messageFile]
+        checkMessage agent ""
+        _ <- cliOk candidate agent ["commit", "--allow-empty", "-m", "custom-type(skills/example): record state", "-m", "Body\n\nTrailer: value"]
+        checkMessage agent "custom-type(skills/example): record state\n\nBody\n\nTrailer: value\n"
+        -- Empty fragments retain existing assembly behavior; only the result is checked.
+        _ <- cliOk candidate agent ["commit", "--allow-empty", "-m", "", "-m", "custom(area): assembled title"]
+        checkMessage agent "custom(area): assembled title\n"
+        forM_ ["custom(area): EOF", "custom(area): LF\n", "custom(area): CRLF\r\n\r\nBody\nTrailer: value\n", "custom(area): body\n\n中文正文\n"] $ \message -> do
+            writeFile messageFile message
+            _ <- cliOk candidate agent ["commit", "--allow-empty", "-F", messageFile]
+            checkMessage agent message
+        let stdinMessage = "custom(area): stdin\n\nBody\n"
+        (code, out, err) <- invokeWithInput agent candidate ["commit", "--allow-empty", "-F", "-"] stdinMessage
+        require (code == ExitSuccess) ("stdin message failed: " ++ out ++ err)
+        checkMessage agent stdinMessage
+        beforeFileError <- gitOk agent ["rev-parse", "HEAD"]
+        forM_ ["bad\n\ncustom(area): later title", "custom(area): bare CR\r"] $ \message -> do
+            writeFile messageFile message
+            diagnostic <- cliFail candidate agent ["commit", "--allow-empty", "--allow-empty-message", "-F", messageFile]
+            require (isInfixOf ":INVALID-COMMIT-MESSAGE" diagnostic) "invalid file message lacks classification"
+        _ <- cliFail candidate agent ["commit", "--allow-empty", "-m", "bad", "-m", "custom(area): later title"]
+        afterFileError <- gitOk agent ["rev-parse", "HEAD"]
+        require (beforeFileError == afterFileError) "invalid assembled/file message moved HEAD"
+        -- A real association remains meaningful without any workspace tree change.
+        previousTree <- gitOk agent ["rev-parse", "HEAD^{tree}"]
+        _ <- cliOk candidate agent ["commit", "-m", "chore(memory): associate project", "--", "main"]
+        associatedTree <- gitOk agent ["rev-parse", "HEAD^{tree}"]
+        project <- gitOk agent ["rev-parse", "HEAD^2"]
+        mainTip <- gitOk directory ["rev-parse", "main"]
+        require (previousTree == associatedTree && project == mainTip) "unchanged-tree association changed"
+        pure ()
     newConfig candidate root = do
         directory <- seed root "new"
         let agent = root </> "agent"
@@ -554,7 +650,7 @@ configCliTests temporary git = do
                 && not (isInfixOf "[warning] head-config:" staged)
             )
             "HEAD/index warnings were conflated"
-        committed <- cliOk candidate agent ["commit", "-m", "v1 roles", "--", "main"]
+        committed <- cliOk candidate agent ["commit", "-m", "chore(test): v1 roles", "--", "main"]
         require (not (isInfixOf "Ignoring" committed)) "commit printed a config warning"
         checked <- cliOk candidate agent ["check"]
         require
@@ -577,20 +673,20 @@ configCliTests temporary git = do
         writeFile (directory </> "notes/conflict") "collision\n"
         _ <- gitOk directory ["add", "--", "notes/conflict"]
         nativeCommit directory "conflicting project"
-        conflict <- cliFail candidate agent ["commit", "-m", "collision", "--", "main"]
+        conflict <- cliFail candidate agent ["commit", "-m", "chore(test): collision", "--", "main"]
         require (isInfixOf "PATH-CONFLICT" conflict) "role path collision was accepted"
         unchanged <- gitOk agent ["rev-parse", "HEAD"]
         require (unchanged == before) "failed parent validation changed HEAD"
         writeFile (agent </> "notes") "must be a directory\n"
         _ <- gitOk agent ["add", "--", "notes"]
         _ <- cliFail candidate agent ["check"]
-        _ <- cliFail candidate agent ["commit", "-m", "wrong kind"]
+        _ <- cliFail candidate agent ["commit", "-m", "chore(test): wrong kind"]
         _ <- gitOk agent ["restore", "--staged", "--", "notes"]
         removeFile (agent </> "notes")
         config agent "(:version 2 :workspace :future-shape)\n"
         unsupported <- cliFail candidate agent ["check"]
         require (isInfixOf "Unsupported config version 2" unsupported) "check hid unsupported version"
-        unsupportedCommit <- cliFail candidate agent ["commit", "-m", "future"]
+        unsupportedCommit <- cliFail candidate agent ["commit", "-m", "chore(test): future"]
         require (isInfixOf "Unsupported config version 2" unsupportedCommit) "commit hid unsupported version"
         still <- gitOk agent ["rev-parse", "HEAD"]
         require (still == before) "rejected candidates changed HEAD"
@@ -640,7 +736,7 @@ configCliTests temporary git = do
             rawPath = BSC.pack "memory/" <> BSC.singleton '\255'
             rejectMixed label = do
                 before <- gitOk agent ["rev-parse", "HEAD"]
-                errorText <- cliFail candidate agent ["commit", "-m", label]
+                errorText <- cliFail candidate agent ["commit", "-m", "chore(test): " ++ label]
                 require
                     (isInfixOf ":MIXED-PROTOCOL-CHANGES" errorText)
                     ("missing mixed-change error for " ++ label)
@@ -648,61 +744,61 @@ configCliTests temporary git = do
                 require (before == after) ("mixed change moved HEAD for " ++ label)
         _ <- cliOk candidate directory ["init", "--branch", "agents", "--worktree-path", agent]
         config agent "(:version 1 :workspace ((:memory ((:directory \"memory\")))))\n"
-        _ <- cliOk candidate agent ["commit", "-m", "config only"]
+        _ <- cliOk candidate agent ["commit", "-m", "chore(test): config only"]
         createDirectory (agent </> "memory")
         writeFile metadata "metadata\n"
         writeFile note "memory\n"
         _ <- gitOk agent ["add", "--", ".gaw/meta", "memory/old"]
         rejectMixed "mixed additions"
         _ <- gitOk agent ["restore", "--staged", "--", "memory/old"]
-        _ <- cliOk candidate agent ["commit", "-m", "protocol addition"]
+        _ <- cliOk candidate agent ["commit", "-m", "chore(test): protocol addition"]
         _ <- gitOk agent ["add", "--", "memory/old"]
-        _ <- cliOk candidate agent ["commit", "-m", "workspace addition"]
+        _ <- cliOk candidate agent ["commit", "-m", "chore(test): workspace addition"]
         -- Existing files on both sides do not count as changed paths.
         writeFile metadata "changed metadata\n"
         writeFile note "changed memory\n"
         _ <- gitOk agent ["add", "--", ".gaw/meta", "memory/old"]
         rejectMixed "mixed content"
         _ <- gitOk agent ["restore", "--staged", "--", ".gaw/meta"]
-        _ <- cliOk candidate agent ["commit", "-m", "workspace content only"]
+        _ <- cliOk candidate agent ["commit", "-m", "chore(test): workspace content only"]
         _ <- gitOk agent ["add", "--", ".gaw/meta"]
-        _ <- cliOk candidate agent ["commit", "-m", "protocol content only"]
+        _ <- cliOk candidate agent ["commit", "-m", "chore(test): protocol content only"]
         -- Only mode bits change here; filesystem chmod is unnecessary.
         _ <- gitOk agent ["update-index", "--chmod=+x", "--", ".gaw/meta", "memory/old"]
         rejectMixed "mixed modes"
         _ <- gitOk agent ["restore", "--staged", "--", "memory/old"]
-        _ <- cliOk candidate agent ["commit", "-m", "protocol mode only"]
+        _ <- cliOk candidate agent ["commit", "-m", "chore(test): protocol mode only"]
         _ <- gitOk agent ["update-index", "--chmod=+x", "--", "memory/old"]
-        _ <- cliOk candidate agent ["commit", "-m", "workspace mode only"]
+        _ <- cliOk candidate agent ["commit", "-m", "chore(test): workspace mode only"]
         removeFile metadata
         removeFile note
         _ <- gitOk agent ["add", "-u", "--", ".gaw/meta", "memory/old"]
         rejectMixed "mixed deletions"
         _ <- gitOk agent ["restore", "--staged", "--", "memory/old"]
-        _ <- cliOk candidate agent ["commit", "-m", "protocol deletion"]
+        _ <- cliOk candidate agent ["commit", "-m", "chore(test): protocol deletion"]
         _ <- gitOk agent ["add", "-u", "--", "memory/old"]
-        _ <- cliOk candidate agent ["commit", "-m", "workspace deletion"]
+        _ <- cliOk candidate agent ["commit", "-m", "chore(test): workspace deletion"]
         -- Explicitly enable renames to test the query's override.
         _ <- gitOk agent ["config", "diff.renames", "true"]
         writeFile (agent </> ".gaw/source") "move me\n"
         _ <- gitOk agent ["add", "--", ".gaw/source"]
-        _ <- cliOk candidate agent ["commit", "-m", "protocol source"]
+        _ <- cliOk candidate agent ["commit", "-m", "chore(test): protocol source"]
         _ <- gitOk agent ["mv", "--", ".gaw/source", "memory/moved"]
         rejectMixed "cross-boundary move"
         _ <- gitOk agent ["restore", "--staged", "--", "memory/moved"]
-        _ <- cliOk candidate agent ["commit", "-m", "remove protocol source"]
+        _ <- cliOk candidate agent ["commit", "-m", "chore(test): remove protocol source"]
         _ <- gitOk agent ["add", "--", "memory/moved"]
-        _ <- cliOk candidate agent ["commit", "-m", "add workspace destination"]
+        _ <- cliOk candidate agent ["commit", "-m", "chore(test): add workspace destination"]
         _ <- gitOk agent ["mv", "--", "memory/moved", "memory/renamed"]
-        _ <- cliOk candidate agent ["commit", "-m", "workspace rename"]
+        _ <- cliOk candidate agent ["commit", "-m", "chore(test): workspace rename"]
         _ <- gitOk agent ["mv", "--", "memory/renamed", ".gaw/destination"]
         rejectMixed "reverse cross-boundary move"
         _ <- gitOk agent ["restore", "--staged", "--", ".gaw/destination"]
-        _ <- cliOk candidate agent ["commit", "-m", "remove workspace source"]
+        _ <- cliOk candidate agent ["commit", "-m", "chore(test): remove workspace source"]
         _ <- gitOk agent ["add", "--", ".gaw/destination"]
-        _ <- cliOk candidate agent ["commit", "-m", "add protocol destination"]
+        _ <- cliOk candidate agent ["commit", "-m", "chore(test): add protocol destination"]
         _ <- gitOk agent ["mv", "--", ".gaw/destination", ".gaw/renamed"]
-        _ <- cliOk candidate agent ["commit", "-m", "protocol rename"]
+        _ <- cliOk candidate agent ["commit", "-m", "chore(test): protocol rename"]
         writeFile (agent </> "memory/line\nbreak") "newline path\n"
         writeFile (agent </> ".gaw/unusual") "metadata\n"
         _ <- gitOk agent ["add", "--", ".gaw/unusual", "memory/line\nbreak"]
@@ -711,22 +807,22 @@ configCliTests temporary git = do
         stageRawPath agent rawPath
         rejectMixed "non-UTF8 path"
         removeRawPath agent rawPath
-        _ <- cliOk candidate agent ["commit", "-m", "protocol with raw paths unstaged"]
+        _ <- cliOk candidate agent ["commit", "-m", "chore(test): protocol with raw paths unstaged"]
         _ <- gitOk agent ["add", "--", "memory/line\nbreak"]
         stageRawPath agent rawPath
-        _ <- cliOk candidate agent ["commit", "-m", "unusual workspace paths"]
+        _ <- cliOk candidate agent ["commit", "-m", "chore(test): unusual workspace paths"]
         previous <- gitOk agent ["rev-parse", "HEAD"]
         tree <- gitOk agent ["rev-parse", "HEAD^{tree}"]
         project <- gitOk directory ["rev-parse", "main"]
-        _ <- cliOk candidate agent ["commit", "-m", "unchanged tree association", "--", "main"]
+        _ <- cliOk candidate agent ["commit", "-m", "chore(test): unchanged tree association", "--", "main"]
         sameTree <- gitOk agent ["rev-parse", "HEAD^{tree}"]
         first <- gitOk agent ["rev-parse", "HEAD^1"]
         second <- gitOk agent ["rev-parse", "HEAD^2"]
         require
             (tree == sameTree && first == previous && second == project)
             "unchanged-tree project association regressed"
-        _ <- cliOk candidate agent ["commit", "--allow-empty", "-m", "intentional empty"]
-        noChange <- cliFail candidate agent ["commit", "-m", "empty without flag"]
+        _ <- cliOk candidate agent ["commit", "--allow-empty", "-m", "chore(test): intentional empty"]
+        noChange <- cliFail candidate agent ["commit", "-m", "chore(test): empty without flag"]
         require (isInfixOf ":EMPTY-COMMIT" noChange) "empty-commit behavior changed"
         _ <- cliOk candidate agent ["check"]
         pure ()
@@ -737,10 +833,12 @@ configCliTests temporary git = do
         config directory legacy
         _ <- gitOk directory ["rm", "--", "project.txt"]
         nativeCommit directory "implicit v0"
+        _ <- cliOk candidate directory ["check"]
+        _ <- cliOk candidate directory ["show"]
         previous <- gitOk directory ["rev-parse", "HEAD"]
         _ <- cliOk candidate directory ["deploy", "--branch", "agents"]
         config directory "(:version 1 :workspace ((:memory ((:directory \"memory\")))))\n"
-        _ <- cliOk candidate directory ["commit", "-m", "adopt v1"]
+        _ <- cliOk candidate directory ["commit", "-m", "chore(test): adopt v1"]
         _ <- cliOk candidate directory ["check"]
         preserved <- gitOk directory ["show", takeWhile (/= '\n') previous ++ ":.gaw/config"]
         parent <- gitOk directory ["rev-parse", "HEAD^1"]

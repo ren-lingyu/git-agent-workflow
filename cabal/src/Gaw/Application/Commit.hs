@@ -31,8 +31,7 @@ createCommit ::
     CommitRequest ->
     m (Either CommitError ObjectId)
 createCommit git fs clock directory request = runExceptT $ do
-    when (BS.null (requestMessage request) && not (requestAllowEmptyMessage request)) $
-        throwE (CommitError EmptyMessage "The commit message is empty")
+    either throwE pure (validateCommitMessage (requestMessage request) (requestAllowEmptyMessage request))
     _ <-
         gitOutput
             ["rev-parse", "--show-toplevel"]

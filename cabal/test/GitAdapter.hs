@@ -33,6 +33,28 @@ import qualified System.Posix.Temp.ByteString as Temp
 
 main :: IO ()
 main = do
+    forM_ [False, True] $ \allowEmptyMessage ->
+        forM_ ["", "bad", "chore(): subject", "chore(memory):  subject", "chore(memory): subject\r", "chore(memory): " <> BS.pack [255]] $ \message ->
+            if BS.null message && allowEmptyMessage
+                then pure ()
+                else do
+                    calls <- newIORef []
+                    let unexpectedGit = Git $ \invocation -> do
+                            modifyIORef' calls (invocation :)
+                            pure (GitResult 99 "" "message validation must precede Git")
+                    directory <- OS.fromBytes "."
+                    result <-
+                        createCommit
+                            unexpectedGit
+                            (FileSystem (\_ -> fail "message validation must precede filesystem access") OS.fromBytes)
+                            (Clock (fail "message validation must precede clock access"))
+                            directory
+                            (CommitRequest message [] True allowEmptyMessage)
+                    require $ case result of
+                        Left (CommitError reason _) -> reason == if BS.null message then EmptyMessage else InvalidCommitMessage
+                        _ -> False
+                    observed <- readIORef calls
+                    require (null observed)
     tempRoot <- fromMaybe "/tmp" <$> Env.getEnv "TMPDIR"
     temp <- Temp.mkdtemp (tempRoot <> "/gaw-git-adapter-")
     let rawDirectory = temp <> "/" <> BS.pack [255]
@@ -246,7 +268,7 @@ main = do
                                                         else GitResult 0 "" ""
                                                     )
                                     _ -> runGit scripted request
-                            commitRequest = CommitRequest "checkpoint\n" [] True False
+                            commitRequest = CommitRequest "chore(test): checkpoint\n" [] True False
                         committed <-
                             createCommit
                                 commitGit
@@ -287,7 +309,7 @@ main = do
                             ([createdInvocation], [_]) -> do
                                 let bindings = gitEnvironment createdInvocation
                                 require
-                                    ( gitInput createdInvocation == Just "checkpoint\n"
+                                    ( gitInput createdInvocation == Just "chore(test): checkpoint\n"
                                         && lookup "GIT_AUTHOR_DATE" bindings == Just "@1700000000 +0000"
                                         && lookup "GIT_COMMITTER_DATE" bindings == Just "@1700000000 +0000"
                                     )
@@ -343,7 +365,7 @@ main = do
                                     (FileSystem (\_ -> pure False) OS.fromBytes)
                                     (Clock (pure 1700000000))
                                     directory
-                                    (CommitRequest "boundary\n" [] False False)
+                                    (CommitRequest "chore(test): boundary\n" [] False False)
                             require $ case result of
                                 Left (CommitError reason _) -> reason == expectedReason
                                 _ -> False

@@ -79,6 +79,19 @@ dependencies, and Git 2.54 or newer:
   cabal run git-gaw -- --help
 #+end_src
 
+** Development changes after 0.7.3
+The following title requirements are unreleased changes in this checkout.
+New nonempty =git gaw commit= messages must use
+printable ASCII titles in =type(scope): subject= form, with a required scope
+and strict spacing. Update agent title generation and refresh the bundled skill
+when adopting this executable. Project conventions may refine message semantics
+within the required syntax; the CLI does not judge type or scope meanings.
+
+Message bodies may use other languages. The explicit =--allow-empty-message=
+exception remains limited to zero-byte messages. Existing checkpoints remain
+valid without rewriting history, and configuration and parent-selection rules
+are unchanged. See Creating Commits below for the exact title rules.
+
 ** Upgrading to 0.7.3
 Upgrading from 0.7.0, 0.7.1 or 0.7.2 requires no workspace migration or history
 rewriting. Refresh the installed bundled skill to adopt checkpoint-message
@@ -86,8 +99,9 @@ defaults and the refined memory-entry trigger and content guidance, alongside
 the existing historical-dependency interpretation, conditional archival
 assessment, establishment and consolidation workflows.
 
-Existing project commit-message conventions take precedence over skill defaults.
-These defaults do not add CLI message validation or change checkpoint eligibility.
+In release 0.7.3, existing project commit-message conventions take precedence
+over skill defaults. That release's defaults do not add CLI message validation
+or change checkpoint eligibility.
 Updating the executable alone does not establish that an agent environment has
 adopted the new skill. Existing checkpoints and archive snapshots keep their
 original conventions.
@@ -288,8 +302,9 @@ before any ref becomes visible.  The source branch and =refs/gaw/HEAD= are
 then created in one expected-state
 =update-ref --stdin= transaction.  A failed ref transaction may leave
 unreachable objects but cannot leave a partially created ref graph.  The root
-commit message is =Initialize GAW= and its author and committer are =Git Agent
-Workflow <gaw@invalid>=; inherited signing configuration is not used.
+commit message is =chore(init): initialize GAW history=. New Auxiliary roots
+use the same message. The author and committer are
+=Git Agent Workflow <gaw@invalid>=; inherited signing configuration is not used.
 
 ** Deploying Local State
 =git gaw deploy= materializes local metadata and optional worktree state for
@@ -429,6 +444,21 @@ Message options may be repeated and mixed.  =-m= values are encoded as UTF-8;
 =-F= files and =-F -= standard input are read as exact bytes.  With no project
 commit, an unchanged tree is rejected unless =--allow-empty= is present.  A
 commit with project parents is meaningful even when its tree is unchanged.
+
+Every nonempty message requires a title in =type(scope): subject= form, using
+only printable ASCII bytes (=0x20= through =0x7E=). Type and scope are nonempty
+tokens without spaces, parentheses or colons; custom values and scopes such as
+=skills/example= are allowed. The colon must be followed by exactly one ASCII
+space, and the subject must be nonempty without leading or trailing spaces.
+The title ends at EOF, LF or CRLF; a bare CR is rejected. The body is not
+format-checked or rewritten and may use other languages.
+
+Validation applies to the final assembled message, before any Git operation.
+Invalid nonempty titles fail with =:INVALID-COMMIT-MESSAGE= and a pointer to
+the bundled skill's Checkpoint messages section. =--allow-empty-message= permits
+only a zero-byte message to bypass this check; it does not allow malformed
+nonempty titles or imply =--allow-empty=. Existing history is not revalidated
+by =check= or the protection hook.
 
 Each project revision is resolved once to a commit object.  Its tip tree is
 checked locally against the candidate workspace declaration and the reserved
@@ -666,13 +696,16 @@ memory. Specialized task skills may keep complete procedures and serve as the
 entry point without an additional fixed-name skill. An Auxiliary's inherited
 =:skills= role does not independently require another entry point.
 
-Checkpoint messages follow established project conventions. Otherwise, choose
-Conventional Commit types from the checkpoint's purpose and default scopes from
-declared workspace roles. Recording knowledge usually uses =chore=; material
+Within the CLI's required title syntax, checkpoint messages follow established
+project conventions. Otherwise, choose Conventional Commit types from the
+checkpoint's purpose and default scopes from declared workspace roles.
+Recording knowledge usually uses =chore=; material
 corrections use =fix=, meaning-preserving reorganization uses =refactor=, and a
 capability with reusable value may use =feat=. A role or an associated project's
 commit type does not determine the checkpoint type. Across roles, use the main
 maintenance purpose; roleless entries use established project classifications.
+Scope is required. When no declared role supplies a suitable scope, choose a
+short, accurate scope from the maintenance purpose without inventing a role.
 Message conventions do not change when a checkpoint is useful, and an
 unchanged-tree historical association needs no artificial workspace edit.
 

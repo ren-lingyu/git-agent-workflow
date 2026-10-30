@@ -5,7 +5,7 @@ module Main (main) where
 import qualified Data.ByteString as BS
 import qualified Data.Text as DataText
 import qualified Data.Text.Encoding as TE
-import Gaw.Protocol.Commit (CommitError (..), CommitReason (..), renderCommitError, validateChangeBoundary)
+import Gaw.Protocol.Commit (CommitError (..), CommitReason (..), CommitRequest (..), planCommitAt, plannedMessage, renderCommitError, validateChangeBoundary, validateCommitMessage)
 import Gaw.Protocol.Config
 import Gaw.Protocol.Deploy
 import Gaw.Protocol.Hook
@@ -15,6 +15,7 @@ import Gaw.Protocol.SExpr
 import Gaw.Protocol.Show
 import Gaw.Protocol.Status (StatusWorktree (..))
 import Gaw.Protocol.Workspace
+import Gaw.Protocol.Workspace.Types (Workspace (..))
 import Gaw.System.Entropy (uuidV4)
 import Gaw.System.Repository
 import System.Exit (exitFailure)
@@ -145,11 +146,77 @@ main = do
     layoutTests
     versionedConfigTests
     commitBoundaryTests
+    commitMessageTests
     putStrLn "Protocol tests passed"
 
 invalidSyntax :: Either ConfigError a -> Bool
 invalidSyntax (Left (InvalidSyntax _)) = True
 invalidSyntax _ = False
+
+commitMessageTests :: IO ()
+commitMessageTests = do
+    let valid =
+            [ "chore(memory): record state"
+            , "custom(scope): subject\n"
+            , "custom-type(skills/example): subject (with): details\r\n\r\nBody\nTrailer: value\n"
+            , "fix(custom-scope): subject\n\n" <> BS.pack [0, 9, 13, 127, 255]
+            , "x(y): z"
+            ]
+        invalid =
+            [ "free form"
+            , "(scope): subject"
+            , "type(): subject"
+            , "type(scope): "
+            , "type(scope):"
+            , "type(scope):subject"
+            , "type(scope):  subject"
+            , "type(scope): subject "
+            , "type(scope):   "
+            , "type(scope): \t"
+            , " type(scope): subject"
+            , "ty pe(scope): subject"
+            , "type(sc ope): subject"
+            , "type(scope) subject"
+            , "type scope: subject"
+            , "type((scope)): subject"
+            , "type(scope:extra): subject"
+            , "type(scope)!: subject"
+            , "type(scope): subject\r"
+            , "type(scope): subject\r\r\n"
+            , "type(scope): sub\rject\n"
+            , "\nchore(memory): subject"
+            , "\r\n"
+            , " "
+            , "\t"
+            , TE.encodeUtf8 "chore(memory): 中文标题"
+            ]
+                ++ ["type(scope): sub" <> BS.singleton byte <> "ject" | byte <- [0, 9, 31, 127, 128, 255]]
+    mapM_ (\message -> assert (validateCommitMessage message False == Right ())) valid
+    mapM_
+        (\message -> mapM_ (assert . invalidMessage . validateCommitMessage message) [False, True])
+        invalid
+    assert (validateCommitMessage "" True == Right ())
+    assert (validateCommitMessage "" False == Left (CommitError EmptyMessage "The commit message is empty"))
+    assert $ case validateCommitMessage "bad" False of
+        Left problem ->
+            all
+                (`BS.isInfixOf` renderCommitError problem)
+                [":INVALID-COMMIT-MESSAGE", "type(scope): subject", "Checkpoint messages", "git-agent-workflow skill"]
+        Right () -> False
+    case (parseSourceRef "refs/heads/agents", parseObjectId (BS.replicate 40 97)) of
+        (Right source, Right oid) -> do
+            let plan message allow =
+                    planCommitAt Formal (CommitRequest message [] True allow) source oid oid oid (Workspace []) [] []
+            mapM_
+                (\message -> assert $ case plan message False of Right result -> plannedMessage result == message; _ -> False)
+                valid
+            mapM_ (\message -> assert (invalidMessage (plan message True))) invalid
+            assert $ case plan "" True of Right result -> plannedMessage result == ""; _ -> False
+            assert $ case plan "" False of Left (CommitError EmptyMessage _) -> True; _ -> False
+        _ -> assert False
+  where
+    invalidMessage (Left (CommitError InvalidCommitMessage _)) = True
+    invalidMessage _ = False
 
 commitBoundaryTests :: IO ()
 commitBoundaryTests = do

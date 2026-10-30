@@ -182,13 +182,22 @@ files, and must run at the GAW worktree root. Before a checkpoint:
 
 ### Checkpoint messages
 
-Follow established project commit-message conventions when present;
-otherwise use the Conventional Commit type/scope defaults below.
+For every nonempty `git gaw commit` message, the CLI requires a printable ASCII
+title in `type(scope): subject` form. Type and scope must be nonempty tokens
+without spaces, parentheses or colons. Use exactly one space after the colon;
+the subject must be nonempty without leading or trailing spaces. Titles end
+at EOF, LF or CRLF; the body may use other languages and is not format-checked
+or rewritten. Only a zero-byte message with `--allow-empty-message` bypasses
+title validation. Existing history is not checked retroactively.
+
+Within that syntax, follow established project commit-message conventions
+when present; otherwise use the Conventional Commit type/scope defaults below.
 Reuse a suitable message workflow when available.
 No particular external skill is required. These defaults guide
-message selection; they do not add CLI validation or determine whether a state
-deserves a checkpoint. Do not let a message workflow's nonempty-diff requirement
-reject a meaningful unchanged-tree external-parent association.
+message semantics; the CLI checks only title syntax, not type/scope meaning or
+whether a state deserves a checkpoint. Do not let a message workflow's
+nonempty-diff requirement reject a meaningful unchanged-tree external-parent
+association.
 
 Choose the Conventional Commit type from the checkpoint's actual purpose.
 Consider substantive workspace changes, meaningful new historical associations
@@ -208,8 +217,10 @@ Default the scope to the declared GAW workspace role: `memory`, `skills`,
 `archive`, or a custom role. Roles guide scope selection, not type classification.
 For a checkpoint spanning roles, choose one appropriate scope by its main
 maintenance purpose. Do not impose a fixed
-role priority or concatenate role names. If no reasonable scope can be chosen,
-omit it rather than inventing a classification.
+role priority or concatenate role names. Scope is required: when a declared
+role does not supply a reasonable scope, choose a short, accurate scope from
+the actual maintenance purpose without inventing a workspace role. For example,
+new roots use `chore(init): initialize GAW history`.
 
 For entries without declared roles, use established project classifications
 and actual maintenance intent rather than inferring roles from directory names.
