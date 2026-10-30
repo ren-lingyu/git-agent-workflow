@@ -1,0 +1,96 @@
+#+title: v0.7.3 Release Notes
+
+* Overview
+This release refines the bundled agent-memory skill's checkpoint-message
+guidance and project memory entry points. It also updates Nix flake composition,
+exposes legacy package outputs, and adds curated Org release history and a
+formatting check for contributors. CLI commands, configuration formats and Git
+history protocol semantics remain unchanged.
+
+* Changed
+** Project memory-entry triggers
+- Describe the project boundary and relevant implementation, review,
+  debugging, planning and recovery tasks so an entry-point skill can be
+  selected even when a request does not explicitly mention GAW or memory.
+- Keep descriptions specific to relevant project work rather than attracting
+  unrelated tasks. Activation selects the knowledge needed for the task;
+  it does not require loading all memory.
+
+** Memory and skill responsibilities
+- Focus entry points on triggers, reading navigation, workflow references and
+  stable interpretation conventions. Concrete project knowledge, architecture
+  facts, motivations, investigation results, case-specific verification limits
+  and current progress belong in memory.
+- Refer to general GAW workflows rather than reproducing them in full in the
+  entry point. Specialized task skills may retain complete project procedures
+  and supply entry responsibilities without an additional fixed-name skill.
+- Judge responsibilities rather than imposing a fixed word limit or skill
+  count. Prefer adapting an existing suitable entry point when possible.
+
+** Nix flake composition
+- Use the locked =personal-nixpkgs= library for flake construction and package
+  overlay aggregation, replacing the repository's direct flake-parts assembly.
+- Share the selected =nixpkgs= input with that library through an input follows
+  relationship.
+
+* Added
+** Checkpoint-message defaults
+- Follow established project commit-message conventions first. When none are
+  established, use Conventional Commit defaults based on the checkpoint's
+  actual purpose, including meaningful external historical associations.
+- Use =chore= for recording knowledge, decisions, state or verification;
+  =fix= for materially incorrect knowledge or faulty guidance; =refactor= for
+  meaning-preserving organization; and =feat= for a capability with real
+  reusable value. A new finding or an edit to a skill does not by itself make
+  a feature.
+- Default scopes to declared workspace roles, including custom roles. For
+  changes spanning roles, use the main maintenance purpose without a fixed
+  role priority or concatenated scope. Omit a scope when none is reasonable.
+- Use established project classifications for roleless entries rather than
+  inferring roles from directory names. The associated project's commit type
+  does not determine the GAW checkpoint type.
+- Reuse a suitable message workflow when available, without requiring a
+  particular external skill. A meaningful unchanged-tree association does not
+  require artificial file changes or become invalid because a message workflow
+  expects a nonempty diff.
+
+** Curated release history
+- Add Org changelog summaries and complete historical release manuscripts for
+  v0.1.0 through v0.7.2, making earlier capabilities, compatibility changes and
+  upgrade guidance available in the repository.
+- Describe v0.1.0 as the initial release and reconstruct later version changes
+  from their tagged source states, using existing release notes as supporting
+  evidence. Historical records distinguish tagged-commit UTC committer times
+  from platform publication timestamps.
+
+** Contributor formatting check
+- Add a treefmt flake check alongside the package check, so the normal
+  =nix flake check= workflow includes formatting validation.
+- Keep =LICENSE= and =flake.lock= in the local exclusion list. README, the
+  ignore file and =.txt= resources are no longer excluded by the repository's
+  treefmt configuration.
+
+** Legacy package outputs
+- Expose the configured package set through =legacyPackages.<system>= flake
+  outputs alongside the existing named and default package outputs.
+
+* Compatibility and migration
+Upgrading from v0.7.0, v0.7.1 or v0.7.2 requires no workspace migration or Git
+history rewriting. Refresh the installed bundled skill to adopt the new
+message defaults and refined entry-point guidance. Updating the executable
+alone does not establish that an agent environment has adopted the new skill.
+
+Existing project message conventions take precedence. The defaults do not add
+CLI commit-message validation or change checkpoint eligibility. Existing
+checkpoints and archive snapshots retain their original conventions; their
+messages and history do not need rewriting.
+
+The entry-point recommendation still applies to formal GAW with an explicit
+=:skills= workspace role. Directory names do not create roles, and an
+Auxiliary's inherited =:skills= role does not independently require another
+entry-point skill.
+
+* Limitations
+Message and entry-point conventions guide agents within their host's
+authorization and skill-selection behavior. They do not add runtime enforcement
+of workspace prose or guarantee automatic activation in every agent environment.
