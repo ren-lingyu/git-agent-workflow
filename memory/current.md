@@ -2,6 +2,64 @@
 
 ## Current state and recovery
 
+Post-0.7.3 checkpoint-title validation is implemented and validated in the
+ordinary worktree, pending user review/staging/commit. The user reports 0.7.3 is
+published; the earlier release section records local verification rather than
+independent platform publication verification. Ordinary HEAD remains the
+release-finalization commit. Ten project files are modified, with an empty
+ordinary index; no version bump, release-state change or publication was made.
+
+The adopted guard validates new nonempty checkpoint titles as printable
+ASCII `type(scope): subject`. Type/scope are nonempty tokens without spaces,
+parentheses or colons; there is exactly one separator space and no subject edge
+spaces. EOF, LF and CRLF end the title; bare CR and other controls/non-ASCII
+title bytes fail. The body is neither decoded nor rewritten. Zero-byte messages
+retain the explicit allow-empty-message exception; nonempty invalid titles do
+not bypass validation. There is no semantic type/scope whitelist, historical
+message check, configuration migration or parent-rule change.
+
+The first project edit added a planned Breaking notice beneath the user's new
+unreleased changelog heading. After validation, its wording was reconciled with
+actual behavior and the stdin fix. Shared pure validation runs before any Git
+call in createCommit and also in planCommitAt, returning
+INVALID-COMMIT-MESSAGE with a pointer to the bundled Skill's Checkpoint messages
+section. New Formal/Auxiliary roots share
+`chore(init): initialize GAW history`; Formal initial config and Auxiliary
+config copying are unchanged. Skill/help explain syntax versus semantic
+selection and mandatory scope. No independent Skill reference was introduced.
+
+Protocol tests cover title boundaries, unrestricted body bytes, error classes,
+empty-message exceptions and planner consistency. Adapter tests prove invalid
+messages perform no Git calls. CLI tests cover Formal/Auxiliary roots and
+configuration inheritance, invalid titles/ref stability, multiple -m fragments,
+-F files/stdin, original message preservation, empty messages and meaningful
+unchanged-tree associations. Existing successful/error-specific GAW fixture
+messages were made valid; native-Git historical fixture messages were retained.
+Legacy history still passes check/show without retrospective message validation.
+
+The new stdin test exposed an existing System.Git adapter bug: after stdin is
+consumed/closed, createPipe can reuse fd 0, and the child closed that live
+standard descriptor after dupTo. The user explicitly authorized extending the
+edit scope to cabal/src/Gaw/System/Git.hs. Its post-dup close now excludes all
+three standard descriptors. The retained CLI -F - test proves the input reaches
+the created commit instead of silently creating an empty-message object.
+
+The user authorized repeated `timeout 120s nix flake check --no-write-lock-file`
+for this task. Initial failures identified two formatting differences (fixed
+manually) and the stdin defect above. After correction, the full check passed;
+it passed again after final changelog/Skill wording changes. The final package
+build log confirms protocol-tests and git-adapter-tests PASS, seven Skill
+resources checked in self-test/sdist/installed modes and thirteen sdist help
+files checked; treefmt also passed. Only x86_64-linux was exercised; the check
+omitted aarch64-linux/aarch64-darwin. Existing Cabal distribution-quality warnings
+remain outside scope. Git diff whitespace review passed. No forced rebuild,
+lockfile update or installation into the agent environment was performed.
+
+The tested implementation includes uncommitted source, so no additional project
+parent is asserted for this checkpoint. Next: user review and ordinary staging/
+commit. Do not repeat checks absent new changes or concerns, choose a release
+number, update old release manuscripts, or claim installed Skill/CLI adoption.
+
 Version 0.7.3 formal finalization and local tagging are complete. The user
 created `chore(release): prepare version 0.7.3`, then
 `chore(release): finalize version 0.7.3`, and the annotated local v0.7.3 tag
