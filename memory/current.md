@@ -2,6 +2,19 @@
 
 ## Current state and recovery
 
+The follow-up `docs(changelog): remove generic source and comparison links`
+is now committed by the user. It removes seventeen generic source-tree and
+adjacent-tag comparison links from the tails of all nine historical release
+manuscripts. Changelog-summary backlinks and original published-note links
+remain; root summaries and version states/times are unchanged. Detailed notes
+should remain self-contained rather than accumulating generic navigation links;
+specific source/commit/issue/PR references can still clarify individual changes.
+Read-only verification confirmed the expected sole parent, all nine intended
+paths, exact equality with the reviewed staged blobs, and clean ordinary
+index/worktree. Staged whitespace review passed; no build or runtime test was
+needed or run for this link-only edit. Its GAW association grounds that inspected
+committed cleanup. No action remains pending from this follow-up.
+
 Historical CHANGELOG backfill is complete in two user-created commits:
 `docs(changelog): backfill historical release notes in Org`, followed by
 `docs(changelog): reconcile historical notes with tagged sources`. After each
@@ -49,7 +62,7 @@ runtime suite ran; old execution claims remain historical reports.
 
 Both messages were prepared through git-maintenance from their actual staged
 diffs. Ordinary staging and commits were user actions. tmp/commit.md retains the
-second project message. The task's temporary review, source evidence, baselines
+latest project message. The task's temporary review, source evidence, baselines
 and patch remain under the ordinary tmp/ area; the adapted patch is based on
 the first commit and has already been applied and committed, so do not apply it
 again. No additional raw archive was warranted: committed documentation and
