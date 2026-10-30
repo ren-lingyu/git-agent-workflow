@@ -2,6 +2,55 @@
 
 ## Current state and recovery
 
+Version 0.7.3 formal finalization and local tagging are complete. The user
+created `chore(release): prepare version 0.7.3`, then
+`chore(release): finalize version 0.7.3`, and the annotated local v0.7.3 tag
+points to the latter commit. Read-only review confirmed its sole parent is the
+reviewed freeze commit, only CHANGELOG.org and CHANGELOGS/v0.7.3.org changed in
+finalization, the complete committed change matches the reviewed staged change,
+and the ordinary index/worktree are clean. The completion checkpoint associates
+that directly inspected tagged source snapshot, not a runtime test result.
+
+The tag contains Cabal/README source version 0.7.3, complete detailed notes,
+a root forward link and CUSTOM_ID v0.7.3. The user manually changed NEXT to DONE
+and recorded UTC CLOSED [2026-10-30 Fri 11:40]. Preserve that human-recorded
+finalization time rather than substituting the commit/tag timestamp. The prior
+instruction to set NEXT was explicit and task-specific; it grants no general
+permission to change version states/times. Publication and installed adoption
+remain separate from source finalization and local tag verification.
+
+The release notes describe refined memory-entry triggers and memory/skill
+content boundaries, checkpoint-message defaults, curated historical manuscripts,
+the contributor formatting check, personal-nixpkgs flake/overlay composition
+and legacyPackages.<system> exports, with compatible upgrade guidance and host
+behavior limits. Nix composition and public package-set exports were initially
+omitted from the root summary and manuscript; user-approved corrections added
+them against the same frozen implementation. They were inventory corrections,
+not post-freeze implementation additions.
+
+README has broader responsibility than the changelog: current capabilities,
+upgrade guidance, repository layout, resource ownership, Nix composition and
+developer checks. The root package.nix move into pkgs/ and direct callPackage
+wiring are internal layout, not user-facing behavior changes or changelog
+migration requirements. That distinction does not exclude independently notable
+build-framework changes or new public flake outputs. Changelog content follows
+Keep a Changelog selection, not a commit inventory. No stale release-number
+comments required source/help edits. The detailed manuscript has no reference
+footer, summary backlink, hosted source/comparison URL or gratuitous commit
+citation; the earlier link policy below continues to apply.
+
+Static review passed for whitespace, version/identity agreement, root/detail
+coverage, local links, outline, preserved historical records and absence of
+prohibited references. The tagged release manuscript and user DONE/CLOSED
+records were inspected directly. No Nix build/check, formatter or runtime suite
+was executed or newly reported during this preparation/finalization work;
+older validation does not establish validation of the newly numbered package.
+No platform publication, remote tag state or installed-version adoption was
+verified. These are evidence limits, not instructions to force rebuilds or
+start a publishing workflow. No additional archive was warranted: committed
+source and release manuscripts preserve the result. All project staging,
+commits and tagging were user actions; await the next user objective.
+
 Changelog reference cleanup is complete in two user commits:
 `docs(changelog): remove generic source and comparison links`, followed by
 `docs(changelog): remove trailing reference sections`. The first removed
@@ -14,14 +63,16 @@ unchanged by these cleanup commits.
 The user explicitly requires CHANGELOGS/*.org not to contain links back to
 CHANGELOG.org and not to add hosting-platform-dependent source-path or comparison
 links. Relevant specific issues, PRs, commits or similar concrete evidence may
-still be cited to explain an individual change. Do not reintroduce generic
-reference footers or navigation links during future changelog maintenance.
+still be cited to explain an individual change. Commit citations in particular
+need a concrete explanatory or verification purpose; they are not default
+substitutes for removed source links. Do not reintroduce generic reference
+footers or navigation links during future changelog maintenance.
 
 After each user commit, read-only verification confirmed the expected sole
 parent, all nine intended paths, equality with every reviewed staged blob and
 clean ordinary index/worktree. Staged whitespace review passed; no build or
-runtime test was needed or run for these reference-only edits. The latest GAW
-association grounds the directly inspected committed section removal. No action
+runtime test was needed or run for these reference-only edits. The earlier
+cleanup checkpoint associates the directly inspected committed section removal. No action
 remains pending from this cleanup.
 
 Historical CHANGELOG backfill is complete in two user-created commits:
