@@ -12,8 +12,6 @@
 (defconst release-notes-version-regexp
   "\\`v?[0-9]+\\.[0-9]+\\.[0-9]+\\(?:[-+][0-9A-Za-z.+-]+\\)?\\'")
 
-(defconst automation-branch-name "_automation")
-
 (defun release-notes-env (name)
   "Return required environment variable NAME."
   (let ((value (getenv name)))
@@ -289,13 +287,6 @@
 
 (defun release-notes-main ()
   "Execute the release command from the signed triggering commit."
-  (unless (equal (release-notes-env "GITHUB_EVENT_NAME") "push")
-    (error "Only GitHub push events are supported"))
-  (unless (equal
-           (release-notes-env "GITHUB_REF")
-           (concat "refs/heads/" automation-branch-name))
-    (error "Release automation must run on automation"))
-
   (let* ((sha (release-notes-env "GITHUB_SHA"))
          (checked-out
           (string-trim (release-notes-git "rev-parse" "HEAD")))
