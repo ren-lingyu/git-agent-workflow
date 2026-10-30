@@ -55,7 +55,3 @@ retain their original conventions.
 * Limitations
 Skill guidance does not add runtime validation of natural language or authorize
 new lifecycle, archival or project-history mutations.
-
-* References
-- [[file:../CHANGELOG.org::#v0.7.2][Changelog summary]].
-- [[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.7.2][Original published release notes]].

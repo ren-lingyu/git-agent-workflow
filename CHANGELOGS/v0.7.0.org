@@ -89,7 +89,3 @@ Knowledge integration remains an explicit agent/reviewer workflow. Git 2.54 or
 newer remains required. The original release notes record x86_64-linux
 verification and 13 help/5 skill resources; declared aarch64 platforms are not
 evidence of completed platform testing or new validation during this backfill.
-
-* References
-- [[file:../CHANGELOG.org::#v0.7.0][Changelog summary]].
-- [[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.7.0][Original published release notes]].

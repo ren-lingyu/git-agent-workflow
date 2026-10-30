@@ -58,7 +58,3 @@ x86_64-linux is the tested Haskell platform recorded by the release
 documentation. Declared aarch64-linux and aarch64-darwin outputs do not
 establish completed platform testing. The implementation targets
 POSIX/Unix-like systems, including macOS; Windows is outside scope.
-
-* References
-- [[file:../CHANGELOG.org::#v0.5.0][Changelog summary]].
-- [[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.5.0][Original published release notes]].

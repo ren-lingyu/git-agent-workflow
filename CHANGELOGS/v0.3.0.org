@@ -71,7 +71,3 @@ different branch or undeploy before deleting the selected branch.
 The original release notes report successful test and package builds. That is
 historical reported validation, not a new execution during this backfill.
 Protection remains local, and unknown metadata is not silently repaired.
-
-* References
-- [[file:../CHANGELOG.org::#v0.3.0][Changelog summary]].
-- [[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.3.0][Original published release notes]].

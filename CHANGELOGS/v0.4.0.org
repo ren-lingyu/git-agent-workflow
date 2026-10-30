@@ -60,7 +60,3 @@ that a host has activated it. The command remains:
 * Limitations
 Skill instructions guide agent behavior within host authorization; they do not
 add runtime enforcement or authorize ordinary project mutations.
-
-* References
-- [[file:../CHANGELOG.org::#v0.4.0][Changelog summary]].
-- [[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.4.0][Original published release notes]].

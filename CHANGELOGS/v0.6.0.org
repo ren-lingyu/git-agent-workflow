@@ -72,7 +72,3 @@ remains required. Refresh the bundled skill to adopt its expanded workflows.
 The CLI treats workspace prose as opaque. Roles and skill conventions do not
 add natural-language enforcement. The recorded tested platform is x86_64-linux;
 other declared platforms remain unverified.
-
-* References
-- [[file:../CHANGELOG.org::#v0.6.0][Changelog summary]].
-- [[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.6.0][Original published release notes]].
