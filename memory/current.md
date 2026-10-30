@@ -2,6 +2,61 @@
 
 ## Current state and recovery
 
+Historical CHANGELOG backfill is complete in two user-created commits:
+`docs(changelog): backfill historical release notes in Org`, followed by
+`docs(changelog): reconcile historical notes with tagged sources`. After each
+HEAD move, read-only checks verified the expected sole parent, exactly the ten
+intended changelog paths, byte equality with every reviewed staged blob, and
+clean ordinary index/worktree. The completion checkpoint associates the final
+committed documentation snapshot directly inspected here, not a runtime test
+or a historical release/tag mutation.
+
+The first commit introduced English CHANGELOG.org and nine
+CHANGELOGS/<version>.org manuscripts from the existing published Release Notes.
+The second used the initial v0.1.0 source tree and all eight adjacent tag-tree
+comparisons to supplement/correct the content, coordinate root summaries and
+normalize overview, change categories, compatibility/migration, limitations and
+references. v0.1.0 is the confirmed first tag and initial release: its initial
+capabilities are described without a fabricated predecessor. The scope ends at
+v0.7.2; later development changes and an Unreleased entry were not included.
+
+The source review clarified initial index/message/config behavior, status exit
+semantics, deletion constraints, Haskell/Cabal packaging, config compatibility
+and forward protection, Auxiliary selector/hook/root-invocation/deletion
+boundaries, and the version-specific skill evolution. Keep the distinction
+between v0.7.1's retention guidance and v0.7.2's conditional archival assessment;
+do not import post-tag entry-trigger/content improvements into historical notes.
+No code, manifests, version numbers, historical tags or platform notes changed.
+
+The historical Org entries were newly created as DONE with tag-matching
+CUSTOM_ID and UTC CLOSED derived from each peeled commit's committer timestamp,
+to minute precision. Existing states and version times were unchanged by the
+second commit. This backfill convention is not platform publication time.
+Current GitHub records confirm all nine versions were published, and remote
+annotated-tag objects matched local tags. The current v0.1.0/v0.2.0 tag commits
+postdate platform publication; the backfill describes confirmed present tag
+endpoints, not unverified bits distributed at those earlier times.
+
+The second-stage patch was applied only after the first commit was verified,
+adapting to the user's lowercase Org directives, blank-line style and source
+indentation. Paragraph filling and a split inline opt-out expression were then
+corrected, and the user restaged before second-message review. Structural and
+link/anchor checks, complete version coverage/order, source-block balance,
+category checks, unchanged states/times, patch preflight/whitespace checks and
+staged whitespace review passed. The final committed content exactly matches
+the reviewed second index. No Emacs export/render check, build or historical
+runtime suite ran; old execution claims remain historical reports.
+
+Both messages were prepared through git-maintenance from their actual staged
+diffs. Ordinary staging and commits were user actions. tmp/commit.md retains the
+second project message. The task's temporary review, source evidence, baselines
+and patch remain under the ordinary tmp/ area; the adapted patch is based on
+the first commit and has already been applied and committed, so do not apply it
+again. No additional raw archive was warranted: committed documentation and
+source history preserve the substantive result. No project action remains from
+this backfill; await the next objective rather than starting development-entry,
+publication, installation or optional native-initialization work.
+
 Entry-trigger coverage and entry-content boundaries are complete together as
 the user commit `feat(skill): guide memory entry triggers and content boundaries`.
 After waiting for HEAD to move, read-only verification confirmed the expected
