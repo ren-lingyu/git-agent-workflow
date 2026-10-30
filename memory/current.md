@@ -2,12 +2,15 @@
 
 ## Current state and recovery
 
-Post-0.7.3 checkpoint-title validation is implemented and validated in the
-ordinary worktree, pending user review/staging/commit. The user reports 0.7.3 is
-published; the earlier release section records local verification rather than
-independent platform publication verification. Ordinary HEAD remains the
-release-finalization commit. Ten project files are modified, with an empty
-ordinary index; no version bump, release-state change or publication was made.
+Post-0.7.3 checkpoint-title validation is complete as the user commit
+`feat(commit): enforce ASCII checkpoint title syntax`. Read-only verification
+confirmed its sole parent is the 0.7.3 release-finalization commit, exactly the
+eleven reviewed paths changed, and the entire committed patch equals the
+reviewed staged patch. The ordinary index/worktree are clean. The user used
+the prepared message including its Breaking footer. No ordinary staging or
+commit remains pending. Source changes remain unreleased, with no version bump
+or release-state change. The user reports 0.7.3 is published; the earlier
+release section records local rather than independent platform verification.
 
 The adopted guard validates new nonempty checkpoint titles as printable
 ASCII `type(scope): subject`. Type/scope are nonempty tokens without spaces,
@@ -27,6 +30,15 @@ section. New Formal/Auxiliary roots share
 `chore(init): initialize GAW history`; Formal initial config and Auxiliary
 config copying are unchanged. Skill/help explain syntax versus semantic
 selection and mandatory scope. No independent Skill reference was introduced.
+
+The user subsequently requested README coordination. README now distinguishes
+unreleased post-0.7.3 behavior from the released 0.7.3 defaults, documents exact
+title/empty-message/history boundaries in Creating Commits, uses the new shared
+initialization title and explains mandatory scope within project conventions.
+README describes the now-committed unreleased implementation, distinguishing
+it from the published release and from installed executable/Skill adoption.
+The identical authorized flake check passed after this README-only follow-up:
+treefmt was built and the unchanged package reused its successful result.
 
 Protocol tests cover title boundaries, unrestricted body bytes, error classes,
 empty-message exceptions and planner consistency. Adapter tests prove invalid
@@ -55,10 +67,14 @@ omitted aarch64-linux/aarch64-darwin. Existing Cabal distribution-quality warnin
 remain outside scope. Git diff whitespace review passed. No forced rebuild,
 lockfile update or installation into the agent environment was performed.
 
-The tested implementation includes uncommitted source, so no additional project
-parent is asserted for this checkpoint. Next: user review and ordinary staging/
-commit. Do not repeat checks absent new changes or concerns, choose a release
-number, update old release manuscripts, or claim installed Skill/CLI adoption.
+The earlier implementation checkpoint omitted a project parent while source
+was uncommitted. This completion checkpoint associates the exact committed
+source inspected after the user's commit. Its contents match the previously
+tested worktree; no runtime rerun was needed or performed in this commit review.
+The prepared ordinary message remains in tmp/commit.md. No pending action
+remains from this task; await the next objective. Do not repeat checks absent
+new changes or concerns, choose a release number, update old release
+manuscripts, or claim installed Skill/CLI adoption.
 
 Version 0.7.3 formal finalization and local tagging are complete. The user
 created `chore(release): prepare version 0.7.3`, then
