@@ -4,6 +4,7 @@ module Gaw.Application.Init (
     InitError (..),
     createInitialRoot,
     initialize,
+    initializeWithConfig,
     renderInitError,
 ) where
 
@@ -37,7 +38,18 @@ initialize ::
     BS.ByteString ->
     Maybe BS.ByteString ->
     m (Either InitError InitResult)
-initialize git fs directory branch requestedPath = runExceptT $ do
+initialize = initializeWithConfig EmptyConfig
+
+initializeWithConfig ::
+    (Monad m) =>
+    InitConfig ->
+    Git m ->
+    FileSystem m ->
+    PosixPath ->
+    BS.ByteString ->
+    Maybe BS.ByteString ->
+    m (Either InitError InitResult)
+initializeWithConfig configMode git fs directory branch requestedPath = runExceptT $ do
     source <- validatedBranch
     probe <- command ["rev-parse", "--git-dir"] Nothing
     requireSuccess "git-failure" "Git failed while locating the repository: " probe
@@ -89,7 +101,7 @@ initialize git fs directory branch requestedPath = runExceptT $ do
     blob <-
         writeObject
             ["hash-object", "-w", "--stdin"]
-            (Just initialConfig)
+            (Just (case configMode of EmptyConfig -> initialConfig; DefaultConfig -> defaultConfig))
             "writing the initial config blob"
     rootResult <- lift (createInitialRoot git directory Formal blob)
     commit <- either throwE pure rootResult

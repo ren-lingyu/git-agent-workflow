@@ -1,7 +1,7 @@
-usage: git gaw init --branch <name> [--worktree-path <path>]
+usage: git gaw init --branch <name> [--worktree-path <path>] [--use-default-config]
 
 Create a new GAW root history on a new local branch and immediately deploy it.
-The initial commit contains a valid empty workspace configuration and is made
+The initial commit contains the selected workspace configuration and is made
 as Git Agent Workflow <gaw@invalid> without inheriting signing configuration.
 
 Initialization refuses existing GAW history, GAW-like invalid history,
@@ -12,10 +12,22 @@ refs/gaw/HEAD are created in one ref transaction.
 Options:
    --branch <name>         name of the new local GAW source branch (required)
    --worktree-path <path> create the deployed linked worktree at path
+   --use-default-config    use the bundled archive, memory and skills config
    --help                  show this help
 
-The default config is (:version 1 :workspace ()); no fixed memory, archive or
-skills directories are created. Older CLIs may not understand this config.
+Without --use-default-config, the config remains (:version 1 :workspace ()).
+With it, the initial .gaw/config contains this bundled text unchanged:
+
+    (:version 1
+     :workspace ((:archive ((:directory "archive")))
+                 (:memory ((:directory "memory")))
+                 (:skills ((:directory "skills")))))
+
+The preset follows the CLI's current generated config schema. It is embedded
+at build time; no project config or external template is read at runtime.
+It declares paths without creating directories or placeholder files. Existing
+history is not modified. The option takes no value and cannot be repeated;
+deploy and aux commands do not accept it. Older CLIs may not understand this config.
 See git gaw help config for versions, role groups and path rules.
 
 Formal GAW cannot use the reserved _gaw_aux_ branch range. Use git gaw aux

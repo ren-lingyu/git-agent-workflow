@@ -287,7 +287,7 @@ restriction on unrelated branches.
 deployment path:
 
 #+begin_src text
-  git gaw init --branch <name> [--worktree-path <path>]
+  git gaw init --branch <name> [--worktree-path <path>] [--use-default-config]
 #+end_src
 
 It first performs read-only checks for existing valid or GAW-like history,
@@ -297,7 +297,28 @@ repository is already initialized.  A branch with a =.gaw/config= marker that
 fails complete committed-state validation is treated as ambiguous or corrupt,
 not ignored.
 
-The initial =(:version 1 :workspace ())= blob, its trees, and the root commit are written
+Without =--use-default-config=, initialization uses
+=(:version 1 :workspace ())=. With it, the initial =.gaw/config= contains the
+bundled preset in the following order and format:
+
+#+begin_src lisp
+  (:version 1
+   :workspace ((:archive ((:directory "archive")))
+               (:memory ((:directory "memory")))
+               (:skills ((:directory "skills")))))
+#+end_src
+
+The preset declares directories without creating them or adding placeholder
+files. It follows the CLI's current generated configuration schema and is
+embedded from =cabal/resources/default-config.txt= at build time. Initialization
+writes its bytes directly, preserving role order, indentation and the final
+newline; it does not read another repository's configuration or an external
+template. Keep this resource compatible with the current generated schema
+when evolving the CLI. Existing histories are not changed, and =deploy= and
+=aux= commands do not accept this init-only flag. Auxiliary initialization
+continues to copy the selected Formal history's committed configuration.
+
+The selected config blob, its trees, and the root commit are written
 before any ref becomes visible.  The source branch and =refs/gaw/HEAD= are
 then created in one expected-state
 =update-ref --stdin= transaction.  A failed ref transaction may leave

@@ -39,9 +39,11 @@ direct declarations:
       (:skills ((:directory "agent-skills")))
       (:directory "misc")))
 
-git gaw init generates (:version 1 :workspace ()) without predefined
-directories. Declarations need not exist in the tree and do not create files
-or directories.
+git gaw init generates (:version 1 :workspace ()) unless --use-default-config
+is supplied. That option writes the bundled current-schema preset with archive,
+memory and skills role groups in that order and matching directory names;
+see git gaw help init for its exact text. Declarations need not exist in the
+tree and do not create files or directories.
 
 Role groups
 

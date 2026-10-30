@@ -29,6 +29,11 @@ project's historical release choices.
   pipes reuse the consumed stdin descriptor, instead of creating an empty
   commit message.
 
+** Added
+- Add =git gaw init --use-default-config= to initialize with the
+  bundled current-schema archive, memory and skills workspace configuration,
+  preserving its alphabetic role order and exact text formatting.
+
 * DONE v0.7.3
 CLOSED: [2026-10-30 Fri 11:40]
 :PROPERTIES:

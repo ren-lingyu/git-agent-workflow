@@ -4,7 +4,10 @@ version:            0.7.3
 synopsis:           Git Agent Workflow
 license:            MIT
 build-type:         Simple
-extra-source-files: resources/help/*.txt
+extra-source-files:
+  resources/default-config.txt
+  resources/help/*.txt
+
 data-files:
   share/skills/git-agent-workflow/references/archive.md
   share/skills/git-agent-workflow/references/auxiliary.md

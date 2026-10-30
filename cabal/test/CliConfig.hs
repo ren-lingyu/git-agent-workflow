@@ -47,6 +47,7 @@ configCliTests temporary git = do
     finally
         ( do
             helpTopics candidate root
+            defaultInitialization candidate root
             commitMessages candidate root
             deploymentLifecycle candidate root
             auxiliaryLifecycle candidate root
@@ -169,6 +170,64 @@ configCliTests temporary git = do
         require
             (map configVersion decoded == [ConfigV0, ConfigV0, ConfigV1])
             "published v0/v1 configuration examples do not decode"
+    defaultInitialization candidate root = do
+        expected <- readFile "resources/default-config.txt"
+        forM_ ["first", "middle", "last", "empty"] $ \variant -> do
+            directory <- seed root ("default-init-" ++ variant)
+            let agent = root </> ("default-init-agent-" ++ variant)
+                arguments = case variant of
+                    "first" -> ["init", "--use-default-config", "--branch", "agents"]
+                    "middle" -> ["init", "--branch=agents", "--use-default-config", "--worktree-path=" ++ agent]
+                    "last" -> ["init", "--worktree-path", agent, "--branch", "agents", "--use-default-config"]
+                    _ -> ["init", "--branch", "agents"]
+                wanted = if variant == "empty" then "(:version 1 :workspace ())\n" else expected
+            _ <- cliOk candidate directory arguments
+            actual <- gitOk directory ["show", "agents:.gaw/config"]
+            paths <- gitOk directory ["ls-tree", "-r", "--name-only", "agents"]
+            parents <- gitOk directory ["show", "-s", "--format=%P", "agents"]
+            require (actual == wanted) "init did not preserve selected config bytes"
+            require (paths == ".gaw/config\n" && parents == "\n") "init root structure changed"
+            _ <- cliOk candidate directory ["check", "--branch", "agents"]
+            before <- gitOk directory ["for-each-ref", "--format=%(refname) %(objectname)"]
+            _ <- cliFail candidate directory ["init", "--branch", "another", "--use-default-config"]
+            after <- gitOk directory ["for-each-ref", "--format=%(refname) %(objectname)"]
+            require (before == after) "default-config flag bypassed existing-history refusal"
+            if variant `elem` ["middle", "last"]
+                then do
+                    deployed <- readFile (agent </> ".gaw/config")
+                    require (deployed == expected) "deployed config differs from resource"
+                    forM_ ["archive", "memory", "skills"] $ \path -> do
+                        exists <- doesPathExist (agent </> path)
+                        require (not exists) "init created an undeclared placeholder"
+                    _ <- cliOk candidate agent ["check"]
+                    pure ()
+                else pure ()
+            if variant == "middle"
+                then do
+                    let aux = root </> "default-init-aux"
+                    _ <- cliOk candidate directory ["aux", "init", "--worktree-path", aux]
+                    branch <- takeWhile (/= '\n') <$> gitOk aux ["branch", "--show-current"]
+                    inherited <- readFile (aux </> drop 9 branch </> ".gaw/config")
+                    require (inherited == expected) "Auxiliary did not inherit the selected Formal config"
+                    _ <- cliOk candidate aux ["check"]
+                    pure ()
+                else pure ()
+        invalid <- seed root "default-init-invalid"
+        before <- gitOk invalid ["for-each-ref", "--format=%(refname) %(objectname)"]
+        forM_
+            [ ["init", "--use-default-config"]
+            , ["init", "--use-default-config", "--branch"]
+            , ["init", "--branch", "agents", "--use-default-config", "--use-default-config"]
+            , ["init", "--branch", "agents", "--use-default-config=true"]
+            , ["deploy", "--use-default-config"]
+            , ["aux", "init", "--use-default-config"]
+            , ["aux", "deploy", "--branch", "agents", "--use-default-config"]
+            ]
+            $ \arguments -> do
+                _ <- cliFail candidate invalid arguments
+                pure ()
+        after <- gitOk invalid ["for-each-ref", "--format=%(refname) %(objectname)"]
+        require (before == after) "invalid initialization options changed refs"
     deploymentLifecycle candidate root = do
         directory <- seed root "deployment"
         let agent = root </> "deployment-formal"

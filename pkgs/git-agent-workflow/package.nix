@@ -73,6 +73,14 @@ let
                     if stream.read(1048577) != contents(path, help_root.resolve()):
                         raise ValueError(f"Source-distribution help differs: {path}")
             print(f"Verified source-distribution help: {len(help_files)} files")
+            config_path = pathlib.Path("resources/default-config.txt")
+            config_member = archive.getmember(f"{prefix}/{config_path.as_posix()}")
+            if not config_member.isfile():
+                raise ValueError("Nonregular default-config source")
+            with archive.extractfile(config_member) as stream:
+                if stream.read(1048577) != contents(config_path, config_path.parent.resolve()):
+                    raise ValueError("Source-distribution default config differs")
+            print("Verified source-distribution default config")
     elif mode == "installed":
         check_tree(pathlib.Path(sys.argv[3]))
     elif mode == "self-test":

@@ -9,6 +9,7 @@ import Gaw.Protocol.Commit (CommitError (..), CommitReason (..), CommitRequest (
 import Gaw.Protocol.Config
 import Gaw.Protocol.Deploy
 import Gaw.Protocol.Hook
+import Gaw.Protocol.Init (defaultConfig, initialConfig)
 import Gaw.Protocol.Layout
 import Gaw.Protocol.Ref
 import Gaw.Protocol.SExpr
@@ -147,11 +148,32 @@ main = do
     versionedConfigTests
     commitBoundaryTests
     commitMessageTests
+    initialConfigTests
     putStrLn "Protocol tests passed"
 
 invalidSyntax :: Either ConfigError a -> Bool
 invalidSyntax (Left (InvalidSyntax _)) = True
 invalidSyntax _ = False
+
+initialConfigTests :: IO ()
+initialConfigTests = do
+    resource <- BS.readFile "resources/default-config.txt"
+    assert (defaultConfig == resource)
+    assert
+        ( defaultConfig
+            == "(:version 1\n :workspace ((:archive ((:directory \"archive\")))\n             (:memory ((:directory \"memory\")))\n             (:skills ((:directory \"skills\")))))\n"
+        )
+    case (parseConfig initialConfig, parseConfig defaultConfig) of
+        (Right empty, Right preset) -> do
+            -- Both initialization modes must track the CLI's current generated schema.
+            assert (configVersion preset == configVersion empty)
+            assert (null (configWarnings preset))
+            assert $ case configSections preset of
+                [RoleGroup "archive" [_], RoleGroup "memory" [_], RoleGroup "skills" [_]] -> True
+                _ -> False
+            assert (map (workspacePathText . workspaceEntryPath) (configWorkspace preset) == ["archive", "memory", "skills"])
+            assert (all ((== WorkspaceDirectory) . workspaceEntryKind) (configWorkspace preset))
+        _ -> assert False
 
 commitMessageTests :: IO ()
 commitMessageTests = do

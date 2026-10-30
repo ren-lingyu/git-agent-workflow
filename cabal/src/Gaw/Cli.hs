@@ -15,7 +15,7 @@ import Gaw.Application.Check (inspectBranchCheck, inspectCheck)
 import Gaw.Application.Commit (createCommit)
 import Gaw.Application.Deploy (deploy, deployAuxiliary, renderDeployError)
 import Gaw.Application.Hook (evaluateTransaction)
-import Gaw.Application.Init (initialize, renderInitError)
+import Gaw.Application.Init (initializeWithConfig, renderInitError)
 import Gaw.Application.Status (StatusError (..), inspectStatus)
 import Gaw.Application.Undeploy (UndeployError (..), undeploy)
 import Gaw.Protocol.Auxiliary (auxiliaryValid, renderAuxiliaryReport)
@@ -24,7 +24,7 @@ import Gaw.Protocol.Check (checkReady, renderBranchCheckReport, renderCheckRepor
 import Gaw.Protocol.Commit (CommitRequest (..), renderCommitError)
 import Gaw.Protocol.Deploy (DeployMode (..), deployedMode, renderDeployResult)
 import Gaw.Protocol.Hook (HookError (..), HookPhase (..), parseHookPhase)
-import Gaw.Protocol.Init (InitResult (..))
+import Gaw.Protocol.Init (InitConfig (..), InitResult (..))
 import Gaw.Protocol.Ref (objectIdBytes, parseSourceRef)
 import Gaw.Protocol.Show (ShowError (..), prepareShowArguments)
 import Gaw.Protocol.Status (renderStatusReport, statusHealthy)
@@ -92,7 +92,7 @@ usageText =
     BS.concat
         [ "git-gaw: Usage:\n"
         , "  git gaw aux init [--worktree-path <path>] | deploy --branch <name> [--worktree-path <path>] | check [--branch <name>]\n"
-        , "  git gaw init --branch <name> [--worktree-path <path>]\n"
+        , "  git gaw init --branch <name> [--worktree-path <path>] [--use-default-config]\n"
         , "  git gaw deploy [--branch <name>] [--worktree-path <path>]\n"
         , "  git gaw undeploy\n"
         , "  git gaw branch -m <new-name> | -d <name> | -D <name>\n"
@@ -132,7 +132,7 @@ runBranch arguments = case arguments of
 runDeploy :: [BS.ByteString] -> IO ExitCode
 runDeploy arguments = case parseDeploymentArguments "deploy" arguments of
     Left detail -> BS.hPut stderr ("git-gaw: " <> detail <> "\n") >> pure (ExitFailure 1)
-    Right (branch, requestedPath) -> do
+    Right (branch, requestedPath, _) -> do
         executable <- OS.fromBytes gitExecutable
         directory <- OS.fromBytes "."
         cwd <- Directory.getWorkingDirectory
@@ -145,17 +145,18 @@ runDeploy arguments = case parseDeploymentArguments "deploy" arguments of
 runInit :: [BS.ByteString] -> IO ExitCode
 runInit arguments = case parseDeploymentArguments "init" arguments of
     Left detail -> BS.hPut stderr ("git-gaw: " <> detail <> "\n") >> pure (ExitFailure 1)
-    Right (Nothing, _) ->
+    Right (Nothing, _, _) ->
         BS.hPut
             stderr
             "git-gaw: git gaw init requires --branch <name>\n"
             >> pure (ExitFailure 1)
-    Right (Just branch, requestedPath) -> do
+    Right (Just branch, requestedPath, useDefaultConfig) -> do
         executable <- OS.fromBytes gitExecutable
         directory <- OS.fromBytes "."
         cwd <- Directory.getWorkingDirectory
         let absolutePath = fmap (absoluteRequested cwd) requestedPath
-        result <- initialize (runGitPosix executable) posixFileSystem directory branch absolutePath
+        let configMode = if useDefaultConfig then DefaultConfig else EmptyConfig
+        result <- initializeWithConfig configMode (runGitPosix executable) posixFileSystem directory branch absolutePath
         case result of
             Left problem -> BS.hPut stderr (renderInitError problem) >> pure (ExitFailure 1)
             Right report -> do
@@ -178,22 +179,26 @@ runInit arguments = case parseDeploymentArguments "init" arguments of
 parseDeploymentArguments ::
     BS.ByteString ->
     [BS.ByteString] ->
-    Either BS.ByteString (Maybe BS.ByteString, Maybe BS.ByteString)
-parseDeploymentArguments commandName = go Nothing Nothing
+    Either BS.ByteString (Maybe BS.ByteString, Maybe BS.ByteString, Bool)
+parseDeploymentArguments commandName = go Nothing Nothing False
   where
-    go branch path [] = Right (branch, path)
-    go branch path (argument : rest) =
-        if null rest && argument `elem` ["--branch", "--worktree-path"]
-            then Left ("Option " <> argument <> " requires a value")
-            else case optionValue "--branch" argument rest of
+    go branch path useDefaultConfig [] = Right (branch, path, useDefaultConfig)
+    go branch path useDefaultConfig (argument : rest)
+        | commandName == "init" && argument == "--use-default-config" =
+            if useDefaultConfig
+                then Left "Option --use-default-config may be specified only once"
+                else go branch path True rest
+        | null rest && argument `elem` ["--branch", "--worktree-path"] =
+            Left ("Option " <> argument <> " requires a value")
+        | otherwise = case optionValue "--branch" argument rest of
+            Just (value, following)
+                | branch /= Nothing -> Left "Option --branch may be specified only once"
+                | otherwise -> go (Just value) path useDefaultConfig following
+            Nothing -> case optionValue "--worktree-path" argument rest of
                 Just (value, following)
-                    | branch /= Nothing -> Left "Option --branch may be specified only once"
-                    | otherwise -> go (Just value) path following
-                Nothing -> case optionValue "--worktree-path" argument rest of
-                    Just (value, following)
-                        | path /= Nothing -> Left "Option --worktree-path may be specified only once"
-                        | otherwise -> go branch (Just value) following
-                    Nothing -> Left ("Unsupported " <> commandName <> " argument: " <> argument)
+                    | path /= Nothing -> Left "Option --worktree-path may be specified only once"
+                    | otherwise -> go branch (Just value) useDefaultConfig following
+                Nothing -> Left ("Unsupported " <> commandName <> " argument: " <> argument)
     optionValue name argument rest
         | argument == name = case rest of
             value : following -> Just (value, following)
@@ -540,7 +545,7 @@ runAuxiliary arguments = do
         operation : options | operation `elem` ["init", "deploy"] ->
             case parseDeploymentArguments ("aux " <> operation) options of
                 Left detail -> bad detail
-                Right (branch, path) -> do
+                Right (branch, path, _) -> do
                     let target = fmap (absoluteRequested cwd) path
                     case (operation, branch) of
                         ("init", Nothing) -> do
