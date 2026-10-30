@@ -1,176 +1,96 @@
 #+title: v0.2.0 Release Notes
 
-GAW v0.2.0 extends the v0.1.0 runtime with repository lifecycle management, local deployment state, repository-wide status inspection, and stronger protection of GAW-managed refs.
-
-The release also clarifies the ownership model of a GAW repository: ordinary Git branches and GAW commit history are portable state, while =refs/gaw/*=, the configured protection hook, and linked worktrees are local deployment state that can be reconstructed from that history.
+* Overview
+This release adds local repository lifecycle management and repository-wide
+inspection to the v0.1.0 runtime, retaining registration-based branch identity.
 
 * Changed
-- Protect registered source branches and the complete =refs/gaw/*= namespace from ordinary Git ref mutations.
+** Protection and committed-state validation
+- Extend protection from registered source branches to the complete
+  =refs/gaw/*= namespace. The hook resolves symbolic-ref updates, preserves
+  ordinary HEAD switches that do not move a protected branch, and rejects
+  invalid registration queries rather than treating them as safe.
+- =init= and =deploy= install or validate the canonical repository-local
+  configured hook, including its enabled setting. Divergent configuration is a
+  conflict. Controlled operations disable only the GAW-owned named hook.
+- Share complete committed-state validation across check, deployment,
+  initialization and status. A config marker alone does not prove validity.
 
-- Install and validate the canonical repository-local configured =reference-transaction= hook.
+** Build and implementation layout
+- Move the Common Lisp system under =lisp/=, with its version in
+  =lisp/VERSION=. Organize packages into pure core, Git-orchestrating runtime
+  and public API layers; centralize protected mutations and worktree inventory.
+- Replace the external =cl-nix-forge= build dependency with a repository-local
+  ASDF/Nix library driving program and test operations.
 
-- Centralize committed-state validation and reuse it across =check=, =deploy=, initialization, and status reporting.
+* Fixed
+- Avoid triggering GAW's own protection hook during worktree deployment and
+  compensation cleanup.
 
-- Reorganize the implementation into explicit =core=, =runtime=, and =api= layers.
+* Added
+** Initialization and deployment
+#+begin_src text
+  git gaw init --branch <name> [--worktree-path <path>]
+  git gaw deploy [--branch <name>] [--worktree-path <path>]
+#+end_src
 
-- Replace the external =cl-nix-forge= build dependency with a repository-local ASDF/Nix build library.
+- =init= checks for existing or ambiguous GAW history, metadata, hook and
+  worktree conflicts, then creates an independent root with =(:workspace ())=.
+  It installs the branch, registration and selector in one expected-state ref
+  transaction before using normal deployment. A failed ref transaction may
+  leave unreachable objects, but not a partially created ref graph.
+- =deploy= selects an existing valid local branch. Without =--branch= it uses a
+  valid selector or discovers local candidates; multiple candidates require
+  explicit selection. It does not fetch or create a missing source branch.
+- Deployment creates or validates local metadata, optionally materializes a
+  linked worktree, checks an attached worktree and configures protection.
+  Repeating deployment against the same valid state is safe.
 
-** Portable history and local deployment state
-GAW now explicitly distinguishes portable history from rebuildable local metadata.
+** Registered branch lifecycle
+- =git gaw branch -m <new-name>= renames the selected registered branch through
+  native Git, then coordinates registration and selector metadata.
+- =git gaw branch -d <name>= retains native safe-delete checks and removes the
+  associated registration and selected-branch metadata after success.
+- Preflight validation, expected-state updates, final checks and best-effort
+  compensation address operations that cannot share one Git transaction.
+  Partial failures are reported explicitly.
 
-Portable state is represented by the ordinary Git branch, its GAW commit history, =.gaw/config=, and workspace contents.
+** Repository-wide status
+- =git gaw status= inventories branches, registrations, selector, hook and
+  worktree attachments from normal, nested, linked or bare repositories.
+- Inspection supports files and reftable ref backends through Git interfaces.
+  Enumeration is supplemented with exact probes derived from known branches and
+  selector state.
+- Default status exits zero when it produces a report, even when findings are
+  unhealthy. Read the report; this is not a readiness-success signal.
+- =status --diagnose= additionally runs Git connectivity diagnostics and
+  combines their result with the GAW report's health criteria. It forwards Git
+  output unchanged and may expose unrelated repository problems.
 
-Local deployment refs have the form:
+* Compatibility and migration
+Portable state remains the ordinary branch, history, config and workspace.
+Deployment metadata is local and rebuildable:
 
 #+begin_src text
   refs/gaw/heads/<name> -> refs/heads/<name>
   refs/gaw/HEAD         -> refs/gaw/heads/<name>
 #+end_src
 
-These refs record local registration and selection. They are not required to be pushed or fetched and do not contain irreplaceable repository state.
+Existing v0.1.0 history and the daily commands remain usable. Use the lifecycle
+commands for setup instead of manually constructing new metadata. The selector
+does not replace the current worktree HEAD as the authority for =commit=. Git
+2.54 or newer remains required; packaged support remains x86_64-linux.
 
-The local selector is also not authoritative for =git gaw commit=: normal commit operation continues to use the symbolic =HEAD= of the current worktree.
-
-** Ref protection
-GAW uses Git 2.54's configured =reference-transaction= hook to protect local protocol state.
-
-The canonical repository-local configuration is:
-
-#+begin_src text
-  hook.gaw-reference-transaction.event = reference-transaction
-  hook.gaw-reference-transaction.command = git-gaw --reference-transaction
-  hook.gaw-reference-transaction.enabled = true
-#+end_src
-
-The hook rejects ordinary Git transactions that would modify:
-
-- a registered GAW source branch;
-- =refs/gaw/heads/*=;
-- =refs/gaw/HEAD=;
-- any other ref under =refs/gaw/*=.
-
-Symbolic-ref chains are resolved when necessary so updates through =HEAD= or another symbolic ref cannot silently mutate a protected source branch.
-
-Valid GAW lifecycle operations temporarily disable only this named GAW protection hook for their own guarded mutations. Other configured hooks remain active.
-
-This release also fixes worktree deployment paths that previously triggered GAW's own protection hook during =git worktree add= or compensation cleanup.
-
-** Validation and =git gaw check=
-Committed-state validation is now shared across repository lifecycle operations.
-
-Validation covers the GAW branch tip, =.gaw/config=, declared workspace contents, and associated project-parent tip trees.
-
-=git gaw check= continues to serve a different purpose from repository-wide status: it checks whether an already provisioned worktree is ready for the normal edit, stage, commit, and show loop.
-
-Protection-hook configuration is included in the readiness report as a local guard. Missing or divergent protection configuration is reported without making it a runtime prerequisite for reading existing history.
-
-** Internal architecture
-The implementation is now organized under =lisp/=, with package-local source and tests.
-
-Packages increasingly follow explicit implementation layers:
-
-#+begin_src text
-  core -> runtime -> api
-#+end_src
-
-- =core= owns pure data, validation, and policy.
-- =runtime= performs Git I/O and orchestration with explicit inputs.
-- =api= supplies package defaults and public entry points.
-
-Protected Git mutations are centralized in a dedicated =mutation= package, removing duplicated knowledge of the GAW protection-hook override from higher-level lifecycle operations.
-
-Worktree inventory is also shared through the workspace layer rather than being independently parsed by deploy and status.
-
-** Build system
-The Lisp system now lives under =lisp/=, and its version is read from:
-
-#+begin_src text
-  lisp/VERSION
-#+end_src
-
-The Nix build no longer depends on =cl-nix-forge=. A small repository-local =lib/asdfFunctions= library now drives ASDF =program-op= and =test-op= directly for package builds and checks.
-
-The default overlay continues to expose =git-agent-workflow=, and the Git version requirement remains Git 2.54 or newer.
-
-* Added
-- Add =git gaw init= to bootstrap a new GAW history.
-
-- Add =git gaw deploy= to materialize local GAW metadata and an optional linked worktree.
-
-- Add =git gaw branch -m= and =git gaw branch -d= for coordinated registered-branch lifecycle operations.
-
-- Add =git gaw status= for repository-wide inspection, with optional low-level Git diagnostics through =--diagnose=.
-
-- Support repository status inspection with both =files= and =reftable= ref backends.
-
-** Repository lifecycle
-A new GAW history can now be initialized directly:
-
-#+begin_src text
-  git gaw init --branch <name> [--worktree-path <path>]
-#+end_src
-
-Initialization validates that the repository does not already contain conflicting GAW history or local protocol metadata, creates the initial =(:workspace ())= state and root commit, atomically installs the source branch, registration, and selector, and then reuses the normal deployment path.
-
-Existing local GAW history can be deployed with:
-
-#+begin_src text
-  git gaw deploy [--branch <name>] [--worktree-path <path>]
-#+end_src
-
-Deployment is entirely local: it does not fetch, contact remotes, or create a missing source branch.
-
-It validates committed GAW state, materializes the local registration and =refs/gaw/HEAD=, optionally creates or validates a linked worktree, and installs the canonical protection hook. Repeated deployment against the same valid state is safe.
-
-Without =--branch=, deploy first uses a valid local selector when available. Otherwise it discovers valid GAW histories from ordinary local branches. Remote-tracking refs are not used as deployment sources.
-
-** Registered branch lifecycle
-Registered GAW branches can now be renamed or safely deleted through:
-
-#+begin_src text
-  git gaw branch -m <new-name>
-  git gaw branch -d <name>
-#+end_src
-
-Rename uses native =git branch -m= so Git remains responsible for worktree =HEAD=, reflogs, and branch configuration, then coordinates the corresponding GAW registration and selector.
-
-Delete retains native =git branch -d= safety checks and removes the associated local GAW metadata only after the branch operation succeeds.
-
-Because native branch operations and GAW protocol-ref changes cannot share one Git transaction, these operations use strict preflight validation, expected-state updates, final invariant checks, and best-effort compensation. Partial failures are reported explicitly.
-
-** Repository-wide status
-GAW now provides:
-
-#+begin_src text
-  git gaw status
-  git gaw status --diagnose
-#+end_src
-
-=git gaw status= is a read-only repository-level inventory. It reports local GAW and ordinary branches, the selector, protocol refs, protection-hook configuration, and worktree attachments. It works from normal worktrees, nested directories, linked worktrees, and bare repositories.
-
-Default ref discovery stays within stable Git interfaces. It combines normal =refs/gaw/*= enumeration with exact probes derived from the selector and local source branches. This lets it diagnose damaged selector chains and registrations whose names are otherwise known, while avoiding direct inspection of a particular ref-storage backend.
-
-An isolated dangling or broken ref whose name is hidden by Git's normal enumeration and cannot be derived from any known GAW state may therefore be absent from the default report.
-
-For deeper diagnostics:
-
-#+begin_src text
-  git gaw status --diagnose
-#+end_src
-
-first produces the normal GAW report and then runs:
-
-#+begin_src text
-  git fsck --connectivity-only --no-reflogs --no-dangling --no-progress
-#+end_src
-
-Git's diagnostic output is passed through unchanged rather than parsed as part of the GAW status format. The check is repository-wide and may report problems unrelated to GAW.
-
-Status inspection is covered for both the =files= and =reftable= ref backends.
-
-
+* Limitations
+- No automatic fetching, remote enforcement, system-wide deployment or
+  arbitrary corruption repair is introduced.
+- A broken ref hidden by Git enumeration and not derivable from known selector
+  or branch names can escape the default status inventory.
+- Status is repository-wide inspection; =check= remains worktree readiness
+  inspection. Neither command repairs metadata.
 
 * References
-[[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.2.0][Original published release notes]] · [[file:../CHANGELOG.org::#v0.2.0][Changelog summary]]
-
-[[https://github.com/ren-lingyu/git-agent-workflow/compare/v0.1.0...v0.2.0][Compare v0.1.0 and v0.2.0]].
+- [[file:../CHANGELOG.org::#v0.2.0][Changelog summary]].
+- [[https://github.com/ren-lingyu/git-agent-workflow/tree/v0.2.0][v0.2.0 source tree]].
+- [[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.2.0][Original published release notes]].
+- [[https://github.com/ren-lingyu/git-agent-workflow/compare/v0.1.0...v0.2.0][Compare v0.1.0 and v0.2.0]].

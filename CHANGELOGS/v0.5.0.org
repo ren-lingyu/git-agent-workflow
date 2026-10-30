@@ -1,44 +1,66 @@
 #+title: v0.5.0 Release Notes
 
-This release replaces GAW's Common Lisp implementation with Haskell while preserving the existing protocol-visible behavior established in v0.4.0.
+* Overview
+This release replaces the Common Lisp implementation with Haskell while keeping
+the v0.4.0 protocol-visible behavior, CLI, configured hook entry point, help
+and agent-memory workflow.
 
 * Removed
-- Removed the previous Common Lisp implementation, ASDF tests, custom ASDF build library, and related fixture infrastructure from =main=.
-
-- Removed Lisp-specific wording from the bundled skill.
+- Remove the Common Lisp runtime, ASDF tests, custom ASDF build library and
+  associated fixture infrastructure from the active mainline source tree.
+- Remove Lisp-specific internal-API wording from the bundled skill.
 
 * Changed
-- Reimplemented GAW in Haskell and reorganized the codebase into:
-  - =Gaw.Protocol.*= for pure protocol types, validation, and planning;
-  - =Gaw.Application.*= for command orchestration;
-  - =Gaw.System.*= for Git, filesystem, clock, and process boundaries.
+** Implementation and resources
+- Organize pure types, validation and planning under =Gaw.Protocol.*=, command
+  orchestration under =Gaw.Application.*=, and Git, filesystem, process and
+  clock boundaries under =Gaw.System.*=.
+- Move source, native tests, help and bundled skill into =cabal/=. Embed help
+  bytes at compile time and forward CLI/Git output bytes without requiring the
+  source help files at runtime.
+- Derive version output from Cabal package metadata. Cabal =data-files= owns
+  bundled resource membership, including the agent skill.
 
-- Replaced the ASDF project and custom Common Lisp build helpers with a native Cabal project under =cabal/=.
-
-- Kept the existing =git-gaw= CLI, configured =reference-transaction= hook entry point, help resources, and agent-memory skill behavior.
-
-** Nix packaging
-- Replaced the previous ASDF-oriented Nix build with =callCabal2nix=.
-- Selected GHC 9.12 for the packaged build.
-- Kept Git >= 2.54 as an explicit requirement.
-- The selected Nix Git executable is captured at compile time through =GIT=, keeping it in the runtime closure without wrapping or duplicating the executable name in Nix packaging.
-- Cabal =data-files= is now the source of truth for bundled data, including the agent skill; Nix installs skills from Cabal's installed data output.
-- Release validation is now centered on the Nix package build and its Cabal test suites.
-
-- Moved help resources and the bundled =git-agent-workflow= skill into the Cabal project layout.
-
-- =git-gaw --version= is now derived from Cabal package metadata instead of maintaining a separate hard-coded version string.
-
-- Updated the README to document the Haskell architecture, native Cabal development path, supported Linux release check, and migration differential-test location.
-
-The v0.4.0 Common Lisp implementation remains the fixed behavioral baseline used by the separate migration differential test.
+** Nix build and native development
+- Replace the ASDF-oriented build with =callCabal2nix= and select GHC 9.12.
+- Require Git 2.54 or newer. Capture the Nix-selected Git executable at compile
+  time through =GIT=, retaining it in the runtime closure without an extra
+  wrapper. Ordinary Cabal builds fall back to =git= on PATH when no build-time
+  override is supplied.
+- Install skills from Cabal's installed data output rather than scanning the
+  project source tree. Missing installed skill data fails the package build.
+- Center the supported Linux release check on the Nix package and Cabal test
+  suites. A cached build/check result is not proof that tests executed anew.
 
 * Added
-- Added native Haskell protocol and Git-adapter test suites, including injected failure cases around Git-backed operations.
+- Native =protocol-tests= and =git-adapter-tests= suites, including real Git
+  operations and injected failures around application boundaries.
+- Document native Cabal development, POSIX-oriented implementation boundaries
+  and the fixed v0.4.0 Common Lisp differential baseline.
 
+* Compatibility and migration
+Existing GAW histories, config and deployments require no migration. Keep using
+=git-gaw= and the same configured hook entry point. Developers building the
+source directly now need GHC, Cabal and the declared Haskell dependencies in
+place of Common Lisp/ASDF tooling:
 
+#+begin_src sh
+  cd cabal
+  cabal build git-gaw
+  cabal test
+#+end_src
+
+The tagged README identifies a separate migration differential-test snapshot;
+that harness is not part of the active v0.5.0 source tree.
+
+* Limitations
+x86_64-linux is the tested Haskell platform recorded by the release
+documentation. Declared aarch64-linux and aarch64-darwin outputs do not
+establish completed platform testing. The implementation targets
+POSIX/Unix-like systems, including macOS; Windows is outside scope.
 
 * References
-[[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.5.0][Original published release notes]] · [[file:../CHANGELOG.org::#v0.5.0][Changelog summary]]
-
-[[https://github.com/ren-lingyu/git-agent-workflow/compare/v0.4.0...v0.5.0][Compare v0.4.0 and v0.5.0]].
+- [[file:../CHANGELOG.org::#v0.5.0][Changelog summary]].
+- [[https://github.com/ren-lingyu/git-agent-workflow/tree/v0.5.0][v0.5.0 source tree]].
+- [[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.5.0][Original published release notes]].
+- [[https://github.com/ren-lingyu/git-agent-workflow/compare/v0.4.0...v0.5.0][Compare v0.4.0 and v0.5.0]].

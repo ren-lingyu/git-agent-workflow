@@ -1,96 +1,79 @@
 #+title: v0.3.0 Release Notes
 
-v0.3.0 simplifies the local GAW protocol by removing branch registrations and making branch identity a property of committed state.
-
-A local branch is now a GAW branch when its current tip passes complete committed-state validation. =refs/gaw/HEAD= is only a local deployment selector and points directly to the selected =refs/heads/*= branch.
+* Overview
+GAW branch identity now follows complete committed-state validation instead of
+local registration. Deployment is a local selection, not the source of
+identity.
 
 * Removed
-- Remove the =refs/gaw/heads/*= registration layer.
-  - GAW branch identity is now content-defined.
-  - =refs/gaw/HEAD= directly targets =refs/heads/<name>=.
-  - Multiple local branches may independently point to valid GAW history without additional registration metadata.
-
-** Breaking compatibility change
-=refs/gaw/heads/*= registrations are no longer part of the GAW protocol.
-
-The v0.2 layout:
+** Breaking: registration protocol and APIs
+Remove the =refs/gaw/heads/*= registration layer and its APIs. The selector now
+points directly to the ordinary branch:
 
 #+begin_src text
+  # v0.2 layout
   refs/gaw/HEAD -> refs/gaw/heads/<name> -> refs/heads/<name>
-#+end_src
-
-is replaced by:
-
-#+begin_src text
+  # v0.3 layout
   refs/gaw/HEAD -> refs/heads/<name>
 #+end_src
 
-The registration APIs have been removed, and a v0.2 selector chain is not automatically migrated by =deploy=.
+=deploy= does not automatically migrate the old selector chain. Follow the
+migration sequence below before selecting an existing valid branch.
 
-For an existing v0.2 deployment, use the following migration sequence:
+* Changed
+- Recognize any local branch with valid committed GAW state as a GAW branch,
+  without a separate registration record. Multiple branches may independently
+  carry valid GAW history.
+- Protect existing valid GAW branches from ordinary movement or deletion. Once
+  a config marker exists, ordinary updates must preserve its exact tree entry;
+  first introduction remains allowed. Query failures fail closed. Direct
+  ordinary mutations of =refs/gaw/*= remain blocked.
+- =commit= operates on the valid branch checked out in its worktree without
+  requiring deployment. =check= reports a missing selector as a warning;
+  malformed, dangling or invalid selectors remain errors.
+- Rename the currently selected formal branch with =branch -m=. Delete only
+  unselected direct branches with valid committed state and no worktree.
+- =deploy= fully validates existing local candidates, refuses malformed or
+  unexpected metadata, and performs no implicit network access.
+- Update status classification and diagnose health criteria for the new model;
+  unexpected protocol refs are health failures in diagnostic mode.
+- Rename the Common Lisp source tree from =lisp/= to =asdf/=.
+
+* Fixed
+- Report command-specific argument errors for init and deploy.
+- Correct status reporting when undeploy is repeated.
+- Align help and README with deployment-independent check behavior.
+
+* Added
+- =git gaw undeploy= removes the selector and owned hook configuration while
+  preserving branches, history, config and worktrees. It safely removes exact
+  discoverable legacy registrations, preserving damaged or unknown metadata for
+  explicit review and reporting incomplete cleanup as failure.
+- =git gaw branch -D <name>= skips native safe-delete ancestry checks while
+  retaining the GAW validity, selection and worktree constraints.
+- Dedicated =help hooks= and =help recovery= topics.
+
+* Compatibility and migration
+For a v0.2 deployment, use the new executable to exit old local deployment
+state and then select the existing history:
 
 #+begin_src text
   git gaw undeploy
-  # explicitly resolve any reported residual refs if necessary
+  # Explicitly resolve reported residual refs if necessary.
   git gaw deploy --branch <name>
 #+end_src
 
-=undeploy= only removes local deployment metadata that can be safely identified; it does not rewrite branch history or repair arbitrary repository corruption.
+No history rewrite or automatic content repair is involved. Partial cleanup is
+not rolled back; after explicit resolution, undeploy may be repeated. Select a
+different branch or undeploy before deleting the selected branch.
 
-* Changed
-- Redesign reference-transaction protection around committed state.
-  - Ordinary Git cannot move or delete a branch whose current tip is valid GAW state.
-  - Once =.gaw/config= exists at a branch tip, ordinary updates must preserve the exact marker tree entry.
-  - The first introduction of the marker remains allowed.
-  - Direct ordinary modification of =refs/gaw/*= remains blocked.
-  - State-query failures fail closed.
-  - GAW lifecycle operations bypass only the GAW-owned named hook.
-
-- Update branch lifecycle commands.
-  - =git gaw branch -m <new-name>= renames the currently selected valid GAW branch and updates the selector.
-  - =git gaw branch -d <name>= retains native Git safe-delete behavior.
-  - =git gaw branch -D <name>= skips only Git's safe-delete check while retaining all GAW validation and worktree constraints.
-  - A selected branch must be undeployed or replaced as the selected branch before deletion.
-
-- Decouple content operations from deployment state.
-  - =git gaw commit= uses the current worktree's symbolic =HEAD= and only requires a valid GAW committed state.
-  - =git gaw check= can succeed without =refs/gaw/HEAD=; a missing selector is only a warning.
-  - An existing malformed, dangling, or invalid selector is still reported as an error.
-
-- Tighten deployment and repository diagnostics.
-  - =git gaw deploy= validates the selected branch completely and performs no implicit network access.
-  - Malformed selectors and discoverable unexpected or legacy =refs/gaw/*= refs block deployment instead of being silently migrated.
-  - =git gaw status= reports content-defined branch classification, selector state, hook state, worktree attachments, and unexpected protocol refs.
-  - =git gaw status --diagnose= treats invalid selector/branch state and unexpected protocol refs as GAW health failures in addition to running Git connectivity diagnostics.
-
-- Rename the Common Lisp source tree from =lisp/= to =asdf/=, including the ASDF system, source, tests, and version file.
-
-* Fixed
-- Polish the CLI and documentation.
-  - =init= and =deploy= now report command-specific argument errors.
-  - Repeated =undeploy= reports final state more accurately.
-  - Help and README documentation now reflect that deployment is not a prerequisite for =check=.
-
-* Added
-- Add =git gaw undeploy=.
-  - Removes the local selector and GAW-owned protection-hook configuration.
-  - Preserves branches, GAW history, =.gaw/config=, existing worktrees, and their contents.
-  - Safely removes discoverable exact v0.2 symbolic registrations.
-  - Preserves ambiguous or damaged protocol refs and reports partial cleanup as a failure.
-
-- Add dedicated help for protection and recovery:
-  - =git gaw help hooks=
-  - =git gaw help recovery=
-
-* Validation
-The original release notes report that the complete test suite and default package build passed with:
-
-#+begin_src sh
-  nix flake check
-  nix build
-#+end_src
+* Limitations
+The original release notes report successful test and package builds. That is
+historical reported validation, not a new execution during this backfill.
+Protection remains local, and unknown metadata is not silently repaired.
 
 * References
-[[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.3.0][Original published release notes]] · [[file:../CHANGELOG.org::#v0.3.0][Changelog summary]]
-
-[[https://github.com/ren-lingyu/git-agent-workflow/compare/v0.2.0...v0.3.0][Compare v0.2.0 and v0.3.0]].
+- [[file:../CHANGELOG.org::#v0.3.0][Changelog summary]].
+- [[https://github.com/ren-lingyu/git-agent-workflow/tree/v0.3.0][v0.3.0 source tree]].
+- [[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.3.0][Original published release notes]].
+- [[https://github.com/ren-lingyu/git-agent-workflow/compare/v0.2.0...v0.3.0][Compare v0.2.0 and v0.3.0]].

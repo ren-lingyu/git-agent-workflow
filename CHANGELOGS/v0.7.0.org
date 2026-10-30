@@ -1,36 +1,97 @@
 #+title: v0.7.0 Release Notes
 
-This release adds independent Auxiliary source histories and a bundled workflow for consolidating cross-session and cross-agent knowledge into formal GAW memory. Formal GAW remains the sole authority for project-current memory.
+* Overview
+This release adds independent Auxiliary source histories while formal GAW
+remains the authority for project-current memory. Source trees are not merged
+into formal memory by creating parent associations.
 
 * Changed
-- Separate formal, Auxiliary and ordinary branches in status. Undeploy reports pre-cleanup inventory and actual shared protection removal while preserving all branch histories and worktrees.
+** Breaking: reserve Auxiliary names
+Reserve the entire =_gaw_aux_= branch-name range, including malformed names.
+Existing branches in that range receive name-based protection even when config
+is missing or damaged, and formal initialization/rename cannot enter it. Review
+existing branches using this prefix when upgrading.
+
+** Inventory and diagnostics
+- Separate formal, Auxiliary and ordinary branches in status; inspect reserved
+  Auxiliary branches using their UUID-relative committed layout.
+- Report the pre-cleanup branch/worktree inventory during undeploy, mark
+  unavailable inventory explicitly, and warn when the shared protection hook
+  was actually removed. Histories and worktrees remain intact.
+- Update hook rejection wording and human-readable output. Consumers matching
+  diagnostic text should be reviewed.
 
 * Added
-- Add =git gaw aux init=, =aux deploy= and =aux check= for independent UUIDv4 source histories. Initialization copies only the selected formal branch's exact committed config into an independent root, without copying its workspace or linking its history.
+** Independent source histories
+#+begin_src text
+  git gaw aux init [--worktree-path <path>]
+  git gaw aux deploy --branch <name> [--worktree-path <path>]
+  git gaw aux check [--branch <name>]
+#+end_src
 
-- Support formal knowledge integration through additional-parent references to exact Auxiliary checkpoints, preserving source ancestry without merging trees or introducing structural history fusion.
+- Create a secure canonical lowercase UUIDv4 branch =_gaw_aux_<uuid>= whose
+  tree is confined to the matching =<uuid>/= subtree. The root contains only
+  =<uuid>/.gaw/config= copied byte-for-byte from the selected formal commit. It
+  copies no uncommitted config, workspace content or formal-history parents.
+- Interpret declarations relative to the UUID subtree. Run ordinary =commit=
+  and =check= at the Git worktree root, not within the UUID directory. Apply
+  the existing protocol/workspace transition boundary to logical UUID-relative
+  paths.
+- Require a valid formal selector and the existing canonical shared hook for
+  Auxiliary init/deploy. These commands do not change the selector, install or
+  repair hooks, fetch, or create registries. Deployment uses an existing source
+  branch and may remain repository-only without a worktree path.
 
-- Add =git gaw check --branch <name>= for committed-state validation without requiring a target worktree or checking the caller's index.
+** Inspection and deletion
+- =git gaw check --branch <name>= checks formal or Auxiliary committed state
+  without a target worktree or the caller's index/operation readiness. It is
+  not a worktree-readiness report.
+- =aux check= reports structural validity separately from safe-deletion
+  readiness. Valid unintegrated history still succeeds. Without a current
+  Auxiliary worktree, specify =--branch=.
+- Extend =branch -d/-D= to valid Auxiliary histories with no associated
+  worktree. Safe deletion requires the source tip to be retained in the formal
+  history selected by =refs/gaw/HEAD=; it verifies selector, formal tip and
+  source tip in one ref transaction.
+- Forced deletion explicitly permits abandonment without formal retention, but
+  keeps validity, worktree and conditional source-tip checks. Continued object
+  reachability is not guaranteed. Neither mode removes worktrees or other refs.
+- Worktree registrations are checked separately before and after deletion, with
+  race detection and conditional compensation. Serialize worktree lifecycle
+  activity with branch deletion; this is not full transactional isolation.
 
-- Extend =git gaw branch -d/-D= to Auxiliary branches. Safe deletion requires retention in the formal history selected by =refs/gaw/HEAD=; =-D= explicitly allows abandonment without requiring formal-history retention. Both require valid committed state and no associated worktree.
+** Source reconstruction and integration guidance
+- Bundle guidance for evidence-backed source reconstruction, uncertainty,
+  reconciliation of decisions, formal knowledge integration and archive reuse.
+- Associate exact relevant Auxiliary checkpoints through normal additional
+  parents when justified, preserving ancestry without merging trees or adopting
+  every source claim. Preserve substantive context in formal memory.
+- Recover retained source files through the associated committed history after
+  branch deletion. Retaining an intermediate checkpoint does not retain a later
+  source tip or make it safe to delete.
+- Extend embedded help and skill resource checks, plus protocol/application
+  coverage for lifecycle, layout, ref/worktree races and compensation.
 
-- Verify the selector target, formal tip and Auxiliary tip in one safe-deletion ref transaction. Worktree registrations are checked separately, with race detection and conditional compensation rather than full transactional isolation.
+* Compatibility and migration
+Existing formal history, v0/v1 configuration and formal branch deletion
+semantics require no migration or rewrite. Upgrade both the interactive
+executable and the executable used by the shared hook before creating/importing
+Auxiliary histories, and keep the bundled skill compatible. Older executables
+cannot validate or protect the new UUID layout.
 
-- Bundle guidance for source reconstruction, evidence and uncertainty, reconciliation of decisions, formal knowledge integration, archival reuse and source recovery after safe deletion.
+Ordinary commit gains no new deployment prerequisite. Auxiliary init/deploy
+have the explicit selector/hook requirements above; undeploy may remove the
+shared protection used by both kinds of history.
 
-* Upgrade notes
-- Auxiliary histories require GAW 0.7.0 or newer. Upgrade the executable used by interactive commands and the shared Git hook before creating or importing Auxiliary history, and keep the bundled skill compatible.
-- The =_gaw_aux_= branch-name range is reserved, including malformed names. Review existing branches using that prefix before upgrading. Existing branches in this range are protected by name even when their config is missing or damaged.
-- Human-readable status, undeploy and hook diagnostic output changes. Review consumers that match these messages.
-- Existing formal history and v0/v1 configuration need no migration or rewrite. Formal branch deletion semantics remain unchanged.
-- There is no =aux retire=, =abort=, =discard= or Auxiliary rename command. Source knowledge integration remains an explicit agent/reviewer workflow.
-
-* Packaging and verification
-The Nix release check covers both protocol and Git-adapter suites, including Auxiliary lifecycle, ref/worktree races, compensation and retained-source recovery. Packaging checks verify 13 embedded help resources and 5 bundled skill files through source distribution, Cabal installation and Nix exposure.
-
-Git >= 2.54 remains required. Verification was performed on x86_64-linux; declared aarch64-linux and aarch64-darwin outputs do not imply completed platform testing.
+* Limitations
+There is no Auxiliary rename, retire, abort, discard or separate executable.
+Knowledge integration remains an explicit agent/reviewer workflow. Git 2.54 or
+newer remains required. The original release notes record x86_64-linux
+verification and 13 help/5 skill resources; declared aarch64 platforms are not
+evidence of completed platform testing or new validation during this backfill.
 
 * References
-[[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.7.0][Original published release notes]] · [[file:../CHANGELOG.org::#v0.7.0][Changelog summary]]
-
-[[https://github.com/ren-lingyu/git-agent-workflow/compare/v0.6.0...v0.7.0][Compare v0.6.0 and v0.7.0]].
+- [[file:../CHANGELOG.org::#v0.7.0][Changelog summary]].
+- [[https://github.com/ren-lingyu/git-agent-workflow/tree/v0.7.0][v0.7.0 source tree]].
+- [[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.7.0][Original published release notes]].
+- [[https://github.com/ren-lingyu/git-agent-workflow/compare/v0.6.0...v0.7.0][Compare v0.6.0 and v0.7.0]].

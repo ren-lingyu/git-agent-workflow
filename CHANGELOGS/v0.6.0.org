@@ -1,62 +1,80 @@
 #+title: v0.6.0 Release Notes
 
-This release introduces versioned workspace configuration, strengthens checkpoint validation and forward compatibility, and expands the bundled agent skill into a more complete workflow for persistent memory, archival evidence, and project-specific skills.
+* Overview
+This release adds versioned workspace configuration and role metadata,
+strengthens checkpoint boundaries and forward protection, and expands the
+bundled memory, archive and project-skill workflows.
 
 * Changed
-** Stronger protection for future configuration versions
-- Added a structural version recognizer that runs before the full configuration parser.
-- Recognized unsupported numeric versions and unrecognized leading version tokens without requiring the current parser to understand the remaining configuration syntax.
-- Classified unknown versions as indeterminate, preserving conservative branch protection even when the =.gaw/config= marker remains unchanged.
-- Preserved existing parsing behavior for v0/v1 configurations without a leading version declaration.
-- Expanded regression coverage for unknown syntax, malformed configurations, branch protection, and recovery behavior.
+** Breaking: separate protocol and workspace changes
+=git gaw commit= rejects candidates changing paths both inside and outside
+=.gaw/=, with =MIXED-PROTOCOL-CHANGES=. The comparison is against the
+first-parent tree and includes additions, deletions, content, modes and
+cross-boundary moves. Rejection happens before commit-object creation or ref
+update.
 
-Future configuration versions should place =:version= first. This forward-protection mechanism is available starting with v0.6.0; older executables cannot be expected to recognize future syntax.
+Stage and checkpoint protocol and workspace changes separately, keeping every
+intermediate candidate valid. =git gaw check= does not replace this transition
+check. Existing history, root initialization and unchanged-tree project
+associations are not retroactively rejected.
 
-** Expanded bundled agent workflow
-Reorganized the bundled =git-agent-workflow= skill with dedicated guidance for:
-
-- *Memory:* Maintaining recoverable working state, recording motivations and related issues, and distinguishing implementation, verification, and external tracking status.
-- *Archive:* Preserving selected historical evidence through independent snapshots, using =MANIFEST.md= and =files/=, with explicit provenance, byte-level verification, and immutable checkpointed snapshots.
-- *Project skills:* Creating, maintaining, and adapting project-specific skills, including transferring useful improvements between project and general workflows.
-
-The skill also clarifies project-parent associations, discourages persistent semantic dependencies on GAW checkpoint OIDs, and distinguishes historical evidence from authoritative current instructions.
-
-These are agent workflow conventions, not new CLI protocol requirements.
-
-** Breaking compatibility change
-*=git gaw commit= now rejects checkpoints that mix changes inside and outside =.gaw/=.*
-
-A checkpoint may modify GAW protocol files or workspace files, but not both in the same commit.
-
-This applies to additions, deletions, content modifications, mode changes, and cross-boundary moves. Validation compares the candidate tree against its first-parent tree and rejects mixed changes with =MIXED-PROTOCOL-CHANGES= before creating a commit object or updating a ref.
-
-*Migration:* Separate protocol changes and workspace changes into distinct GAW checkpoints. Existing history is not retroactively rejected, and unchanged-tree project associations retain their previous behavior.
-
-** Packaging and Testing
-- Extended protocol and CLI regression tests for configuration versions, workspace roles, commit boundaries, and protection hooks.
-- Added real Git integration tests covering future-version protection and marker-preserving recovery.
-- Improved Cabal source-distribution and Nix build checks to verify bundled skill references and embedded help resources.
-- Continued to support the existing Git-native workflow without introducing external archive tools or additional configuration commands.
+** Initialization and bundled workflows
+- New =init= roots contain =(:version 1 :workspace ())= without predefined
+  directories. Declarations do not themselves create files or directories.
+- Route memory, archive and project-skill procedures to dedicated references.
+  Record objectives, motivations, related work, implementation status and
+  verification separately, maintaining current knowledge promptly.
+- Preserve selected original evidence as independent immutable snapshots with
+  =MANIFEST.md= and =files/=, scoped provenance, byte verification and explicit
+  sanitization limits. Historical material is evidence, not active instruction.
+- Guide reusable skill creation and workflow transplantation, keeping temporary
+  project progress in memory. Avoid durable semantic dependencies on checkpoint
+  OIDs and keep project-parent choices tied to exact supported snapshots.
 
 * Added
-** Versioned workspace configuration
-- Introduced configuration v1 with optional role-based workspace groups, such as =:memory=, =:archive=, and =:skills=.
-- Supported custom role names, repeated role groups, and mixing grouped and direct workspace declarations.
-- Preserved the original configuration format as implicit v0, without requiring historical checkpoints to be migrated.
-- Updated =git gaw init= to generate =(:version 1 :workspace ())= by default.
-- Added non-blocking diagnostics for unknown v1 top-level fields, reported by =git gaw check= and =git gaw status=.
-- Added =git gaw help config= as a dedicated reference for configuration syntax, workspace validation, and compatibility.
+** Versioned configuration and workspace roles
+- Read implicit and explicit v0 plus v1. V1 permits direct declarations,
+  repeated role groups and custom role names; nested role groups and duplicate
+  paths are rejected. Reserved entry names remain =file= and =directory=.
+- Preserve role/group metadata while flattening the same effective workspace
+  for validation. Roles add no inheritance, precedence or Git protection, and
+  directory names do not invent roles for v0 or ungrouped declarations.
+- Report unknown v1 top-level field names as non-blocking warnings in check and
+  status. Values still satisfy restricted syntax and resource limits; v0
+  continues to reject unknown fields. Check distinguishes HEAD/index warnings.
+- Add =git gaw help config= for syntax, path coverage, limits and
+  compatibility.
 
-Role metadata does not change workspace path coverage or Git validation semantics.
+** Forward protection and regression coverage
+- Recognize unknown leading version values before the full v0/v1 parser. An
+  unsupported numeric or unrecognized version token makes branch state
+  indeterminate and preserves protection even with an unchanged marker.
+- Enforce shared structural limits without interpreting future-version bodies.
+  Missing/malformed leading values and malformed structure remain invalid.
+- Add configuration, CLI and real-Git cases for roles, unknown versions,
+  marker-preserving recovery and mixed checkpoint boundaries.
+- Extend source-distribution and installed-resource checks for the skill
+  references and embedded help.
 
-* Compatibility
-- Existing implicit and explicit v0 configurations remain supported.
-- Historical checkpoints retain their original configuration semantics; no history rewrite or migration is required.
-- Older GAW executables are not guaranteed to understand v1 or future configuration versions.
-- Git 2.54 or newer remains required for configured reference-transaction hook support.
-- The Haskell implementation is tested on x86_64-linux; other declared platforms remain unverified.
+* Compatibility and migration
+No rewrite is required for implicit or explicit v0 histories. Supported older
+configs retain their own checkpoint semantics; old executables need not read
+v1. When introducing a future config version, place =:version= first after the
+opening parenthesis, apart from whitespace/comments. Accepted nonleading v0/v1
+configs remain readable through the compatibility path, but that path cannot
+protect unknown future syntax. Use a compatible executable for unsupported
+versions; v0.5.0 cannot retroactively gain v0.6.0's forward protection.
+
+Split future protocol/workspace edits as described above. Git 2.54 or newer
+remains required. Refresh the bundled skill to adopt its expanded workflows.
+
+* Limitations
+The CLI treats workspace prose as opaque. Roles and skill conventions do not
+add natural-language enforcement. The recorded tested platform is x86_64-linux;
+other declared platforms remain unverified.
 
 * References
-[[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.6.0][Original published release notes]] · [[file:../CHANGELOG.org::#v0.6.0][Changelog summary]]
-
-[[https://github.com/ren-lingyu/git-agent-workflow/compare/v0.5.0...v0.6.0][Compare v0.5.0 and v0.6.0]].
+- [[file:../CHANGELOG.org::#v0.6.0][Changelog summary]].
+- [[https://github.com/ren-lingyu/git-agent-workflow/tree/v0.6.0][v0.6.0 source tree]].
+- [[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.6.0][Original published release notes]].
+- [[https://github.com/ren-lingyu/git-agent-workflow/compare/v0.5.0...v0.6.0][Compare v0.5.0 and v0.6.0]].

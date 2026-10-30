@@ -3,13 +3,14 @@
 #+startup: logdone
 #+property: TIMEZONE UTC
 
-Notable changes to Git Agent Workflow, newest first. Version links lead to
-the complete release notes.
+Notable changes to Git Agent Workflow, newest first. Version links lead to the
+complete release notes.
 
-The content follows [[https://keepachangelog.com/en/2.0.0/][Keep a Changelog]] principles using an Org summary
-and per-version manuscripts. Historical CLOSED records use the tagged commit's
-committer time in UTC, to minute precision; they are not platform publication
-timestamps. Version numbers retain the project's historical release choices.
+The content follows [[https://keepachangelog.com/en/2.0.0/][Keep a Changelog]]
+principles using an Org summary and per-version manuscripts. Historical CLOSED
+records use the tagged commit's committer time in UTC, to minute precision;
+they are not platform publication timestamps. Version numbers retain the
+project's historical release choices.
 
 * DONE v0.7.2
 CLOSED: [2026-10-20 Tue 13:30]
@@ -19,11 +20,20 @@ CLOSED: [2026-10-20 Tue 13:30]
 [[file:CHANGELOGS/v0.7.2.org][Detailed release notes]].
 
 ** Changed
-- Clarify commit parents as historical dependencies while preserving parent-selection criteria; recover Git relationships from the DAG instead of parallel static indexes.
-- Make archival assessment conditional on an explicit preservation request or an independent evidence need; references do not automatically expand capture scope.
+- Clarify commit parents as historical dependencies while preserving
+  parent-selection criteria; recover Git relationships from the DAG instead of
+  parallel static indexes.
+- Make archival assessment conditional on an explicit preservation request or
+  an independent evidence need; references do not automatically expand capture
+  scope.
+- Ordinary establishment, consolidation and Auxiliary work do not require
+  per-source archival assessment. Existing source-selection and authorization
+  boundaries remain in force.
 
 ** Added
-- Recommend a project memory entry-point skill for formal GAW with an explicit =:skills= role. Refresh the bundled skill; no CLI, configuration or history migration is required.
+- Recommend a project memory entry-point skill for formal GAW with an explicit
+  =:skills= role. Refresh the bundled skill; no CLI, configuration or history
+  migration is required.
 
 * DONE v0.7.1
 CLOSED: [2026-10-19 Mon 02:30]
@@ -33,11 +43,17 @@ CLOSED: [2026-10-19 Mon 02:30]
 [[file:CHANGELOGS/v0.7.1.org][Detailed release notes]].
 
 ** Changed
-- Guide interleaved Auxiliary discovery-line integration and assess knowledge integration, evidence archival and source-history retention separately.
-- Strengthen pre-persistence sanitization and selective evidence retention; prefer English for new GAW content.
+- Guide interleaved Auxiliary discovery-line integration and assess knowledge
+  integration, evidence archival and source-history retention separately.
+- Strengthen pre-persistence sanitization and selective evidence retention;
+  prefer English for new GAW content.
+- Screen newly retained ancestor history before persistence; complete justified
+  retention actions promptly, distinguishing original bytes and sanitized
+  derivatives.
 
 ** Added
-- Establishment and Consolidation skill workflows, bundled with Cabal. Refresh the installed skill; no CLI, configuration or history migration is required.
+- Establishment and Consolidation skill workflows, bundled with Cabal. Refresh
+  the installed skill; no CLI, configuration or history migration is required.
 
 * DONE v0.7.0
 CLOSED: [2026-10-15 Thu 04:49]
@@ -47,12 +63,23 @@ CLOSED: [2026-10-15 Thu 04:49]
 [[file:CHANGELOGS/v0.7.0.org][Detailed release notes]].
 
 ** Changed
-- *Breaking:* Reserve the =_gaw_aux_= name range, including malformed names. Review existing branches in that range and upgrade both interactive and hook executables before using Auxiliary histories.
-- Separate formal, Auxiliary and ordinary branches in status; extend undeploy inventory and hook diagnostics. Review consumers of human-readable output.
+- *Breaking:* Reserve the =_gaw_aux_= name range, including malformed names;
+  existing branches there are protected by name. Review existing names and
+  upgrade both interactive and hook executables before using Auxiliary
+  histories.
+- Separate formal, Auxiliary and ordinary branches in status; extend undeploy
+  inventory and hook diagnostics. Review consumers of human-readable output.
 
 ** Added
-- =aux init/deploy/check= for independent UUIDv4 source histories, =check --branch= for committed-state inspection, and Auxiliary deletion through =branch -d/-D=.
-- Bundled source reconstruction, formal knowledge integration, evidence reuse and retained-source recovery guidance. Existing formal history and v0/v1 configuration require no migration.
+- =aux init/deploy/check= for independent UUIDv4 source histories,
+  =check --branch= for committed-state inspection, and Auxiliary deletion
+  through =branch -d/-D=.
+- Bundled source reconstruction, formal knowledge integration, evidence reuse
+  and retained-source recovery guidance. Existing formal history and v0/v1
+  configuration require no migration.
+- Auxiliary init/deploy require a valid formal selector and canonical shared
+  hook; invoke commit/check at the Git worktree root. Auxiliary structural
+  validity is separate from deletion readiness.
 
 * DONE v0.6.0
 CLOSED: [2026-10-11 Sun 07:26]
@@ -62,13 +89,22 @@ CLOSED: [2026-10-11 Sun 07:26]
 [[file:CHANGELOGS/v0.6.0.org][Detailed release notes]].
 
 ** Changed
-- *Breaking:* Reject GAW checkpoints mixing changes inside and outside =.gaw/=. Split protocol and workspace changes into separate checkpoints; existing history is unaffected.
-- Initialize new histories with explicit v1 configuration; existing implicit/explicit v0 remains supported.
-- Expand memory, archive and project-skill guidance, including immutable evidence snapshots, work motivation and workflow transplantation.
+- *Breaking:* Reject GAW checkpoints mixing changes inside and outside =.gaw/=.
+  Split protocol and workspace changes into separate checkpoints; existing
+  history is unaffected.
+- Initialize new histories with explicit v1 configuration; existing
+  implicit/explicit v0 remains supported.
+- Expand memory, archive and project-skill guidance, including immutable
+  evidence snapshots, work motivation and workflow transplantation.
 
 ** Added
-- Versioned configuration with optional workspace roles, unknown-field diagnostics and =help config=.
-- Conservative branch protection for unknown leading configuration versions, plus configuration, transition and resource-packaging coverage.
+- Versioned configuration with optional workspace roles, unknown-field
+  diagnostics and =help config=.
+- Conservative branch protection for unknown leading configuration versions,
+  plus configuration, transition and resource-packaging coverage.
+- Roles add no inheritance, precedence or protection. Unknown v1 fields warn in
+  check/status without failing; v0 remains strict, and future versions require
+  a leading version envelope.
 
 * DONE v0.5.0
 CLOSED: [2026-10-06 Tue 07:25]
@@ -78,12 +114,21 @@ CLOSED: [2026-10-06 Tue 07:25]
 [[file:CHANGELOGS/v0.5.0.org][Detailed release notes]].
 
 ** Removed
-- Replace the Common Lisp implementation, ASDF tests and custom ASDF build helpers in the main source tree.
+- Replace the Common Lisp implementation, ASDF tests and custom ASDF build
+  helpers in the main source tree.
 
 ** Changed
-- Reimplement GAW in Haskell with Protocol, Application and System layers, preserving v0.4.0 protocol-visible behavior and the existing CLI.
-- Use Cabal metadata for version output and bundled resources; use callCabal2nix with GHC 9.12 and a compile-time selected Git executable.
-- Center release validation on the Nix package and native Cabal protocol/Git-adapter suites.
+- Reimplement GAW in Haskell with Protocol, Application and System layers,
+  preserving v0.4.0 protocol-visible behavior and the existing CLI.
+- Use Cabal metadata for version output and bundled resources; use
+  callCabal2nix with GHC 9.12 and a compile-time selected Git executable.
+- Center release validation on the Nix package and native Cabal
+  protocol/Git-adapter suites.
+
+** Added
+- Native protocol and real-Git adapter suites with failure injection; document
+  Cabal development and distinguish tested Linux from declared, unverified
+  platforms.
 
 * DONE v0.4.0
 CLOSED: [2026-10-05 Mon 07:30]
@@ -93,12 +138,17 @@ CLOSED: [2026-10-05 Mon 07:30]
 [[file:CHANGELOGS/v0.4.0.org][Detailed release notes]].
 
 ** Changed
-- Use =git-agent-workflow= as the Nix package name; the executable remains =git-gaw=. Refactor the ASDF/Nix packaging helpers.
+- Use =git-agent-workflow= as the Nix package name; the executable remains
+  =git-gaw=. Refactor the ASDF/Nix packaging helpers.
 
 ** Added
-- Bundle the persistent-memory skill, covering recovery, ongoing memory maintenance, selective checkpoints and host authorization boundaries.
-- Guide retrospective reconstruction of complete durable states across the full evidence horizon, with conservative exact-project provenance and explicit unrecoverable gaps.
-- Declarative ASDF skill installation with an opt-out and packaging fixture coverage.
+- Bundle the persistent-memory skill, covering recovery, ongoing memory
+  maintenance, selective checkpoints and host authorization boundaries.
+- Guide retrospective reconstruction of complete durable states across the full
+  evidence horizon, with conservative exact-project provenance and explicit
+  unrecoverable gaps.
+- Declarative ASDF skill installation with an opt-out and packaging fixture
+  coverage.
 
 * DONE v0.3.0
 CLOSED: [2026-10-04 Sun 07:14]
@@ -108,18 +158,27 @@ CLOSED: [2026-10-04 Sun 07:14]
 [[file:CHANGELOGS/v0.3.0.org][Detailed release notes]].
 
 ** Removed
-- *Breaking:* Remove =refs/gaw/heads/*= registration APIs and metadata from the protocol. Use =undeploy=, explicitly resolve reported residual refs, then =deploy --branch <name>= when upgrading a v0.2 deployment.
+- *Breaking:* Remove =refs/gaw/heads/*= registration APIs and metadata from the
+  protocol. Use =undeploy=, explicitly resolve reported residual refs, then
+  =deploy --branch <name>= when upgrading a v0.2 deployment.
 
 ** Changed
-- Identify GAW branches by valid committed state; =refs/gaw/HEAD= directly selects =refs/heads/<name>=. Update protection, deployment and diagnostics for this model.
-- =commit= uses the current worktree HEAD; =check= can succeed without deployment, while malformed selectors remain errors.
+- Identify GAW branches by valid committed state; =refs/gaw/HEAD= directly
+  selects =refs/heads/<name>=. Update protection, deployment and diagnostics
+  for this model.
+- =commit= uses the current worktree HEAD; =check= can succeed without
+  deployment, while malformed selectors remain errors.
 - Rename the Common Lisp source tree from =lisp/= to =asdf/=.
+- Require unselected valid direct branches with no worktree for deletion;
+  diagnostic mode treats unexpected protocol refs as health failures.
 
 ** Fixed
 - Correct init argument errors and repeated undeploy status reporting.
 
 ** Added
-- =undeploy= removes identifiable local deployment metadata while preserving history and worktrees; =branch -D= allows forced deletion subject to GAW validity and worktree checks.
+- =undeploy= removes identifiable local deployment metadata while preserving
+  history and worktrees; =branch -D= allows forced deletion subject to GAW
+  validity and worktree checks.
 
 * DONE v0.2.0
 CLOSED: [2026-10-03 Sat 16:23]
@@ -129,15 +188,22 @@ CLOSED: [2026-10-03 Sat 16:23]
 [[file:CHANGELOGS/v0.2.0.org][Detailed release notes]].
 
 ** Changed
-- Protect registered source branches and the complete =refs/gaw/*= namespace; deployment installs and validates the canonical configured hook.
-- Replace the external Common Lisp build dependency with a repository-local ASDF/Nix library and reorganize the implementation.
+- Protect registered source branches and the complete =refs/gaw/*= namespace;
+  deployment installs and validates the canonical configured hook.
+- Replace the external Common Lisp build dependency with a repository-local
+  ASDF/Nix library and reorganize the implementation.
 
 ** Fixed
 - Avoid GAW hook rejection during worktree deployment and compensation.
 
 ** Added
-- =init= and =deploy= for local provisioning, with =branch -m/-d= for registered branch lifecycle management.
-- Repository-wide =status= and optional =--diagnose= connectivity inspection, including files and reftable backend coverage.
+- =init= and =deploy= for local provisioning, with =branch -m/-d= for
+  registered branch lifecycle management.
+- Repository-wide =status= and optional =--diagnose= connectivity inspection,
+  including files and reftable backend coverage.
+- Status distinguishes report production from health: default success does not
+  imply readiness; diagnostic mode combines GAW health criteria with Git
+  connectivity results.
 
 * DONE v0.1.0
 CLOSED: [2026-09-30 Wed 12:13]
@@ -149,6 +215,10 @@ CLOSED: [2026-09-30 Wed 12:13]
 First tagged release. Provisioning and deployment must be performed externally.
 
 ** Added
-- Initial runtime release: independent GAW history, explicit workspace declarations, validated =git gaw commit=, first-parent inspection with =show=, readiness checks with =check=, and version output.
-- Optional configured Git reference-transaction hook protecting registered GAW branches; Git 2.54 or newer is required.
+- Initial runtime release: independent GAW history, explicit workspace
+  configuration, validated index-based commits with flexible messages and
+  project parents, first-parent show, readiness checks, help and version
+  output.
+- Optional configured Git reference-transaction hook protecting registered GAW
+  branches; Git 2.54 or newer is required.
 - Nix build, installation and downstream overlay support for x86_64-linux.

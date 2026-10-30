@@ -1,67 +1,72 @@
 #+title: v0.1.0 Release Notes
 
-The first runtime release of Git Agent Workflow (GAW).
-
-GAW is a Git-native workflow for maintaining persistent agent working state
-and history alongside a Git repository. This release provides the core runtime
-for an already provisioned GAW repository and worktree.
+* Overview
+The first tagged release provides the core runtime for an already provisioned
+GAW repository and worktree. Its capabilities are the initial release baseline,
+not changes relative to an earlier release.
 
 * Added
-- Maintain GAW state in an independent Git history.
+** Independent history and explicit workspace
+- Keep agent state in an independent Git history. The first-parent chain is
+  canonical GAW evolution; zero or more additional project parents retain exact
+  project snapshots without merging their trees.
+- Declare files and directories in an unversioned restricted S-expression at
+  =.gaw/config=. Read strict UTF-8 without reader evaluation; reject invalid
+  paths, reserved namespaces and content outside the declared workspace.
+- Validate project-parent tip trees against workspace and reserved-path
+  conflicts. This is a local tree check, not an audit of every ancestor.
 
-- Associate GAW commits with project commits through additional parent edges.
+** Daily commands
+- =git gaw commit= uses the complete index and the current worktree's symbolic
+  HEAD. Run it at the GAW worktree root. It validates the candidate workspace,
+  resolves each supplied project revision once, and conditionally updates the
+  branch so a concurrent ref move is not overwritten.
+- Compose messages with repeated =-m= and =-F= options, including =-F -= for
+  standard input. Use =--allow-empty= for an unchanged tree without project
+  parents and =--allow-empty-message= when intentionally supplying an empty
+  message. An unchanged-tree project association is meaningful without
+  =--allow-empty=.
+- =git gaw show= delegates to Git while enforcing first-parent traversal and
+  defaulting to first-parent merge diffs. It accepts ordinary show options,
+  revisions and paths subject to those restrictions.
+- =git gaw check= reports committed/staged workspace validity and local
+  readiness. Warnings do not fail the command; error findings do. It does not
+  stage files or include unstaged changes in the candidate.
+- Provide overview and command-specific help, =git gaw version= and
+  =git gaw --version=.
 
-- Manage an explicit workspace declared in =.gaw/config=.
+** Optional protection and Nix packaging
+- An optional repository-local configured reference-transaction hook blocks
+  ordinary object updates to exactly registered GAW branches, including updates
+  through symbolic refs. This is a local accidental-update guard.
+- Build and install =git-gaw= with the Nix flake and expose
+  =git-agent-workflow= through its default overlay.
 
-- Create validated GAW commits with =git gaw commit=.
+* Compatibility and migration
+There is no earlier released version to migrate. Setup must supply the GAW
+history, branch registration, selector, worktree and any desired hook before
+using the runtime. A minimal daily loop is:
 
-- Inspect canonical first-parent history with =git gaw show=.
-
-- Check repository and worktree readiness with =git gaw check=.
-
-- Protect registered GAW branches from accidental ordinary Git updates using a
-  Git 2.54 configured =reference-transaction= hook.
-
-- Build and install =git-gaw= through the Nix flake.
-
-- Consume GAW from downstream flakes through the default overlay.
-
-* Daily workflow
 #+begin_src text
   git gaw check
   git gaw version
-  edit workspace files
-  git status / git diff
-  git add <paths>
-  git gaw commit [options] [project-commit...]
+  # edit declared workspace files
+  git status
+  git diff
+  git add <explicit-workspace-paths>
+  git gaw commit -m "Record current knowledge" [project-commit...]
   git gaw show
 #+end_src
 
-* Branch protection
-Registered GAW branches can optionally be protected with a repository-local
-configured hook:
-
-#+begin_src sh
-  git config --local hook.gaw-reference-transaction.event reference-transaction
-  git config --local hook.gaw-reference-transaction.command \
-    'git-gaw --reference-transaction'
-#+end_src
-
-The hook is intended as a local guard against accidental ref updates, not as an
-authorization boundary.
-
-* Requirements
-- x86_64-linux
-- Nix with flakes enabled
-- Git 2.54 or newer
-
-* Not yet included
-This release does not provide automatic provisioning. In particular, branch
-creation, registration, hook configuration, and deployment must currently be
-performed externally.
-
-The repository protocol and user-facing interface may still change before a
-stable release.
+* Limitations
+- The supported packaged environment is x86_64-linux with Nix flakes and Git
+  2.54 or newer for configured hook support.
+- There are no CLI provisioning, deployment or branch lifecycle commands.
+- Ordinary direct changes to =refs/gaw/*= are not yet protected. The broader
+  namespace protection is introduced in v0.2.0.
+- The workspace format and public interface may change before a stable release.
 
 * References
-[[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.1.0][Original published release notes]] · [[file:../CHANGELOG.org::#v0.1.0][Changelog summary]]
+- [[file:../CHANGELOG.org::#v0.1.0][Changelog summary]].
+- [[https://github.com/ren-lingyu/git-agent-workflow/tree/v0.1.0][v0.1.0 source tree]].
+- [[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.1.0][Original published release notes]].

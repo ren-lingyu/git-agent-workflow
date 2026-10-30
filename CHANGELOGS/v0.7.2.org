@@ -1,43 +1,63 @@
 #+title: v0.7.2 Release Notes
 
-This release improves the bundled GAW agent-memory skill, clarifying the interpretation of Git history, refining project memory navigation, and making archival assessment conditional rather than routine.
-
-*No CLI commands, configuration formats, or Git protocol semantics have changed.*
+* Overview
+This release clarifies historical dependencies, memory entry points and
+conditional archival assessment in the bundled skill. It does not change CLI
+commands, configuration formats or Git protocol mechanics.
 
 * Changed
-** Historical Dependency Semantics
-- Clarify that GAW commit parents represent historical dependencies needed to interpret durable knowledge states.
-- Distinguish first-parent knowledge inheritance from additional historical context supplied by exact project or Auxiliary commits.
-- Clarify that parent edges are not citations, knowledge-adoption records, approval markers, or validation results.
-- Preserve existing parent-selection criteria without introducing additional necessity tests or mandatory per-parent explanations.
+** Historical dependencies and source recovery
+- Describe first parents as inherited knowledge history and additional parents
+  as relevant external historical context through exact commits. Associated
+  trees are not merged. Edges are not citations, knowledge-adoption records,
+  approval markers or validation results.
+- Preserve the established exact-state parent-selection criteria without adding
+  a new necessity test, mandatory per-parent explanations or fixed business
+  roles for additional-parent positions.
+- Recover ancestry, source relationships and retained-history reachability from
+  Git and committed trees, using memory for substantive explanations and
+  evidence limits instead of parallel static UUID/checkpoint indexes.
+- Clarify that Auxiliary UUIDs provide structural separation and collision
+  avoidance, not durable semantic source identity, provenance or chronology.
+- Retain a relevant source state for justified historical context, not merely
+  to keep objects reachable or make a branch deletable.
 
-** Conditional Archival Assessment
-- Separate routine source inspection and memory maintenance from archival assessment.
-- Trigger archival evaluation only for explicit preservation requests or concrete independent evidence needs.
-- Allow a completed evaluation to result in no capture, without requiring per-acquisition archival records.
-- Prevent references between source materials from automatically expanding archival scope.
-- Preserve existing archive snapshot, manifest, verification, and authorization requirements.
-
-** Source History Recovery
-- Recover checkpoint ancestry, external-parent relationships, and retained-history reachability directly from Git rather than maintaining parallel static indexes in memory.
-- Clarify that Auxiliary UUIDs provide structural separation, not stable knowledge-source identity.
-- Improve guidance for recovering relevant source history from retained Git objects and committed trees.
+** Conditional archival assessment
+- Routine source inspection, memory maintenance, establishment, consolidation
+  and Auxiliary work no longer trigger archival assessment by default.
+- Begin an assessment for an explicit preservation request or a concrete
+  independent original-evidence need. Knowledge integration, capture and parent
+  selection remain separate judgments, not a mandatory per-source checklist.
+- Within an active assessment, reassess newly acquired candidates under the
+  same selection threshold. An evaluation may result in no capture; ordinary
+  work needs no per-acquisition archive decision record.
+- References do not transfer archival value or recursively expand capture
+  scope. Preserve the existing snapshot, manifest, byte-verification,
+  sanitization and authorization requirements once capture is justified.
 
 * Added
-** Project Memory Entry-Point Skills
-- Recommend a minimal project-level memory entry-point skill when formal GAW explicitly declares a =:skills= workspace role.
-- Prefer adapting an existing suitable skill over creating a duplicate.
-- Keep entry-point skills focused on memory navigation and interpretation rather than duplicating memory content or Git-derived relationships.
-- Avoid imposing the same entry-point requirement on Auxiliary histories merely because they inherit the configuration.
+- Recommend a minimal project-level memory entry-point skill when formal GAW
+  explicitly declares a =:skills= role. Prefer adapting an existing suitable
+  skill; no fixed name, layout or extra specialized procedure is required.
+- Use the entry point for memory navigation, reading order and interpretation
+  conventions. Reference existing memory rather than duplicating facts or
+  Git-derived relationships, and maintain it when organization or
+  interpretation changes rather than after every session.
+- Do not infer the requirement from directory names or apply it independently
+  to an Auxiliary merely because it inherits a =:skills= role.
 
-* Upgrading
-Upgrading from v0.7.0 or v0.7.1 requires *no workspace migration or Git history rewriting*.
+* Compatibility and migration
+Upgrading from v0.7.0 or v0.7.1 needs no workspace migration or history
+rewrite. Refresh the installed bundled skill to adopt this guidance; updating
+the executable alone does not prove adoption. Existing checkpoints and archives
+retain their original conventions.
 
-Refresh the installed bundled skill to adopt the updated guidance. Updating the executable alone does not guarantee that an agent environment is using the new skill.
-
-Existing checkpoints and archive snapshots retain their original conventions.
+* Limitations
+Skill guidance does not add runtime validation of natural language or authorize
+new lifecycle, archival or project-history mutations.
 
 * References
-[[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.7.2][Original published release notes]] · [[file:../CHANGELOG.org::#v0.7.2][Changelog summary]]
-
-[[https://github.com/ren-lingyu/git-agent-workflow/compare/v0.7.1...v0.7.2][Compare v0.7.1 and v0.7.2]].
+- [[file:../CHANGELOG.org::#v0.7.2][Changelog summary]].
+- [[https://github.com/ren-lingyu/git-agent-workflow/tree/v0.7.2][v0.7.2 source tree]].
+- [[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.7.2][Original published release notes]].
+- [[https://github.com/ren-lingyu/git-agent-workflow/compare/v0.7.1...v0.7.2][Compare v0.7.1 and v0.7.2]].

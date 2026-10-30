@@ -1,40 +1,74 @@
 #+title: v0.7.1 Release Notes
 
-This release extends the bundled GAW skill with structured knowledge establishment and cross-source consolidation workflows, improves Auxiliary history integration guidance, and strengthens selective evidence retention and sanitization practices.
+* Overview
+This release extends the bundled skill with knowledge establishment and
+cross-source consolidation. CLI commands, configuration and Git history
+protocol remain unchanged.
 
 * Changed
-** Auxiliary Discovery-Line Integration
-- Clarify the role of Auxiliary histories in preserving independently evolving discovery lines across parallel or alternating sessions.
-- Support interleaved integration of intermediate Auxiliary checkpoints into formal GAW, without waiting for source histories to finish.
-- Distinguish knowledge integration, evidence archival, and Git source-history retention.
-- Require justified source-checkpoint associations while accounting for their Git ancestry and retention consequences.
+** Discovery lines and independent retention decisions
+- Treat Auxiliary histories as independently evolving discovery lines that may
+  span sessions, agents or alternating work. Integrate intermediate stages into
+  formal memory while sources continue developing, without a one-to-one mapping
+  between agents, sources or checkpoints.
+- Permit interleaved integration of several lines and several source parents in
+  a formal stage. Select the exact inspected state, not an unexamined latest
+  tip; later ancestry retention does not replace an earlier stage's
+  association.
+- Assess knowledge integration, raw-evidence archival and source Git-history
+  retention separately. Reading or adopting a source does not mandate a parent.
+  Associations need relevant exact-state evidence and an acceptable authorized
+  ancestor-retention boundary; audit, explanation or recovery can supply value.
 
-** Selective Archival and Sanitization
-- Strengthen sensitive-content screening before GAW persistence, including memory, archives, checkpoint messages, and external history associations.
-- Narrow the default archive scope to bounded material with independent evidentiary value, rather than complete conversations, agent rollouts, or routine logs.
-- Reassess archival value whenever material is acquired, even from a previously used source, without lowering the retention threshold or creating unnecessary duplicates.
-- Clarify conditions for retaining original bytes and documenting sanitized derivatives.
-
-** Workflow and Packaging Improvements
-- Prefer English for newly authored GAW content, while preserving original wording when necessary and respecting explicit language requirements.
-- Bundle the new Establishment and Consolidation references with the Cabal package.
-- Update workflow routing, documentation, and upgrade guidance.
+** Selection and sanitization
+- Screen before writing memory, archives, skills, checkpoint messages or
+  staging, including newly retained parent ancestry. A clean source tip does
+  not prove the absence of sensitive content in its ancestors.
+- Prefer the smallest sufficient evidence set. Do not retain whole
+  conversations, routine logs, large test output or temporary directories by
+  default.
+- Reassess newly acquired material even from an existing path or source,
+  complete justified memory/capture actions promptly within authorization, and
+  avoid duplicate snapshots merely because material was obtained again.
+- Distinguish authorized original bytes from sanitized derivatives and record
+  evidence limits. History deletion or GC is not routine sanitization.
+- Prefer English for newly authored GAW content while preserving necessary
+  original wording and explicit user/project language requirements.
 
 * Added
-** Knowledge Establishment and Consolidation
-- Add dedicated *Establishment* and *Consolidation* workflows for building recoverable knowledge baselines and integrating knowledge across sessions, agents, and sources.
-- Reuse the same memory establishment and maintenance principles for formal and Auxiliary GAW histories.
-- Support overlapping, conflicting, and incomplete historical sources while preserving meaningful decisions, revisions, provenance limitations, and unresolved questions.
-- Support incremental consolidation without requiring every source to become an Auxiliary history.
+** Establishment
+- Provide a dedicated workflow for an absent or materially insufficient
+  baseline in formal GAW or Auxiliary. Bound knowledge and evidence, identify
+  gaps and build a resumable understanding with motivations, decisions and next
+  actions.
+- Reuse existing reconstruction/provenance rules; establishing current
+  knowledge cannot prove older observations. A sufficient baseline returns to
+  normal maintenance rather than requiring establishment for every acquisition.
 
-* Compatibility
-*No CLI, configuration format, or Git history protocol changes.*
+** Consolidation
+- Compare overlapping, conflicting, obsolete and incomplete knowledge scopes
+  against formal memory. Preserve unresolved material disagreements rather than
+  manufacturing consensus or treating recency as proof.
+- Support central, authorized distributed or hybrid investigation, coordinating
+  formal writes and reconciling intervening work before checkpoints.
+- Use project documents, conversations, existing histories or Auxiliary sources
+  directly; converting every source into an Auxiliary or archive is optional.
+- Bundle Establishment and Consolidation references in Cabal data and update
+  workflow routing, README and upgrade guidance.
 
-Existing GAW histories and archive snapshots require no migration or rewriting.
+* Compatibility and migration
+Existing histories and archive snapshots need no rewrite or migration. Refresh
+the installed bundled skill when upgrading from v0.7.0; updating the executable
+alone does not establish host adoption. Formal memory remains authoritative for
+the project, while Auxiliary uses the same evidence standard within its scope.
 
-Users upgrading from v0.7.0 should refresh their installed bundled skill to access the new workflows. Updating the executable alone does not guarantee that an agent environment has adopted the updated skill.
+* Limitations
+The new procedures are skill guidance, not new CLI enforcement, permission to
+delegate, or permission to retain unsafe history. Completed consolidation does
+not imply every historical assertion was rerun or any source must be deleted.
 
 * References
-[[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.7.1][Original published release notes]] · [[file:../CHANGELOG.org::#v0.7.1][Changelog summary]]
-
-[[https://github.com/ren-lingyu/git-agent-workflow/compare/v0.7.0...v0.7.1][Compare v0.7.0 and v0.7.1]].
+- [[file:../CHANGELOG.org::#v0.7.1][Changelog summary]].
+- [[https://github.com/ren-lingyu/git-agent-workflow/tree/v0.7.1][v0.7.1 source tree]].
+- [[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.7.1][Original published release notes]].
+- [[https://github.com/ren-lingyu/git-agent-workflow/compare/v0.7.0...v0.7.1][Compare v0.7.0 and v0.7.1]].
