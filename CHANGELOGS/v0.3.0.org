@@ -74,6 +74,4 @@ Protection remains local, and unknown metadata is not silently repaired.
 
 * References
 - [[file:../CHANGELOG.org::#v0.3.0][Changelog summary]].
-- [[https://github.com/ren-lingyu/git-agent-workflow/tree/v0.3.0][v0.3.0 source tree]].
 - [[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.3.0][Original published release notes]].
-- [[https://github.com/ren-lingyu/git-agent-workflow/compare/v0.2.0...v0.3.0][Compare v0.2.0 and v0.3.0]].

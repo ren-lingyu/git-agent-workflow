@@ -63,6 +63,4 @@ add runtime enforcement or authorize ordinary project mutations.
 
 * References
 - [[file:../CHANGELOG.org::#v0.4.0][Changelog summary]].
-- [[https://github.com/ren-lingyu/git-agent-workflow/tree/v0.4.0][v0.4.0 source tree]].
 - [[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.4.0][Original published release notes]].
-- [[https://github.com/ren-lingyu/git-agent-workflow/compare/v0.3.0...v0.4.0][Compare v0.3.0 and v0.4.0]].

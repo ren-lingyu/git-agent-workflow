@@ -58,6 +58,4 @@ new lifecycle, archival or project-history mutations.
 
 * References
 - [[file:../CHANGELOG.org::#v0.7.2][Changelog summary]].
-- [[https://github.com/ren-lingyu/git-agent-workflow/tree/v0.7.2][v0.7.2 source tree]].
 - [[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.7.2][Original published release notes]].
-- [[https://github.com/ren-lingyu/git-agent-workflow/compare/v0.7.1...v0.7.2][Compare v0.7.1 and v0.7.2]].

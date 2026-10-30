@@ -69,6 +69,4 @@ not imply every historical assertion was rerun or any source must be deleted.
 
 * References
 - [[file:../CHANGELOG.org::#v0.7.1][Changelog summary]].
-- [[https://github.com/ren-lingyu/git-agent-workflow/tree/v0.7.1][v0.7.1 source tree]].
 - [[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.7.1][Original published release notes]].
-- [[https://github.com/ren-lingyu/git-agent-workflow/compare/v0.7.0...v0.7.1][Compare v0.7.0 and v0.7.1]].

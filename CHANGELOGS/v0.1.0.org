@@ -68,5 +68,4 @@ using the runtime. A minimal daily loop is:
 
 * References
 - [[file:../CHANGELOG.org::#v0.1.0][Changelog summary]].
-- [[https://github.com/ren-lingyu/git-agent-workflow/tree/v0.1.0][v0.1.0 source tree]].
 - [[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.1.0][Original published release notes]].
