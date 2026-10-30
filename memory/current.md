@@ -2,18 +2,27 @@
 
 ## Current state and recovery
 
-The follow-up `docs(changelog): remove generic source and comparison links`
-is now committed by the user. It removes seventeen generic source-tree and
-adjacent-tag comparison links from the tails of all nine historical release
-manuscripts. Changelog-summary backlinks and original published-note links
-remain; root summaries and version states/times are unchanged. Detailed notes
-should remain self-contained rather than accumulating generic navigation links;
-specific source/commit/issue/PR references can still clarify individual changes.
-Read-only verification confirmed the expected sole parent, all nine intended
-paths, exact equality with the reviewed staged blobs, and clean ordinary
-index/worktree. Staged whitespace review passed; no build or runtime test was
-needed or run for this link-only edit. Its GAW association grounds that inspected
-committed cleanup. No action remains pending from this follow-up.
+Changelog reference cleanup is complete in two user commits:
+`docs(changelog): remove generic source and comparison links`, followed by
+`docs(changelog): remove trailing reference sections`. The first removed
+seventeen source-tree/tag-comparison links; the second removed all nine trailing
+References sections, including summary backlinks and original published-note
+links. The version manuscripts now stand independently. Root summary links to
+the detailed notes, ordinary release content, version states and times remain
+unchanged by these cleanup commits.
+
+The user explicitly requires CHANGELOGS/*.org not to contain links back to
+CHANGELOG.org and not to add hosting-platform-dependent source-path or comparison
+links. Relevant specific issues, PRs, commits or similar concrete evidence may
+still be cited to explain an individual change. Do not reintroduce generic
+reference footers or navigation links during future changelog maintenance.
+
+After each user commit, read-only verification confirmed the expected sole
+parent, all nine intended paths, equality with every reviewed staged blob and
+clean ordinary index/worktree. Staged whitespace review passed; no build or
+runtime test was needed or run for these reference-only edits. The latest GAW
+association grounds the directly inspected committed section removal. No action
+remains pending from this cleanup.
 
 Historical CHANGELOG backfill is complete in two user-created commits:
 `docs(changelog): backfill historical release notes in Org`, followed by
