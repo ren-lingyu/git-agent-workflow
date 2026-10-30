@@ -1,0 +1,71 @@
+#+title: v0.4.0 Release Notes
+
+v0.4.0 adds a bundled agent skill for using GAW as persistent working memory across sessions, together with declarative skill packaging support in the ASDF/Nix build.
+
+The memory workflow treats the declared GAW workspace as current working memory, the first-parent chain as recoverable memory evolution, and additional parents as exact project-snapshot provenance. It supports both normal incremental maintenance and conservative reconstruction of substantive work that predates usable GAW memory history.
+
+* Changed
+- Refactor the ASDF/Nix build helpers.
+  - Split project construction, generic scripts, and agent-skill installation into dedicated helper files.
+  - Keep skill-manifest generation and installation as an isolated build capability.
+  - Update flake inputs used by the build.
+
+- Polish package and documentation metadata.
+  - The Nix package =pname= now matches the project name, =git-agent-workflow=; the executable remains =git-gaw=.
+  - README documentation now covers the persistent-memory workflow, retrospective reconstruction, evidence-horizon coverage, provenance rules, host permission boundaries, and ASDF skill installation.
+
+* Added
+- Add the bundled =git-agent-workflow= skill.
+  - Recover current goals, decisions, unresolved questions, provenance, and next actions from the declared workspace before expanding into history.
+  - Maintain current memory as substantive work evolves rather than deferring persistence to session handoff.
+  - Keep checkpoint creation selective: workspace updates do not require a checkpoint unless the resulting state has independent recovery value.
+  - Use =git gaw check=, explicit staging, =git gaw commit=, and =git gaw show= as the normal memory loop inside a validated GAW worktree.
+  - Keep GAW lifecycle changes and ordinary project-history mutation outside the skill's routine memory scope.
+
+- Preserve recoverable session evolution during retrospective consolidation.
+  - A pre-existing session may become multiple first-parent GAW checkpoints when distinct durable states and their ordering are supported by evidence.
+  - Checkpoint consequential findings, adopted or revised decisions, validation results, and meaningful phase transitions rather than replaying messages, tool calls, or small edits.
+  - Keep each reconstructed checkpoint as a complete durable memory state rather than a delta narrative.
+  - Preserve the final workspace as the current resumable state.
+
+- Add full retrospective evidence-horizon coverage.
+  - Honor user-supplied session start and end boundaries before selecting checkpoints.
+  - Do not silently narrow reconstruction to the visible conversation tail, current workspace, or the beginning of existing GAW history.
+  - Survey the full horizon before creating reconstructed checkpoints and account for substantive intervals before declaring reconstruction complete.
+  - Pause for additional evidence when a material gap may hide earlier durable states or affect their ordering.
+  - When a gap is genuinely unrecoverable, reconstruct only supported evolution and report the gap explicitly instead of inventing chronology or claiming complete coverage.
+
+- Keep project-snapshot provenance independently conservative.
+  - Additional project parents are attached only when existing evidence identifies the exact project commit against which the relevant work was performed.
+  - Current =HEAD=, timestamps, nearby commits, and likely intervals are not sufficient provenance.
+  - Missing project provenance does not prevent a memory checkpoint.
+  - Later revalidation grounds only the revalidated state and does not retroactively establish provenance for earlier work.
+
+- Add declarative ASDF agent-skill installation.
+  - Skills are declared under the ASDF =share/skills= component tree.
+  - Only explicitly declared static skill files are installed.
+  - Every declared skill must include =SKILL.md=.
+  - =mkProject= enables skill installation by default and exposes =installAgentSkills = false= as an opt-out.
+  - A project without a skill subtree remains valid and installs no skill content.
+
+- Add fixture coverage for skill packaging.
+  - Verify installation of declared skill files.
+  - Verify undeclared files and undeclared skills are excluded.
+  - Verify disabling =installAgentSkills= removes the installation dependency and output.
+  - Verify projects without a skill subtree continue to build normally.
+
+* Compatibility
+There are no GAW runtime protocol or CLI breaking changes in v0.4.0.
+
+Existing v0.3.0 repositories and deployments remain valid. The new functionality is primarily the bundled persistent-memory skill and its packaging infrastructure.
+
+The Nix derivation name now follows the project name =git-agent-workflow=, while the installed command remains:
+
+#+begin_src text
+  git-gaw
+#+end_src
+
+* References
+[[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.4.0][Original published release notes]] · [[file:../CHANGELOG.org::#v0.4.0][Changelog summary]]
+
+[[https://github.com/ren-lingyu/git-agent-workflow/compare/v0.3.0...v0.4.0][Compare v0.3.0 and v0.4.0]].

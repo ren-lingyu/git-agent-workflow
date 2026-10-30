@@ -1,0 +1,44 @@
+#+title: v0.5.0 Release Notes
+
+This release replaces GAW's Common Lisp implementation with Haskell while preserving the existing protocol-visible behavior established in v0.4.0.
+
+* Removed
+- Removed the previous Common Lisp implementation, ASDF tests, custom ASDF build library, and related fixture infrastructure from =main=.
+
+- Removed Lisp-specific wording from the bundled skill.
+
+* Changed
+- Reimplemented GAW in Haskell and reorganized the codebase into:
+  - =Gaw.Protocol.*= for pure protocol types, validation, and planning;
+  - =Gaw.Application.*= for command orchestration;
+  - =Gaw.System.*= for Git, filesystem, clock, and process boundaries.
+
+- Replaced the ASDF project and custom Common Lisp build helpers with a native Cabal project under =cabal/=.
+
+- Kept the existing =git-gaw= CLI, configured =reference-transaction= hook entry point, help resources, and agent-memory skill behavior.
+
+** Nix packaging
+- Replaced the previous ASDF-oriented Nix build with =callCabal2nix=.
+- Selected GHC 9.12 for the packaged build.
+- Kept Git >= 2.54 as an explicit requirement.
+- The selected Nix Git executable is captured at compile time through =GIT=, keeping it in the runtime closure without wrapping or duplicating the executable name in Nix packaging.
+- Cabal =data-files= is now the source of truth for bundled data, including the agent skill; Nix installs skills from Cabal's installed data output.
+- Release validation is now centered on the Nix package build and its Cabal test suites.
+
+- Moved help resources and the bundled =git-agent-workflow= skill into the Cabal project layout.
+
+- =git-gaw --version= is now derived from Cabal package metadata instead of maintaining a separate hard-coded version string.
+
+- Updated the README to document the Haskell architecture, native Cabal development path, supported Linux release check, and migration differential-test location.
+
+The v0.4.0 Common Lisp implementation remains the fixed behavioral baseline used by the separate migration differential test.
+
+* Added
+- Added native Haskell protocol and Git-adapter test suites, including injected failure cases around Git-backed operations.
+
+
+
+* References
+[[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.5.0][Original published release notes]] · [[file:../CHANGELOG.org::#v0.5.0][Changelog summary]]
+
+[[https://github.com/ren-lingyu/git-agent-workflow/compare/v0.4.0...v0.5.0][Compare v0.4.0 and v0.5.0]].

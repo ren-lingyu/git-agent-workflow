@@ -1,0 +1,36 @@
+#+title: v0.7.0 Release Notes
+
+This release adds independent Auxiliary source histories and a bundled workflow for consolidating cross-session and cross-agent knowledge into formal GAW memory. Formal GAW remains the sole authority for project-current memory.
+
+* Changed
+- Separate formal, Auxiliary and ordinary branches in status. Undeploy reports pre-cleanup inventory and actual shared protection removal while preserving all branch histories and worktrees.
+
+* Added
+- Add =git gaw aux init=, =aux deploy= and =aux check= for independent UUIDv4 source histories. Initialization copies only the selected formal branch's exact committed config into an independent root, without copying its workspace or linking its history.
+
+- Support formal knowledge integration through additional-parent references to exact Auxiliary checkpoints, preserving source ancestry without merging trees or introducing structural history fusion.
+
+- Add =git gaw check --branch <name>= for committed-state validation without requiring a target worktree or checking the caller's index.
+
+- Extend =git gaw branch -d/-D= to Auxiliary branches. Safe deletion requires retention in the formal history selected by =refs/gaw/HEAD=; =-D= explicitly allows abandonment without requiring formal-history retention. Both require valid committed state and no associated worktree.
+
+- Verify the selector target, formal tip and Auxiliary tip in one safe-deletion ref transaction. Worktree registrations are checked separately, with race detection and conditional compensation rather than full transactional isolation.
+
+- Bundle guidance for source reconstruction, evidence and uncertainty, reconciliation of decisions, formal knowledge integration, archival reuse and source recovery after safe deletion.
+
+* Upgrade notes
+- Auxiliary histories require GAW 0.7.0 or newer. Upgrade the executable used by interactive commands and the shared Git hook before creating or importing Auxiliary history, and keep the bundled skill compatible.
+- The =_gaw_aux_= branch-name range is reserved, including malformed names. Review existing branches using that prefix before upgrading. Existing branches in this range are protected by name even when their config is missing or damaged.
+- Human-readable status, undeploy and hook diagnostic output changes. Review consumers that match these messages.
+- Existing formal history and v0/v1 configuration need no migration or rewrite. Formal branch deletion semantics remain unchanged.
+- There is no =aux retire=, =abort=, =discard= or Auxiliary rename command. Source knowledge integration remains an explicit agent/reviewer workflow.
+
+* Packaging and verification
+The Nix release check covers both protocol and Git-adapter suites, including Auxiliary lifecycle, ref/worktree races, compensation and retained-source recovery. Packaging checks verify 13 embedded help resources and 5 bundled skill files through source distribution, Cabal installation and Nix exposure.
+
+Git >= 2.54 remains required. Verification was performed on x86_64-linux; declared aarch64-linux and aarch64-darwin outputs do not imply completed platform testing.
+
+* References
+[[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.7.0][Original published release notes]] · [[file:../CHANGELOG.org::#v0.7.0][Changelog summary]]
+
+[[https://github.com/ren-lingyu/git-agent-workflow/compare/v0.6.0...v0.7.0][Compare v0.6.0 and v0.7.0]].

@@ -1,0 +1,67 @@
+#+title: v0.1.0 Release Notes
+
+The first runtime release of Git Agent Workflow (GAW).
+
+GAW is a Git-native workflow for maintaining persistent agent working state
+and history alongside a Git repository. This release provides the core runtime
+for an already provisioned GAW repository and worktree.
+
+* Added
+- Maintain GAW state in an independent Git history.
+
+- Associate GAW commits with project commits through additional parent edges.
+
+- Manage an explicit workspace declared in =.gaw/config=.
+
+- Create validated GAW commits with =git gaw commit=.
+
+- Inspect canonical first-parent history with =git gaw show=.
+
+- Check repository and worktree readiness with =git gaw check=.
+
+- Protect registered GAW branches from accidental ordinary Git updates using a
+  Git 2.54 configured =reference-transaction= hook.
+
+- Build and install =git-gaw= through the Nix flake.
+
+- Consume GAW from downstream flakes through the default overlay.
+
+* Daily workflow
+#+begin_src text
+  git gaw check
+  git gaw version
+  edit workspace files
+  git status / git diff
+  git add <paths>
+  git gaw commit [options] [project-commit...]
+  git gaw show
+#+end_src
+
+* Branch protection
+Registered GAW branches can optionally be protected with a repository-local
+configured hook:
+
+#+begin_src sh
+  git config --local hook.gaw-reference-transaction.event reference-transaction
+  git config --local hook.gaw-reference-transaction.command \
+    'git-gaw --reference-transaction'
+#+end_src
+
+The hook is intended as a local guard against accidental ref updates, not as an
+authorization boundary.
+
+* Requirements
+- x86_64-linux
+- Nix with flakes enabled
+- Git 2.54 or newer
+
+* Not yet included
+This release does not provide automatic provisioning. In particular, branch
+creation, registration, hook configuration, and deployment must currently be
+performed externally.
+
+The repository protocol and user-facing interface may still change before a
+stable release.
+
+* References
+[[https://github.com/ren-lingyu/git-agent-workflow/releases/tag/v0.1.0][Original published release notes]] · [[file:../CHANGELOG.org::#v0.1.0][Changelog summary]]
