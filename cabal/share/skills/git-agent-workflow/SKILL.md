@@ -213,6 +213,14 @@ file changes. Use these defaults:
 - `feat`: add a capability with real reusable value. New findings or a change
   to a Skill file alone do not make a feature.
 
+Use `docs` with care. Memory and skills are primary maintained content of GAW,
+not merely documentation accompanying software. Do not choose `docs` solely
+because a checkpoint changes prose, Markdown, Org files or a Skill. Classify
+the checkpoint by its actual knowledge or maintenance purpose using the
+defaults above. Use `docs` when the actual purpose is documentation rather
+than knowledge recording, correction, reorganization or adding a reusable
+capability, subject to established project conventions.
+
 Default the scope to the declared GAW workspace role: `memory`, `skills`,
 `archive`, or a custom role. Roles guide scope selection, not type classification.
 For a checkpoint spanning roles, choose one appropriate scope by its main
